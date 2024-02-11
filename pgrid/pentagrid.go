@@ -107,10 +107,6 @@ func (f Field) MakeGridPoint(gridLine0, gridLine1 GridLine, name string) GridPoi
 	return gridPoint
 }
 
-func (f Field) DrawGridPoint(gridPoint GridPoint, prefix string) {
-	f.canvasFile.DrawPoint(gridPoint.Point, prefix+gridPoint.name, 0)
-}
-
 type Neighbor struct {
 	nextLine  GridLine
 	nextPoint GridPoint

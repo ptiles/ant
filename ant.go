@@ -104,7 +104,7 @@ func main() {
 
 	fileName := fmt.Sprintf("results/%s-%d.svg", antName, maxSteps)
 	//fmt.Printf("Writing result to %s\n", fileName)
-	canvas := canv.New(fileName, width/2, height/2)
+	canvas := canv.New(fileName, width/2, height/2, int(limit))
 	defer canvas.Close()
 
 	//canvas.DrawOrigin()
@@ -125,10 +125,10 @@ func main() {
 	currLine := field.MakeGridLine(pgrid.B, 0)
 
 	prevPoint := field.MakeGridPoint(initialLine, prevLine, "")
-	//field.DrawGridPoint(prevPoint, "")
+	//canvas.DrawPoint(prevPoint.Point, 0, "")
 
 	currPoint := field.MakeGridPoint(prevLine, currLine, "")
-	//field.DrawGridPoint(currPoint, "")
+	//canvas.DrawPoint(currPoint.Point, 0, "")
 
 	for st := 0; st < maxSteps; st++ {
 		isRightTurn := walk(currPoint.PackedCoords, rules, limit)
@@ -143,6 +143,6 @@ func main() {
 		if canvas.IsOutside(point) {
 			return
 		}
-		canvas.DrawPoint(point, "", color)
+		canvas.DrawPoint(point, color, "")
 	})
 }

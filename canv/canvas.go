@@ -6,9 +6,10 @@ import (
 	"github.com/ptiles/ant/geom"
 	"math"
 	"os"
+	"strings"
 )
 
-var palette = [...]string{
+var gridPalette = [...]string{
 	"#8fce00",
 	"#2986cc",
 	"#f44336",
@@ -27,32 +28,38 @@ var palette = [...]string{
 }
 
 type Canvas struct {
-	file   *os.File
-	svg    *svg.SVG
-	width  int
-	height int
+	file        *os.File
+	svg         *svg.SVG
+	width       int
+	height      int
+	paletteSize int
 }
 
-func New(fileName string, width int, height int) Canvas {
+func New(fileName string, width, height, paletteSize int) Canvas {
 	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		panic(err)
 	}
 	svgFile := svg.New(file)
 
-	cf := Canvas{file, svgFile, width, height}
+	cf := Canvas{file, svgFile, width, height, paletteSize}
 
 	cf.svg.Start(width*2, height*2)
-	cf.svg.Style("text/css", "svg { background-color: black; }")
+	styles := make([]string, 0, paletteSize+1)
+	styles = append(styles, "svg { background-color: black; }")
+	for c := 0; c < paletteSize; c++ {
+		format := ".c%d { fill: color-mix(in srgb, #0000ff, hsl(%ddeg, 30%%, 60%%) 80%%); }"
+		degrees := 360 * c / paletteSize
+		styles = append(styles, fmt.Sprintf(format, c, degrees))
+	}
+	cf.svg.Style("text/css", strings.Join(styles, "\n"))
 	cf.svg.Rect(1, 1, width*2-2, height*2-2, "stroke:#444; stroke-width:1px")
 	cf.svg.Translate(width, height)
-	cf.svg.ScaleXY(1, -1)
 
 	return cf
 }
 
 func (cf Canvas) Close() {
-	cf.svg.Gend()
 	cf.svg.Gend()
 	cf.svg.End()
 
@@ -63,59 +70,25 @@ func (cf Canvas) Close() {
 }
 
 func (cf Canvas) DrawOrigin() {
-	style := fmt.Sprintf("stroke:%s; stroke-width:1", palette[6])
+	style := fmt.Sprintf("stroke:%s; stroke-width:1", gridPalette[6])
 	cf.svg.Line(-10, 0, 10, 0, style)
 	cf.svg.Line(0, -10, 0, 10, style)
 	cf.svg.Line(int(cf.width)-50, 0, int(cf.width)-40, 0, style)
 	cf.svg.Line(0, int(cf.height)-50, 0, int(cf.height)-40, style)
 }
 
-var pointsPalette = [...]string{
-	"#1c3144",
-	"#1c3144",
-	"#1c3144",
-	"#1c3144",
-	"#596f62",
-	"#596f62",
-	"#596f62",
-	"#596f62",
-	"#7ea16b",
-	"#7ea16b",
-	"#7ea16b",
-	"#7ea16b",
-	"#c3d898",
-	"#c3d898",
-	"#c3d898",
-	"#c3d898",
-	"#70161e",
-	"#70161e",
-	"#70161e",
-	"#888",
-}
-
 func (cf Canvas) drawCircle(point geom.Point, color uint8) {
-	style := fmt.Sprintf("fill:%s; stroke-width:1", pointsPalette[color])
-	cf.svg.Circle(int(point[0]), int(point[1]), 1, style)
+	class := fmt.Sprintf(`class="c%d"`, color%uint8(cf.paletteSize))
+	cf.svg.Circle(int(point[0]), int(point[1]), 1, class)
 }
 
-func (cf Canvas) DrawPoint(point geom.Point, name string, color uint8) {
+func (cf Canvas) DrawPoint(point geom.Point, color uint8, name string) {
 	cf.drawCircle(point, color)
-
-	//cf.svg.ScaleXY(1, -1)
-	//cf.svg.Textspan(int(point[0])+7, -int(point[1])+2, name+" ", "stroke:white")
-	////fmt.Printf("%s a %.1f; b %.1f; c %.1f; d %.1f; e %.1f\n", name, distances[0], distances[1], distances[2], distances[3], distances[4])
-	////cf.svg.Span(fmt.Sprintf(" a %.1f;", distances[0]), fmt.Sprintf("stroke:%s", palette[0]))
-	////cf.svg.Span(fmt.Sprintf(" b %.1f;", distances[1]), fmt.Sprintf("stroke:%s", palette[1]))
-	////cf.svg.Span(fmt.Sprintf(" c %.1f;", distances[2]), fmt.Sprintf("stroke:%s", palette[2]))
-	////cf.svg.Span(fmt.Sprintf(" d %.1f;", distances[3]), fmt.Sprintf("stroke:%s", palette[3]))
-	////cf.svg.Span(fmt.Sprintf(" e %.1f;", distances[4]), fmt.Sprintf("stroke:%s", palette[4]))
-	//cf.svg.TextEnd()
-	//cf.svg.Gend()
 }
 
 func (cf Canvas) drawLineSegment(line geom.Line, color int) {
 	point1, point2 := line[0], line[1]
-	style := fmt.Sprintf("stroke:%s; stroke-width:1", palette[color])
+	style := fmt.Sprintf("stroke:%s; stroke-width:1", gridPalette[color])
 	cf.svg.Line(int(point1[0]), int(point1[1]), int(point2[0]), int(point2[1]), style)
 }
 
