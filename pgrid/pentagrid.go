@@ -3,6 +3,7 @@ package pgrid
 import (
 	"github.com/ptiles/ant/canv"
 	"github.com/ptiles/ant/geom"
+	"github.com/ptiles/ant/store"
 	"math"
 )
 
@@ -20,8 +21,6 @@ const D = 3
 const E = 4
 
 var axisIndices = [5]uint8{A, B, C, D, E}
-
-const AxisCount = uint8(5)
 
 type Field struct {
 	dist       float64
@@ -75,96 +74,12 @@ func (f Field) MakeGridLine(ax uint8, off int16) GridLine {
 	return GridLine{ax, off, line}
 }
 
-// _   AB   AC   AD   AE |   BC    BD    BE |   CD    CE |   DE
-// _ a[0]                | a[1]             | a[2]       | else
-// _ a[1] a[2] a[3] a[4] | a[2]  a[3]  a[4] | a[3]  a[4] | a[4]
-// _    0   +1   +2   +3 |    4    +1    +2 |    7    +1 |    9
-// _    0    1    2    3 |    4     5     6 |    7     8 |    9
-//func axesOffset(a [5]bool) int {
-//	if a[0] {
-//		return qi(a[2], 1, 0) + qi(a[3], 2, 0) + qi(a[4], 4, 0)
-//	}
-//	if a[1] {
-//		return 4 + qi(a[3], 1, 0) + qi(a[4], 2, 0)
-//	}
-//	if a[2] {
-//		return 7 + qi(a[4], 1, 0)
-//	}
-//	return 9
-//}
-
-func aIndex(a0, a1 uint8) uint8 {
-	if a0 == A {
-		return a1 - 1
-	}
-	if a0 == B {
-		return a1 + 2
-	}
-	if a0 == C {
-		return a1 + 4
-	}
-	return 9
-}
-
-var values = [1 << 8][1 << 8][10]uint8{}
-
-var a0ByIndex = [10]uint8{A, A, A, A, B, B, B, C, C, D}
-var a1ByIndex = [10]uint8{B, C, D, E, C, D, E, D, E, E}
-
-func (f Field) GetPointsByOffsets(off0, off1 int16) ([]geom.Point, []uint8) {
-	points := make([]geom.Point, 0, 10)
-	colors := make([]uint8, 0, 10)
-	for index := uint8(0); index < 10; index++ {
-		color := values[uint8(off0)][uint8(off1)][index]
-		if color > 0 {
-			line0 := f.MakeGridLine(a0ByIndex[index], off0).Line
-			line1 := f.MakeGridLine(a1ByIndex[index], off1).Line
-			point := geom.Intersection(line0, line1)
-			points = append(points, point)
-			colors = append(colors, color)
-		}
-	}
-	return points, colors
-}
-
-var MinOffset0 = int16(0)
-var MaxOffset0 = int16(0)
-
-var MinOffset1 = int16(0)
-var MaxOffset1 = int16(0)
-
-func (gp GridPoint) Get() uint8 {
-	return values[uint8(gp.off0)][uint8(gp.off1)][gp.aIndex]
-}
-
-func (gp GridPoint) Set(value uint8) {
-	off0, off1 := gp.off0, gp.off1
-
-	if off0 > MaxOffset0 {
-		MaxOffset0 = off0
-	}
-	if off0 < MinOffset0 {
-		MinOffset0 = off0
-	}
-
-	if off1 > MaxOffset1 {
-		MaxOffset1 = off1
-	}
-	if off1 < MinOffset0 {
-		MinOffset1 = off1
-	}
-
-	values[uint8(off0)][uint8(off1)][gp.aIndex] = value
-}
-
 type GridPoint struct {
-	axes    [5]bool
-	offsets [5]float64
-	Point   geom.Point
-	name    string
-	off0    int16
-	off1    int16
-	aIndex  uint8
+	axes         [5]bool
+	offsets      [5]float64
+	Point        geom.Point
+	name         string
+	PackedCoords store.PackedCoordinates
 }
 
 func (f Field) MakeGridPoint(gridLine0, gridLine1 GridLine, name string) GridPoint {
@@ -185,13 +100,9 @@ func (f Field) MakeGridPoint(gridLine0, gridLine1 GridLine, name string) GridPoi
 		}
 	}
 
-	if gridLine0.Axis < gridLine1.Axis {
-		gridPoint.off0, gridPoint.off1 = gridLine0.Offset, gridLine1.Offset
-		gridPoint.aIndex = aIndex(gridLine0.Axis, gridLine1.Axis)
-	} else {
-		gridPoint.off0, gridPoint.off1 = gridLine1.Offset, gridLine0.Offset
-		gridPoint.aIndex = aIndex(gridLine1.Axis, gridLine0.Axis)
-	}
+	gridPoint.PackedCoords = store.PackCoordinates(
+		gridLine0.Axis, gridLine1.Axis, gridLine0.Offset, gridLine1.Offset,
+	)
 
 	return gridPoint
 }

@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ptiles/ant/canv"
+	"github.com/ptiles/ant/geom"
 	"github.com/ptiles/ant/pgrid"
+	"github.com/ptiles/ant/store"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -29,10 +31,10 @@ const (
 	maxStepsDefault = 100000
 )
 
-func walk(currPoint pgrid.GridPoint, steps []bool, maxValue uint8) (bool, bool) {
-	value := (currPoint.Get() + 1) % maxValue
-	currPoint.Set(value)
-	return steps[value], value == 0
+func walk(coords store.PackedCoordinates, steps []bool, maxValue uint8) bool {
+	value := (store.Get(coords) + 1) % maxValue
+	store.Set(coords, value)
+	return steps[value]
 }
 
 func main() {
@@ -59,7 +61,7 @@ func main() {
 
 	switch len(args) {
 	case 0:
-		fmt.Fprintln(os.Stderr, "Name is required")
+		fmt.Fprintf(os.Stderr, "Name is required. Try to run: %s LLLRLRL", programName)
 		fmt.Fprintf(os.Stderr, usageTextShort, programName)
 		os.Exit(1)
 	case 1:
@@ -129,18 +131,18 @@ func main() {
 	//field.DrawGridPoint(currPoint, "")
 
 	for st := 0; st < maxSteps; st++ {
-		isRightTurn, _ := walk(currPoint, rules, limit)
+		isRightTurn := walk(currPoint.PackedCoords, rules, limit)
 		prevPoint, currPoint, prevLine, currLine = field.NextPoint(prevPoint, currPoint, prevLine, currLine, isRightTurn)
 	}
-	fmt.Printf("%s  %dx%d\n", fileName, pgrid.MaxOffset0-pgrid.MinOffset0, pgrid.MaxOffset1-pgrid.MinOffset1)
+	fmt.Printf("%s  %dx%d\n", fileName, store.MaxOffset0-store.MinOffset0, store.MaxOffset1-store.MinOffset1)
 
-	for a0 := pgrid.MinOffset0; a0 <= pgrid.MaxOffset0; a0++ {
-		for a1 := pgrid.MinOffset1; a1 <= pgrid.MaxOffset1; a1++ {
-			points, colors := field.GetPointsByOffsets(a0, a1)
-			for i := range points {
-				canvas.DrawPoint(points[i], "", colors[i])
-				//field.DrawGridPoint(point, "")
-			}
+	store.ForEach(func(axis0, axis1 uint8, off0, off1 int16, color uint8) {
+		line0 := field.MakeGridLine(axis0, off0).Line
+		line1 := field.MakeGridLine(axis1, off1).Line
+		point := geom.Intersection(line0, line1)
+		if canvas.IsOutside(point) {
+			return
 		}
-	}
+		canvas.DrawPoint(point, "", color)
+	})
 }

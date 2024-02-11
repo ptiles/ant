@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ajstarks/svgo"
 	"github.com/ptiles/ant/geom"
+	"math"
 	"os"
 )
 
@@ -168,4 +169,8 @@ func borderIntersection(line geom.Line, canvasWidth float64, canvasHeight float6
 func (cf Canvas) DrawLine(line geom.Line, color int) {
 	bi := borderIntersection(line, float64(cf.width), float64(cf.height))
 	cf.drawLineSegment(bi, color)
+}
+
+func (cf Canvas) IsOutside(point geom.Point) bool {
+	return math.Abs(point[0]) > float64(cf.width) || math.Abs(point[1]) > float64(cf.height)
 }
