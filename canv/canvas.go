@@ -59,7 +59,7 @@ func New(fileName string, width, height, paletteSize int) Canvas {
 	return cf
 }
 
-func (cf Canvas) Close() {
+func (cf *Canvas) Close() {
 	cf.svg.Gend()
 	cf.svg.End()
 
@@ -69,7 +69,7 @@ func (cf Canvas) Close() {
 	}
 }
 
-func (cf Canvas) DrawOrigin() {
+func (cf *Canvas) DrawOrigin() {
 	style := fmt.Sprintf("stroke:%s; stroke-width:1", gridPalette[6])
 	cf.svg.Line(-10, 0, 10, 0, style)
 	cf.svg.Line(0, -10, 0, 10, style)
@@ -77,16 +77,20 @@ func (cf Canvas) DrawOrigin() {
 	cf.svg.Line(0, int(cf.height)-50, 0, int(cf.height)-40, style)
 }
 
-func (cf Canvas) drawCircle(point geom.Point, color uint8) {
+func (cf *Canvas) drawCircle(point geom.Point, color uint8) {
 	class := fmt.Sprintf(`class="c%d"`, color%uint8(cf.paletteSize))
 	cf.svg.Circle(int(point[0]), int(point[1]), 1, class)
 }
 
-func (cf Canvas) DrawPoint(point geom.Point, color uint8, name string) {
+func (cf *Canvas) DrawPoint(point geom.Point, color uint8, name string) {
 	cf.drawCircle(point, color)
+	//if name != "" {
+	//	cf.svg.Textspan(int(point[0])+7, int(point[1])+2, name, "stroke:white")
+	//	cf.svg.TextEnd()
+	//}
 }
 
-func (cf Canvas) drawLineSegment(line geom.Line, color int) {
+func (cf *Canvas) drawLineSegment(line geom.Line, color int) {
 	point1, point2 := line[0], line[1]
 	style := fmt.Sprintf("stroke:%s; stroke-width:1", gridPalette[color])
 	cf.svg.Line(int(point1[0]), int(point1[1]), int(point2[0]), int(point2[1]), style)
@@ -139,11 +143,11 @@ func borderIntersection(line geom.Line, canvasWidth float64, canvasHeight float6
 	return result
 }
 
-func (cf Canvas) DrawLine(line geom.Line, color int) {
+func (cf *Canvas) DrawLine(line geom.Line, color int) {
 	bi := borderIntersection(line, float64(cf.width), float64(cf.height))
 	cf.drawLineSegment(bi, color)
 }
 
-func (cf Canvas) IsOutside(point geom.Point) bool {
+func (cf *Canvas) IsOutside(point geom.Point) bool {
 	return math.Abs(point[0]) > float64(cf.width) || math.Abs(point[1]) > float64(cf.height)
 }

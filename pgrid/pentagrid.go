@@ -23,36 +23,59 @@ const E = 4
 var axisIndices = [5]uint8{A, B, C, D, E}
 
 type Field struct {
-	dist       float64
-	anchors    [5]geom.Point
-	Axes       [5]geom.Point
-	normals    [5]geom.Point
-	canvasFile *canv.Canvas
+	dist             float64
+	anchors          [5]geom.Point
+	anchorLines      [5]geom.Line
+	axisUnits        [5]geom.Point
+	normals          [5]geom.Point
+	intersectAnchors [5][5]geom.Point
+	intersectVectors [5][5]geom.Point
+	canvasFile       *canv.Canvas
 }
 
 func New(r, dist float64, phi0degrees int, canvasFile *canv.Canvas) Field {
 	phi0 := fromDegrees(phi0degrees)
 	phi := fromDegrees(72)
-	axis0 := fromDegrees(180 - 54 + phi0degrees)
+	axisAngle0 := fromDegrees(180 - 54 + phi0degrees)
 
-	var anchors [5]geom.Point
-	var axes [5]geom.Point
-	var normals [5]geom.Point
+	result := Field{dist: dist, canvasFile: canvasFile}
 
-	for ax := 0; ax < len(anchors); ax++ {
+	for ax := range axisIndices {
 		phiAx := phi * float64(ax)
 
-		anchors[ax][X] = r * math.Cos(phi0+phiAx)
-		anchors[ax][Y] = r * math.Sin(phi0+phiAx)
+		result.anchors[ax][X] = r * math.Cos(phi0+phiAx)
+		result.anchors[ax][Y] = r * math.Sin(phi0+phiAx)
 
-		axes[ax][X] = 1 * math.Cos(axis0+phiAx)
-		axes[ax][Y] = 1 * math.Sin(axis0+phiAx)
+		result.axisUnits[ax][X] = 1 * math.Cos(axisAngle0+phiAx)
+		result.axisUnits[ax][Y] = 1 * math.Sin(axisAngle0+phiAx)
 
-		normals[ax][X] = dist * math.Cos(phi0+0.5*phi+phiAx)
-		normals[ax][Y] = dist * math.Sin(phi0+0.5*phi+phiAx)
+		result.normals[ax][X] = dist * math.Cos(phi0+0.5*phi+phiAx)
+		result.normals[ax][Y] = dist * math.Sin(phi0+0.5*phi+phiAx)
+
+		anchorEnd := geom.Point{
+			result.anchors[ax][X] + result.axisUnits[ax][X],
+			result.anchors[ax][Y] + result.axisUnits[ax][Y],
+		}
+		result.anchorLines[ax] = geom.Line{result.anchors[ax], anchorEnd}
 	}
 
-	return Field{dist, anchors, axes, normals, canvasFile}
+	for ax0 := uint8(0); ax0 < 5; ax0++ {
+		for ax1 := uint8(0); ax1 < 5; ax1++ {
+			line0 := result.MakeGridLine(ax0, 0)
+			line1 := result.MakeGridLine(ax1, 0)
+			intersectAnchor := geom.Intersection(line0.Line, line1.Line)
+			result.intersectAnchors[ax0][ax1] = intersectAnchor
+
+			line01 := result.MakeGridLine(ax0, 1)
+			intersection01 := geom.Intersection(line01.Line, line1.Line)
+			result.intersectVectors[ax0][ax1] = geom.Point{
+				intersection01[X] - intersectAnchor[X],
+				intersection01[Y] - intersectAnchor[Y],
+			}
+		}
+	}
+
+	return result
 }
 
 type GridLine struct {
@@ -61,8 +84,8 @@ type GridLine struct {
 	Line   geom.Line
 }
 
-func (f Field) MakeGridLine(ax uint8, off int16) GridLine {
-	axis := f.Axes[ax]
+func (f *Field) MakeGridLine(ax uint8, off int16) GridLine {
+	axis := f.axisUnits[ax]
 	anchor := f.anchors[ax]
 	normal := f.normals[ax]
 	distance := float64(off)
@@ -82,7 +105,7 @@ type GridPoint struct {
 	PackedCoords store.PackedCoordinates
 }
 
-func (f Field) MakeGridPoint(gridLine0, gridLine1 GridLine, name string) GridPoint {
+func (f *Field) MakeGridPoint1(gridLine0, gridLine1 GridLine, name string) GridPoint {
 	gridPoint := GridPoint{name: name}
 	gridPoint.offsets[gridLine0.Axis] = float64(gridLine0.Offset)
 	gridPoint.axes[gridLine0.Axis] = true
@@ -93,9 +116,7 @@ func (f Field) MakeGridPoint(gridLine0, gridLine1 GridLine, name string) GridPoi
 
 	for ax := range gridPoint.offsets {
 		if !gridPoint.axes[ax] {
-			anchorEnd := geom.Point{f.anchors[ax][X] + f.Axes[ax][X], f.anchors[ax][Y] + f.Axes[ax][Y]}
-			anchorLine := geom.Line{f.anchors[ax], anchorEnd}
-			distance := geom.Distance(anchorLine, gridPoint.Point)
+			distance := geom.Distance(f.anchorLines[ax], gridPoint.Point)
 			gridPoint.offsets[ax] = distance / f.dist
 		}
 	}
@@ -107,48 +128,67 @@ func (f Field) MakeGridPoint(gridLine0, gridLine1 GridLine, name string) GridPoi
 	return gridPoint
 }
 
-type Neighbor struct {
-	nextLine  GridLine
-	nextPoint GridPoint
-	distance  float64
+func (f *Field) MakeGridPoint(gridLine0, gridLine1 GridLine, name string) GridPoint {
+	gridPoint := GridPoint{name: name}
+	offset0 := float64(gridLine0.Offset)
+	gridPoint.offsets[gridLine0.Axis] = offset0
+	gridPoint.axes[gridLine0.Axis] = true
+	offset1 := float64(gridLine1.Offset)
+	gridPoint.offsets[gridLine1.Axis] = offset1
+	gridPoint.axes[gridLine1.Axis] = true
+
+	//gridPoint.Point = geom.Intersection(gridLine0.Line, gridLine1.Line)
+	anchor := f.intersectAnchors[gridLine0.Axis][gridLine1.Axis]
+
+	vector0 := f.intersectVectors[gridLine0.Axis][gridLine1.Axis]
+	vector1 := f.intersectVectors[gridLine1.Axis][gridLine0.Axis]
+	gridPoint.Point = geom.Point{
+		anchor[X] + vector0[X]*offset0 + vector1[X]*offset1,
+		anchor[Y] + vector0[Y]*offset0 + vector1[Y]*offset1,
+	}
+
+	for ax := range gridPoint.offsets {
+		if !gridPoint.axes[ax] {
+			distance := geom.Distance(f.anchorLines[ax], gridPoint.Point)
+			gridPoint.offsets[ax] = distance / f.dist
+		}
+	}
+
+	gridPoint.PackedCoords = store.PackCoordinates(
+		gridLine0.Axis, gridLine1.Axis, gridLine0.Offset, gridLine1.Offset,
+	)
+
+	return gridPoint
 }
 
-func (f Field) nearestNeighbors(currPoint GridPoint, prevLine, currLine GridLine, positiveSide bool) []Neighbor {
-	// TODO: use plain array for this
-	neighbors := make([]Neighbor, 0, 12)
+func (f *Field) NearestNeighbor(currentPoint GridPoint, prevLine, currentLine GridLine, positiveSide bool) (GridPoint, GridLine) {
+	var nextLineResult GridLine
+	var nextPointResult GridPoint
+	currentDistance := 1000000.0
+
 	for _, axis := range axisIndices {
-		if axis != prevLine.Axis && axis != currLine.Axis {
-			axisOffset := currPoint.offsets[axis]
-			for _, offset := range [...]float64{math.Ceil(axisOffset) + 1, math.Floor(axisOffset) - 1, math.Ceil(axisOffset), math.Floor(axisOffset)} {
+		if axis != prevLine.Axis && axis != currentLine.Axis {
+			axisOffset := currentPoint.offsets[axis]
+			for _, offset := range [2]float64{math.Ceil(axisOffset), math.Floor(axisOffset)} {
 				nextLine := f.MakeGridLine(axis, int16(offset))
-				nextPoint := f.MakeGridPoint(currLine, nextLine, "")
+				nextPoint := f.MakeGridPoint(currentLine, nextLine, "")
 				distance := geom.Distance(prevLine.Line, nextPoint.Point)
 				//axisNames := [5]string{"A", "B", "C", "D", "E"}
-				//fmt.Printf("Neighbor %s %d ; %s %d ", axisNames[currLine.Axis], currLine.Offset, axisNames[nextLine.Axis], nextLine.Offset)
+				//fmt.Printf("Neighbor %s %d ; %s %d ", axisNames[currentLine.Axis], currentLine.Offset, axisNames[nextLine.Axis], nextLine.Offset)
 				//fmt.Printf("distance=%.1f\n", distance)
 				if (positiveSide && distance > 0) || (!positiveSide && distance < 0) {
-					neighbors = append(neighbors, Neighbor{nextLine, nextPoint, distance})
+					if math.Abs(distance) < currentDistance {
+						currentDistance = math.Abs(distance)
+						nextLineResult = nextLine
+						nextPointResult = nextPoint
+					}
 				}
 			}
 		}
 	}
-	return neighbors
-}
 
-func (f Field) NearestNeighbor(currentPoint GridPoint, prevLine, currentLine GridLine, positiveSide bool) (GridPoint, GridLine) {
-	var nextLine GridLine
-	var nextPoint GridPoint
-	currentDistance := 1000000.0
-	for _, neighbor := range f.nearestNeighbors(currentPoint, prevLine, currentLine, positiveSide) {
-		distance := neighbor.distance
-		if math.Abs(distance) < currentDistance {
-			currentDistance = math.Abs(distance)
-			nextLine = neighbor.nextLine
-			nextPoint = neighbor.nextPoint
-		}
-	}
 	//fmt.Printf("currentDistance=%.1f, positiveSide=%t\n", currentDistance, positiveSide)
-	return nextPoint, nextLine
+	return nextPointResult, nextLineResult
 }
 
 var axesRotation = [5][5]bool{
@@ -159,7 +199,7 @@ var axesRotation = [5][5]bool{
 	{true, true, false, false, true},
 }
 
-func (f Field) NextPoint(prevPoint, currPoint GridPoint, prevLine, currLine GridLine, isRightTurn bool) (GridPoint, GridPoint, GridLine, GridLine) {
+func (f *Field) NextPoint(prevPoint, currPoint GridPoint, prevLine, currLine GridLine, isRightTurn bool) (GridPoint, GridPoint, GridLine, GridLine) {
 	axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
 	prevPointSign := geom.Distance(currLine.Line, prevPoint.Point) < 0
 	positiveSide := isRightTurn != axisRotation != prevPointSign

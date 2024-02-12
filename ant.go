@@ -7,8 +7,10 @@ import (
 	"github.com/ptiles/ant/geom"
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/store"
+	"log"
 	"os"
 	"path/filepath"
+	"runtime/pprof"
 	"strconv"
 )
 
@@ -37,6 +39,12 @@ func walk(coords store.PackedCoordinates, steps []bool, maxValue uint8) bool {
 	return steps[value]
 }
 
+func walk2(coords store.PackedCoordinates, steps []bool, maxValue uint8) bool {
+	value := (store.Get2(coords) + 1) % maxValue
+	store.Set2(coords, value)
+	return steps[value]
+}
+
 func main() {
 	var r int
 	var dist int
@@ -46,6 +54,7 @@ func main() {
 	var antName string
 	var maxSteps int
 
+	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 	flag.IntVar(&r, "r", 2, "Radius")
 	flag.IntVar(&dist, "d", 8, "Distance")
 	flag.IntVar(&phi0, "a", 0, "Angle")
@@ -84,6 +93,15 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Warning: Extra positional arguments ignored")
 	}
 
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
 	limit := uint8(len(antName))
 	var nameInvalid = limit < 2
 	rules := make([]bool, limit)
@@ -112,7 +130,7 @@ func main() {
 	field := pgrid.New(float64(r), float64(dist), phi0, &canvas)
 
 	// Draw grid
-	//for ax := range field.Axes {
+	//for ax := 0; ax < 5; ax++ {
 	//	for off := -15; off < 16; off++ {
 	//		//color := ax + qi(off%5 == 0, 5, 10)
 	//		color := ax + 10
@@ -125,18 +143,22 @@ func main() {
 	currLine := field.MakeGridLine(pgrid.B, 0)
 
 	prevPoint := field.MakeGridPoint(initialLine, prevLine, "")
-	//canvas.DrawPoint(prevPoint.Point, 0, "")
+	//canvas.DrawPoint(prevPoint.Point, 0, "E0 A0")
 
 	currPoint := field.MakeGridPoint(prevLine, currLine, "")
-	//canvas.DrawPoint(currPoint.Point, 0, "")
+	//canvas.DrawPoint(currPoint.Point, 0, "A0 B0")
+
+	//store.Allocate(13)
 
 	for st := 0; st < maxSteps; st++ {
 		isRightTurn := walk(currPoint.PackedCoords, rules, limit)
+		//isRightTurn := walk2(currPoint.PackedCoords, rules, limit)
 		prevPoint, currPoint, prevLine, currLine = field.NextPoint(prevPoint, currPoint, prevLine, currLine, isRightTurn)
 	}
 	fmt.Printf("%s  %dx%d\n", fileName, store.MaxOffset0-store.MinOffset0, store.MaxOffset1-store.MinOffset1)
 
 	store.ForEach(func(axis0, axis1 uint8, off0, off1 int16, color uint8) {
+		//store.ForEach2(func(axis0, axis1 uint8, off0, off1 int16, color uint8) {
 		line0 := field.MakeGridLine(axis0, off0).Line
 		line1 := field.MakeGridLine(axis1, off1).Line
 		point := geom.Intersection(line0, line1)
