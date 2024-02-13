@@ -1,7 +1,5 @@
 package geom
 
-import "math"
-
 type Point [2]float64
 
 type Line [2]Point
@@ -50,7 +48,7 @@ func Intersection(line1, line2 Line) Point {
 	return p
 }
 
-func DistanceUnit(line Line, point Point) (float64, float64) {
+func Distance(line Line, point Point) float64 {
 	x1, y1 := line[0][X], line[0][Y]
 	x2, y2 := line[1][X], line[1][Y]
 	x0, y0 := point[X], point[Y]
@@ -59,14 +57,26 @@ func DistanceUnit(line Line, point Point) (float64, float64) {
 	x21 := x2 - x1
 	y21 := y2 - y1
 
-	return x21*y10 - x10*y21, x21*x21 + y21*y21
+	return x21*y10 - x10*y21
 }
 
-func Distance(line Line, point Point) float64 {
-	num, den := DistanceUnit(line, point)
-	if den == 1 {
-		return num
-	}
-	// all vectors are unit, so don't need this usually
-	return num / math.Sqrt(den)
-}
+//func DistanceUnit(line Line, point Point) (float64, float64) {
+//	x1, y1 := line[0][X], line[0][Y]
+//	x2, y2 := line[1][X], line[1][Y]
+//	x0, y0 := point[X], point[Y]
+//	x10 := x1 - x0
+//	y10 := y1 - y0
+//	x21 := x2 - x1
+//	y21 := y2 - y1
+//
+//	return x21*y10 - x10*y21, x21*x21 + y21*y21
+//}
+//
+//func Distance2(line Line, point Point) float64 {
+//	num, den := DistanceUnit(line, point)
+//	if den == 1 {
+//		return num
+//	}
+//	// all vectors are unit, so don't need this usually
+//	return num / math.Sqrt(den)
+//}
