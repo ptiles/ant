@@ -3,9 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ptiles/ant/canv"
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/store"
+	"image"
+	"image/color"
+	"image/png"
 	"log"
 	"math"
 	"os"
@@ -134,8 +136,7 @@ func main() {
 		//isRightTurn := walk2(currPoint.PackedCoords, rules, limit)
 		prevPoint, currPoint, prevLine, currLine = field.NextPoint(prevPoint, currPoint, prevLine, currLine, isRightTurn)
 	}
-	fileName := fmt.Sprintf("results/%s-%d.svg", antName, maxSteps)
-	fmt.Printf("%s  %dx%d\n", fileName, store.MaxOffset0-store.MinOffset0, store.MaxOffset1-store.MinOffset1)
+	fileName := fmt.Sprintf("results/%s-%d.png", antName, maxSteps)
 
 	maxX := minWidth/2 - 20
 	maxY := minHeight/2 - 20
@@ -156,32 +157,55 @@ func main() {
 	maxX += 20
 	maxY += 20
 
-	fmt.Printf("Size: %dx%d; Name: %s; Steps: %d\n", maxX*2, maxY*2, antName, maxSteps)
-	canvas := canv.New(fileName, maxX, maxY, int(limit))
-	defer canvas.Close()
-
-	//fmt.Printf("Writing result to %s\n", fileName)
-	//canvas.DrawOrigin()
-	// Draw grid
-	//for ax := 0; ax < 5; ax++ {
-	//	for off := -15; off < 16; off++ {
-	//		//color := ax + qi(off%5 == 0, 5, 10)
-	//		color := ax + 10
-	//		canvas.DrawLine(field.MakeGridLine(uint8(ax), int16(off)).Line, color)
-	//	}
-	//}
-	//
-	//canvas.DrawPoint(prevPoint.Point, 0, "E0 A0")
-	//canvas.DrawPoint(currPoint.Point, 0, "A0 B0")
+	fmt.Printf("%s Name: %s; Steps: %d; Size: %dx%d\n", fileName, antName, maxSteps, maxX*2, maxY*2)
+	img := image.NewPaletted(image.Rect(0, 0, maxX*2, maxY*2), getPalette(int(limit)))
 
 	store.ForEach(func(axis0, axis1 uint8, off0, off1 int16, color uint8) {
 		//store.ForEach2(func(axis0, axis1 uint8, off0, off1 int16, color uint8) {
 		line0 := pgrid.GridLine{Axis: axis0, Offset: off0}
 		line1 := pgrid.GridLine{Axis: axis1, Offset: off1}
 		point := field.MakeGridPoint(line0, line1).Point
-		//if canvas.IsOutside(point) {
-		//	return
-		//}
-		canvas.DrawPoint(point, color)
+		img.SetColorIndex(int(point[0])+maxX, int(point[1])+maxY, color+1)
 	})
+
+	// Create a new file to save the PNG image
+	file, err := os.Create(fileName)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	// Encode the image as a PNG and save it to the file
+	err = png.Encode(file, img)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func fromDegrees(deg int) float64 {
+	return float64(deg) * math.Pi / 180.0
+}
+
+func getPalette(steps int) color.Palette {
+	var palette = make(color.Palette, steps+1)
+	palette[0] = color.RGBA{R: 0, G: 0, B: 0, A: 0xff}
+
+	for c := 0; c < steps; c++ {
+		step := c * 360 / steps
+
+		ra := step + 0*120 + 90
+		ga := step + 1*120 + 90
+		ba := step + 2*120 + 90
+
+		rs := (1 + math.Sin(fromDegrees(ra))) / 2
+		gs := (1 + math.Sin(fromDegrees(ga))) / 2
+		bs := (1 + math.Sin(fromDegrees(ba))) / 2
+
+		r := uint8(math.Round(rs*0xd0 + 0x0f))
+		g := uint8(math.Round(gs * 0xb0))
+		b := uint8(math.Round(bs*0xb0 + 0x4f))
+
+		palette[c+1] = color.RGBA{R: r, G: g, B: b, A: 255}
+	}
+	return palette
 }
