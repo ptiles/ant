@@ -10,4 +10,4 @@ open results/LLLRLRL-200000.svg
 
 # Result
 
-![](example/LLLRLRL-200000.svg.png)
+![](example/LLLRLRL-200000.png)

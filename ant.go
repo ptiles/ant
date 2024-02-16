@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/store"
+	"github.com/ptiles/ant/utils"
 	"image"
 	"image/color"
 	"image/png"
@@ -50,7 +51,6 @@ func walk2(coords store.PackedCoordinates, steps []bool, maxValue uint8) bool {
 func main() {
 	var r int
 	var dist int
-	var phi0 int
 	var minWidth int
 	var minHeight int
 	var antName string
@@ -59,9 +59,8 @@ func main() {
 	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 	flag.IntVar(&r, "r", 2, "Radius")
 	flag.IntVar(&dist, "d", 8, "Distance")
-	flag.IntVar(&phi0, "a", 0, "Angle")
-	flag.IntVar(&minWidth, "W", 1024, "Canvas min width")
-	flag.IntVar(&minHeight, "H", 768, "Canvas min height")
+	flag.IntVar(&minWidth, "W", 128, "Canvas min width")
+	flag.IntVar(&minHeight, "H", 128, "Canvas min height")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, usageText, programName, programName)
@@ -120,7 +119,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	field := pgrid.New(float64(r), float64(dist), phi0)
+	field := pgrid.New(float64(r), float64(dist))
 
 	initialLine := pgrid.GridLine{Axis: pgrid.E, Offset: 0}
 	prevLine := pgrid.GridLine{Axis: pgrid.A, Offset: 0}
@@ -138,13 +137,15 @@ func main() {
 	}
 	fileName := fmt.Sprintf("results/%s-%d.png", antName, maxSteps)
 
-	maxX := minWidth/2 - 20
-	maxY := minHeight/2 - 20
+	maxX := minWidth / 2
+	maxY := minHeight / 2
+
 	store.ForEach(func(axis0, axis1 uint8, off0, off1 int16, color uint8) {
 		//store.ForEach2(func(axis0, axis1 uint8, off0, off1 int16, color uint8) {
 		line0 := pgrid.GridLine{Axis: axis0, Offset: off0}
 		line1 := pgrid.GridLine{Axis: axis1, Offset: off1}
-		point := field.MakeGridPoint(line0, line1).Point
+		gp := field.MakeGridPoint(line0, line1)
+		point := field.GetCenterPoint(&gp)
 		pointX := int(math.Abs(point[0]))
 		if pointX > maxX {
 			maxX = pointX
@@ -154,8 +155,9 @@ func main() {
 			maxY = pointY
 		}
 	})
-	maxX += 20
-	maxY += 20
+
+	maxX = (maxX/128 + 1) * 128
+	maxY = (maxY/128 + 1) * 128
 
 	fmt.Printf("%s Name: %s; Steps: %d; Size: %dx%d\n", fileName, antName, maxSteps, maxX*2, maxY*2)
 	img := image.NewPaletted(image.Rect(0, 0, maxX*2, maxY*2), getPalette(int(limit)))
@@ -164,7 +166,8 @@ func main() {
 		//store.ForEach2(func(axis0, axis1 uint8, off0, off1 int16, color uint8) {
 		line0 := pgrid.GridLine{Axis: axis0, Offset: off0}
 		line1 := pgrid.GridLine{Axis: axis1, Offset: off1}
-		point := field.MakeGridPoint(line0, line1).Point
+		gp := field.MakeGridPoint(line0, line1)
+		point := field.GetCenterPoint(&gp)
 		img.SetColorIndex(int(point[0])+maxX, int(point[1])+maxY, color+1)
 	})
 
@@ -182,10 +185,6 @@ func main() {
 	}
 }
 
-func fromDegrees(deg int) float64 {
-	return float64(deg) * math.Pi / 180.0
-}
-
 func getPalette(steps int) color.Palette {
 	var palette = make(color.Palette, steps+1)
 	palette[0] = color.RGBA{R: 0, G: 0, B: 0, A: 0xff}
@@ -197,9 +196,9 @@ func getPalette(steps int) color.Palette {
 		ga := step + 1*120 + 90
 		ba := step + 2*120 + 90
 
-		rs := (1 + math.Sin(fromDegrees(ra))) / 2
-		gs := (1 + math.Sin(fromDegrees(ga))) / 2
-		bs := (1 + math.Sin(fromDegrees(ba))) / 2
+		rs := (1 + math.Sin(utils.FromDegrees(ra))) / 2
+		gs := (1 + math.Sin(utils.FromDegrees(ga))) / 2
+		bs := (1 + math.Sin(utils.FromDegrees(ba))) / 2
 
 		r := uint8(math.Round(rs*0xd0 + 0x0f))
 		g := uint8(math.Round(gs * 0xb0))

@@ -53,7 +53,7 @@ func PackCoordinates(axis0, axis1 uint8, offset0, offset1 int16) PackedCoordinat
 var axis0ByIndex = [10]uint8{A, A, A, A, B, B, B, C, C, D}
 var axis1ByIndex = [10]uint8{B, C, D, E, C, D, E, D, E, E}
 
-func unpackAxes(packedAxes uint8) (uint8, uint8) {
+func UnpackAxes(packedAxes uint8) (uint8, uint8) {
 	return axis0ByIndex[packedAxes], axis1ByIndex[packedAxes]
 }
 
@@ -145,7 +145,7 @@ func ForEach(callback func(axis0, axis1 uint8, off0, off1 int16, color uint8)) {
 			for packedAxes := uint8(0); packedAxes < 10; packedAxes++ {
 				color := get(off0, off1, packedAxes)
 				if color > 0 {
-					axis0, axis1 := unpackAxes(packedAxes)
+					axis0, axis1 := UnpackAxes(packedAxes)
 					callback(axis0, axis1, off0, off1, color)
 				}
 			}
@@ -200,7 +200,7 @@ func ForEach2(callback func(axis0, axis1 uint8, off0, off1 int16, color uint8)) 
 			for packedAxes := uint8(0); packedAxes < 10; packedAxes++ {
 				color := get2(off0, off1, packedAxes)
 				if color > 0 {
-					axis0, axis1 := unpackAxes(packedAxes)
+					axis0, axis1 := UnpackAxes(packedAxes)
 					callback(axis0, axis1, off0, off1, color)
 				}
 			}

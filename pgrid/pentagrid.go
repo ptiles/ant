@@ -3,12 +3,9 @@ package pgrid
 import (
 	"github.com/ptiles/ant/geom"
 	"github.com/ptiles/ant/store"
+	"github.com/ptiles/ant/utils"
 	"math"
 )
-
-func fromDegrees(deg int) float64 {
-	return float64(deg) * math.Pi / 180.0
-}
 
 const X = 0
 const Y = 1
@@ -18,8 +15,6 @@ const B = 1
 const C = 2
 const D = 3
 const E = 4
-
-var axisIndices = [5]uint8{A, B, C, D, E}
 
 type Field struct {
 	dist             float64
@@ -31,24 +26,23 @@ type Field struct {
 	intersectVectors [5][5]geom.Point
 }
 
-func New(r, dist float64, phi0degrees int) Field {
-	phi0 := fromDegrees(phi0degrees)
-	phi := fromDegrees(72)
-	axisAngle0 := fromDegrees(180 - 54 + phi0degrees)
+func New(r, dist float64) Field {
+	phi := utils.FromDegrees(72)
+	axisAngle0 := utils.FromDegrees(180 - 54)
 
 	result := Field{dist: dist}
 
-	for ax := range axisIndices {
+	for ax := 0; ax < 5; ax++ {
 		phiAx := phi * float64(ax)
 
-		result.anchors[ax][X] = r * math.Cos(phi0+phiAx)
-		result.anchors[ax][Y] = r * math.Sin(phi0+phiAx)
+		result.anchors[ax][X] = r * math.Cos(phiAx)
+		result.anchors[ax][Y] = r * math.Sin(phiAx)
 
 		result.axisUnits[ax][X] = 1 * math.Cos(axisAngle0+phiAx)
 		result.axisUnits[ax][Y] = 1 * math.Sin(axisAngle0+phiAx)
 
-		result.normals[ax][X] = dist * math.Cos(phi0+0.5*phi+phiAx)
-		result.normals[ax][Y] = dist * math.Sin(phi0+0.5*phi+phiAx)
+		result.normals[ax][X] = dist * math.Cos(0.5*phi+phiAx)
+		result.normals[ax][Y] = dist * math.Sin(0.5*phi+phiAx)
 
 		anchorEnd := geom.Point{
 			result.anchors[ax][X] + result.axisUnits[ax][X],
@@ -79,7 +73,6 @@ func New(r, dist float64, phi0degrees int) Field {
 type GridLine struct {
 	Axis   uint8
 	Offset int16
-	//Line   geom.Line
 }
 
 func (f *Field) GetLine(gl GridLine) geom.Line {
@@ -95,34 +88,34 @@ func (f *Field) GetLine(gl GridLine) geom.Line {
 
 type GridPoint struct {
 	axes         [5]bool
-	offsets      [5]float64
+	Offsets      [5]int16
 	Point        geom.Point
 	PackedCoords store.PackedCoordinates
 }
 
 func (f *Field) MakeGridPoint(gridLine0, gridLine1 GridLine) GridPoint {
 	gridPoint := GridPoint{}
-	offset0 := float64(gridLine0.Offset)
-	gridPoint.offsets[gridLine0.Axis] = offset0
+	offset0 := gridLine0.Offset
+	gridPoint.Offsets[gridLine0.Axis] = offset0
 	gridPoint.axes[gridLine0.Axis] = true
-	offset1 := float64(gridLine1.Offset)
-	gridPoint.offsets[gridLine1.Axis] = offset1
+	offset1 := gridLine1.Offset
+	gridPoint.Offsets[gridLine1.Axis] = offset1
 	gridPoint.axes[gridLine1.Axis] = true
 
-	//gridPoint.Point = geom.Intersection(gridLine0.Line, gridLine1.Line)
 	anchor := f.intersectAnchors[gridLine0.Axis][gridLine1.Axis]
 
 	vector0 := f.intersectVectors[gridLine0.Axis][gridLine1.Axis]
 	vector1 := f.intersectVectors[gridLine1.Axis][gridLine0.Axis]
+	off0, off1 := float64(offset0), float64(offset1)
 	gridPoint.Point = geom.Point{
-		anchor[X] + vector0[X]*offset0 + vector1[X]*offset1,
-		anchor[Y] + vector0[Y]*offset0 + vector1[Y]*offset1,
+		anchor[X] + vector0[X]*off0 + vector1[X]*off1,
+		anchor[Y] + vector0[Y]*off0 + vector1[Y]*off1,
 	}
 
-	for ax := range gridPoint.offsets {
+	for ax := range gridPoint.Offsets {
 		if !gridPoint.axes[ax] {
 			distance := geom.Distance(f.anchorLines[ax], gridPoint.Point)
-			gridPoint.offsets[ax] = distance / f.dist
+			gridPoint.Offsets[ax] = int16(math.Ceil(distance / f.dist))
 		}
 	}
 
@@ -133,17 +126,72 @@ func (f *Field) MakeGridPoint(gridLine0, gridLine1 GridLine) GridPoint {
 	return gridPoint
 }
 
+var DeBrujinConstants = [5][2]float64{
+	{
+		math.Cos(2 * math.Pi * float64(0) / 5),
+		math.Sin(2 * math.Pi * float64(0) / 5),
+	},
+	{
+		math.Cos(2 * math.Pi * float64(1) / 5),
+		math.Sin(2 * math.Pi * float64(1) / 5),
+	},
+	{
+		math.Cos(2 * math.Pi * float64(2) / 5),
+		math.Sin(2 * math.Pi * float64(2) / 5),
+	},
+	{
+		math.Cos(2 * math.Pi * float64(3) / 5),
+		math.Sin(2 * math.Pi * float64(3) / 5),
+	},
+	{
+		math.Cos(2 * math.Pi * float64(4) / 5),
+		math.Sin(2 * math.Pi * float64(4) / 5),
+	},
+}
+
+func DeBrujin(floatOffsets *[5]float64) (float64, float64) {
+	x := 0 +
+		floatOffsets[0]*DeBrujinConstants[0][0] +
+		floatOffsets[1]*DeBrujinConstants[1][0] +
+		floatOffsets[2]*DeBrujinConstants[2][0] +
+		floatOffsets[3]*DeBrujinConstants[3][0] +
+		floatOffsets[4]*DeBrujinConstants[4][0]
+
+	y := 0 +
+		floatOffsets[0]*DeBrujinConstants[0][1] +
+		floatOffsets[1]*DeBrujinConstants[1][1] +
+		floatOffsets[2]*DeBrujinConstants[2][1] +
+		floatOffsets[3]*DeBrujinConstants[3][1] +
+		floatOffsets[4]*DeBrujinConstants[4][1]
+
+	return x, y
+}
+
+func (f *Field) GetCenterPoint(gp *GridPoint) geom.Point {
+	var floatOffsets [5]float64
+	for i := 0; i < 5; i++ {
+		floatOffsets[i] = float64(gp.Offsets[i])
+	}
+
+	axis0, axis1 := store.UnpackAxes(gp.PackedCoords.PackedAxes)
+	floatOffsets[axis0] += 0.5
+	floatOffsets[axis1] += 0.5
+
+	x, y := DeBrujin(&floatOffsets)
+	return geom.Point{x * 3, y * 3}
+}
+
 func (f *Field) NearestNeighbor(currentPoint GridPoint, prevLine, currentLine GridLine, positiveSide bool) (GridPoint, GridLine) {
 	var nextLineResult GridLine
 	var nextPointResult GridPoint
 	currentDistance := 1000000.0
 	prevLineLine := f.GetLine(prevLine)
 
-	for _, axis := range axisIndices {
+	for axis := uint8(0); axis < 5; axis++ {
 		if axis != prevLine.Axis && axis != currentLine.Axis {
-			axisOffset := currentPoint.offsets[axis]
-			for _, offset := range [2]float64{math.Ceil(axisOffset), math.Floor(axisOffset)} {
-				nextLine := GridLine{axis, int16(offset)}
+			axisOffset := currentPoint.Offsets[axis]
+			for _, offset := range [2]int16{axisOffset, axisOffset - 1} {
+				nextLine := GridLine{axis, offset}
 				// TODO: look how many times MakeGridPoint gets called unnecessarily here
 				nextPoint := f.MakeGridPoint(currentLine, nextLine)
 				distance := geom.Distance(prevLineLine, nextPoint.Point)
