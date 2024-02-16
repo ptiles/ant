@@ -1,11 +1,20 @@
+# Building
+
+```
+go build .
+```
+
 # Running
 
 ```
-go run yhr/ant LLLRLRL 200000
+./ant LLLRLRL 200000
+open results/LLLRLRL-200000.svg
 ```
 
+For usage, run:
+
 ```
-open results/LLLRLRL-200000.svg
+./ant -h
 ```
 
 # Result
