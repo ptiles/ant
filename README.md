@@ -8,7 +8,7 @@ go build .
 
 ```
 ./ant LLLRLRL 200000
-open results/LLLRLRL-200000.svg
+open results/LLLRLRL-200000.png
 ```
 
 For usage, run:
