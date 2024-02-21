@@ -6,12 +6,6 @@ const C = 2
 const D = 3
 const E = 4
 
-var MinOffset0 = int16(0)
-var MaxOffset0 = int16(0)
-
-var MinOffset1 = int16(0)
-var MaxOffset1 = int16(0)
-
 // _  AB   AC   AD   AE  |  BC    BD    BE  |  CD    CE  |  DE
 // _ a[0]                | a[1]             | a[2]       | else
 // _ a[1] a[2] a[3] a[4] | a[2]  a[3]  a[4] | a[3]  a[4] | a[4]
@@ -74,36 +68,17 @@ func get(offset0, offset1 int16, packedAxes uint8) uint8 {
 func Set(coords PackedCoordinates, value uint8) {
 	offset0, offset1, packedAxes := coords.Offset0, coords.Offset1, coords.PackedAxes
 	packedOffsets := uint32(uint16(offset1))<<16 + uint32(uint16(offset0))
-	setMinMax(offset0, offset1)
 	values[packedAxes][packedOffsets] = value
 }
 
 func ForEach(callback func(axis0, axis1 uint8, off0, off1 int16, color uint8)) {
 	for packedAxes := uint8(0); packedAxes < 10; packedAxes++ {
-		for off1 := MinOffset1; off1 <= MaxOffset1; off1++ {
-			for off0 := MinOffset0; off0 <= MaxOffset0; off0++ {
-				color := get(off0, off1, packedAxes)
-				if color > 0 {
-					axis0, axis1 := UnpackAxes(packedAxes)
-					callback(axis0, axis1, off0, off1, color)
-				}
+		for packedOffsets, color := range values[packedAxes] {
+			if color > 0 {
+				axis0, axis1 := UnpackAxes(packedAxes)
+				off1, off0 := int16(uint16(packedOffsets>>16)), int16(uint16(packedOffsets))
+				callback(axis0, axis1, off0, off1, color)
 			}
 		}
-	}
-}
-
-func setMinMax(offset0, offset1 int16) {
-	if offset0 > MaxOffset0 {
-		MaxOffset0 = offset0
-	}
-	if offset0 < MinOffset0 {
-		MinOffset0 = offset0
-	}
-
-	if offset1 > MaxOffset1 {
-		MaxOffset1 = offset1
-	}
-	if offset1 < MinOffset1 {
-		MinOffset1 = offset1
 	}
 }
