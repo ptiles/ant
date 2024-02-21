@@ -1,7 +1,7 @@
 # Building
 
 ```
-go build .
+go build ./cmd/ant
 ```
 
 # Running

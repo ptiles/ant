@@ -41,7 +41,7 @@ func main() {
 	var cpuprofile = flag.String("cpuprofile", "", "Write cpu profile to file")
 	flag.IntVar(&r, "r", 2, "Radius")
 	flag.IntVar(&dist, "d", 8, "Distance")
-	flag.IntVar(&partialSteps, "p", 100000, "Save partial result every N steps, 0 to disable")
+	flag.IntVar(&partialSteps, "p", 0, "Save partial result every N steps, 0 to disable")
 	flag.IntVar(&minWidth, "W", 128, "Canvas min width")
 	flag.IntVar(&minHeight, "H", 128, "Canvas min height")
 
