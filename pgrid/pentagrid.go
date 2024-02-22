@@ -164,7 +164,8 @@ func DeBrujin(floatOffsets *[5]float64) (float64, float64) {
 		floatOffsets[3]*DeBrujinConstants[3][1] +
 		floatOffsets[4]*DeBrujinConstants[4][1]
 
-	return x, y
+	// Flip X and Y axes to make stars vertically symmetrical
+	return y, x
 }
 
 func (f *Field) GetCenterPoint(gp *GridPoint) geom.Point {

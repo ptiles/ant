@@ -34,14 +34,22 @@ func main() {
 	var dist int
 	var minWidth int
 	var minHeight int
+	var whiteBackground bool
+	var openResults bool
+	var openResult bool
 	var antName string
 	var maxSteps int
 	var partialSteps int
+	var startingPoint string
 
 	var cpuprofile = flag.String("cpuprofile", "", "Write cpu profile to file")
 	flag.IntVar(&r, "r", 2, "Radius")
 	flag.IntVar(&dist, "d", 8, "Distance")
+	flag.StringVar(&startingPoint, "s", "A0+B0", "Starting axes and direction")
 	flag.IntVar(&partialSteps, "p", 0, "Save partial result every N steps, 0 to disable")
+	flag.BoolVar(&whiteBackground, "w", false, "White background")
+	flag.BoolVar(&openResults, "oo", false, "Open partial resulting files")
+	flag.BoolVar(&openResult, "o", false, "Open resulting file")
 	flag.IntVar(&minWidth, "W", 128, "Canvas min width")
 	flag.IntVar(&minHeight, "H", 128, "Canvas min height")
 
@@ -88,16 +96,24 @@ func main() {
 	}
 
 	field := pgrid.New(float64(r), float64(dist))
-	prevPoint, currPoint, prevLine, currLine := initialState(&field)
+	prevPoint, currPoint, prevLine, currLine := initialState(&field, startingPoint)
 
-	for st := 0; st < maxSteps; st++ {
+	for step := 0; step < maxSteps; step++ {
 		isRightTurn := walk(currPoint.PackedCoords, rules, limit)
 		prevPoint, currPoint, prevLine, currLine = field.NextPoint(prevPoint, currPoint, prevLine, currLine, isRightTurn)
 
-		if partialSteps != 0 && st%partialSteps == 0 {
-			saveImage(&field, antName, limit, st, minWidth, minHeight)
+		if partialSteps != 0 && step%partialSteps == 0 {
+			fileName := fmt.Sprintf("results/%s-%s-%d.png", antName, startingPoint, step)
+			saveImage(&field, fileName, limit, step, minWidth, minHeight, whiteBackground)
+			if openResults {
+				open(fileName)
+			}
 		}
 	}
 
-	saveImage(&field, antName, limit, maxSteps, minWidth, minHeight)
+	fileName := fmt.Sprintf("results/%s-%s-%d.png", antName, startingPoint, maxSteps)
+	saveImage(&field, fileName, limit, maxSteps, minWidth, minHeight, whiteBackground)
+	if openResult || openResults {
+		open(fileName)
+	}
 }

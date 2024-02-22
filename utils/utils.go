@@ -12,9 +12,13 @@ func FromDegrees(deg int) float64 {
 	return float64(deg) * math.Pi / 180.0
 }
 
-func GetPalette(steps int) color.Palette {
+func GetPalette(steps int, whiteBackground bool) color.Palette {
 	var palette = make(color.Palette, steps+1)
-	palette[0] = color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}
+	if whiteBackground {
+		palette[0] = color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}
+	} else {
+		palette[0] = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xff}
+	}
 
 	for c := 0; c < steps; c++ {
 		step := c * 360 / steps

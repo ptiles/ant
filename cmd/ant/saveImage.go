@@ -10,17 +10,15 @@ import (
 	"os"
 )
 
-func saveImage(field *pgrid.Field, antName string, limit uint8, steps, minWidth, minHeight int) {
+func saveImage(field *pgrid.Field, fileName string, limit uint8, steps, minWidth, minHeight int, whiteBackground bool) {
 	if steps == 0 {
 		return
 	}
 
 	maxX, maxY := getMinMax(field, minWidth, minHeight)
 
-	fileName := fmt.Sprintf("results/%s-%d.png", antName, steps)
-
 	points := 0
-	img := image.NewPaletted(image.Rect(0, 0, maxX*2, maxY*2), utils.GetPalette(int(limit)))
+	img := image.NewPaletted(image.Rect(0, 0, maxX*2, maxY*2), utils.GetPalette(int(limit), whiteBackground))
 	store.ForEach(func(axis0, axis1 uint8, off0, off1 int16, color uint8) {
 		line0 := pgrid.GridLine{Axis: axis0, Offset: off0}
 		line1 := pgrid.GridLine{Axis: axis1, Offset: off1}
