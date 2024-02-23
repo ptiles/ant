@@ -1,10 +1,13 @@
 package utils
 
 import (
+	"errors"
 	"image/color"
 	"log"
 	"math"
 	"os"
+	"os/exec"
+	"runtime"
 	"runtime/pprof"
 )
 
@@ -12,8 +15,8 @@ func FromDegrees(deg int) float64 {
 	return float64(deg) * math.Pi / 180.0
 }
 
-func GetPalette(steps int, whiteBackground bool) color.Palette {
-	var palette = make(color.Palette, steps+1)
+func GetPalette(steps int, whiteBackground bool) []color.RGBA {
+	var palette = make([]color.RGBA, steps+1)
 	if whiteBackground {
 		palette[0] = color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}
 	} else {
@@ -52,4 +55,32 @@ func StartCPUProfile(cpuprofile *string) {
 
 func StopCPUProfile() {
 	pprof.StopCPUProfile()
+}
+
+func Open(fileName string) {
+	switch runtime.GOOS {
+	case "darwin":
+		exec.Command("open", fileName).Run()
+	case "windows":
+		exec.Command("start", fileName).Run()
+	default:
+		exec.Command("xdg-open", fileName).Run()
+	}
+}
+
+func GetRules(antName string) ([]bool, error) {
+	limit := uint8(len(antName))
+	var nameInvalid = limit < 2
+	rules := make([]bool, limit)
+	for i, letter := range antName {
+		if letter != 'R' && letter != 'r' && letter != 'L' && letter != 'l' {
+			nameInvalid = true
+			break
+		}
+		rules[i] = letter == 'R' || letter == 'r'
+	}
+	if nameInvalid {
+		return rules, errors.New("invalid name")
+	}
+	return rules, nil
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/utils"
+	"image"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -88,32 +89,25 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Warning: Extra positional arguments ignored")
 	}
 
-	rules, limit, err := getRules(antName)
+	rules, err := utils.GetRules(antName)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Invalid name.  Should consist of at least two letters R L r l.")
 		fmt.Fprintf(os.Stderr, usageTextShort, programName)
 		os.Exit(1)
 	}
 
-	field := pgrid.New(float64(r), float64(dist))
-	prevPoint, currPoint, prevLine, currLine := initialState(&field, startingPoint)
+	field := pgrid.New(float64(r), float64(dist), rules, startingPoint)
+	palette := utils.GetPalette(int(field.Limit), whiteBackground)
 
-	for step := 0; step < maxSteps; step++ {
-		isRightTurn := walk(currPoint.PackedCoords, rules, limit)
-		prevPoint, currPoint, prevLine, currLine = field.NextPoint(prevPoint, currPoint, prevLine, currLine, isRightTurn)
+	modifiedImagesCh := make(chan *image.RGBA, 1024)
 
-		if partialSteps != 0 && step%partialSteps == 0 {
-			fileName := fmt.Sprintf("results/%s-%s-%d.png", antName, startingPoint, step)
-			saveImage(&field, fileName, limit, step, minWidth, minHeight, whiteBackground)
-			if openResults {
-				open(fileName)
-			}
-		}
-	}
+	go field.ModifiedImagesStepper(modifiedImagesCh, maxSteps, palette)
 
 	fileName := fmt.Sprintf("results/%s-%s-%d.png", antName, startingPoint, maxSteps)
-	saveImage(&field, fileName, limit, maxSteps, minWidth, minHeight, whiteBackground)
+
+	saveImageFromModifiedImages(modifiedImagesCh, fileName, maxSteps)
+
 	if openResult || openResults {
-		open(fileName)
+		utils.Open(fileName)
 	}
 }

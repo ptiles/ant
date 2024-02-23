@@ -4,6 +4,8 @@ import (
 	"github.com/ptiles/ant/geom"
 	"github.com/ptiles/ant/store"
 	"github.com/ptiles/ant/utils"
+	"image"
+	"image/color"
 	"math"
 )
 
@@ -17,7 +19,11 @@ const D = 3
 const E = 4
 
 type Field struct {
-	dist             float64
+	dist         float64
+	Rules        []bool
+	Limit        uint8
+	InitialPoint string
+
 	anchors          [5]geom.Point
 	anchorLines      [5]geom.Line
 	axisUnits        [5]geom.Point
@@ -26,11 +32,11 @@ type Field struct {
 	intersectVectors [5][5]geom.Point
 }
 
-func New(r, dist float64) Field {
+func New(r, dist float64, rules []bool, initialPoint string) *Field {
 	phi := utils.FromDegrees(72)
 	axisAngle0 := utils.FromDegrees(180 - 54)
 
-	result := Field{dist: dist}
+	result := &Field{dist: dist, Rules: rules, Limit: uint8(len(rules)), InitialPoint: initialPoint}
 
 	for ax := 0; ax < 5; ax++ {
 		phiAx := phi * float64(ax)
@@ -87,33 +93,36 @@ func (f *Field) GetLine(gl GridLine) geom.Line {
 }
 
 type GridPoint struct {
-	axes         [5]bool
 	Offsets      [5]int16
 	Point        geom.Point
 	PackedCoords store.PackedCoordinates
 }
 
-func (f *Field) MakeGridPoint(gridLine0, gridLine1 GridLine) GridPoint {
-	gridPoint := GridPoint{}
+func (f *Field) gridPointToPoint(gridLine0, gridLine1 GridLine) geom.Point {
 	offset0 := gridLine0.Offset
-	gridPoint.Offsets[gridLine0.Axis] = offset0
-	gridPoint.axes[gridLine0.Axis] = true
 	offset1 := gridLine1.Offset
-	gridPoint.Offsets[gridLine1.Axis] = offset1
-	gridPoint.axes[gridLine1.Axis] = true
 
 	anchor := f.intersectAnchors[gridLine0.Axis][gridLine1.Axis]
 
 	vector0 := f.intersectVectors[gridLine0.Axis][gridLine1.Axis]
 	vector1 := f.intersectVectors[gridLine1.Axis][gridLine0.Axis]
 	off0, off1 := float64(offset0), float64(offset1)
-	gridPoint.Point = geom.Point{
+
+	return geom.Point{
 		anchor[X] + vector0[X]*off0 + vector1[X]*off1,
 		anchor[Y] + vector0[Y]*off0 + vector1[Y]*off1,
 	}
+}
 
-	for ax := range gridPoint.Offsets {
-		if !gridPoint.axes[ax] {
+func (f *Field) MakeGridPoint(gridLine0, gridLine1 GridLine) GridPoint {
+	gridPoint := GridPoint{}
+
+	gridPoint.Offsets[gridLine0.Axis] = gridLine0.Offset
+	gridPoint.Offsets[gridLine1.Axis] = gridLine1.Offset
+	gridPoint.Point = f.gridPointToPoint(gridLine0, gridLine1)
+
+	for ax := range uint8(5) {
+		if ax != gridLine0.Axis && ax != gridLine1.Axis {
 			distance := geom.Distance(f.anchorLines[ax], gridPoint.Point)
 			gridPoint.Offsets[ax] = int16(math.Ceil(distance / f.dist))
 		}
@@ -168,7 +177,7 @@ func DeBrujin(floatOffsets *[5]float64) (float64, float64) {
 	return y, x
 }
 
-func (f *Field) GetCenterPoint(gp *GridPoint) geom.Point {
+func (f *Field) GetCenterPoint(gp *GridPoint) (int, int) {
 	var floatOffsets [5]float64
 	for i := 0; i < 5; i++ {
 		floatOffsets[i] = float64(gp.Offsets[i])
@@ -179,7 +188,8 @@ func (f *Field) GetCenterPoint(gp *GridPoint) geom.Point {
 	floatOffsets[axis1] += 0.5
 
 	x, y := DeBrujin(&floatOffsets)
-	return geom.Point{x * 3, y * 3}
+	return int(x * 2), int(y * 2)
+	//return geom.Point{x, y}
 }
 
 func (f *Field) NearestNeighbor(currentPoint GridPoint, prevLine, currentLine GridLine, positiveSide bool) (GridPoint, GridLine) {
@@ -229,4 +239,58 @@ func (f *Field) NextPoint(prevPoint, currPoint GridPoint, prevLine, currLine Gri
 
 	nextPoint, nextLine := f.NearestNeighbor(currPoint, prevLine, currLine, positiveSide)
 	return currPoint, nextPoint, currLine, nextLine
+}
+
+func (f *Field) walk(coords store.PackedCoordinates) (bool, uint8) {
+	value := store.Get(coords)
+	newValue := (value + 1) % f.Limit
+	store.Set(coords, newValue)
+	return f.Rules[value], newValue
+}
+
+func (f *Field) Step(prevPoint, currPoint GridPoint, prevLine, currLine GridLine) (GridPoint, GridPoint, GridLine, GridLine, uint8) {
+	isRightTurn, prevPointColor := f.walk(currPoint.PackedCoords)
+	prevPoint, currPoint, prevLine, currLine = f.NextPoint(prevPoint, currPoint, prevLine, currLine, isRightTurn)
+	return prevPoint, currPoint, prevLine, currLine, prevPointColor
+}
+
+type ModifiedPoint struct {
+	X     int
+	Y     int
+	Color uint8
+}
+
+func (f *Field) ModifiedPointsStepper(modifiedPoints chan<- ModifiedPoint, maxSteps int) {
+	prevPoint, currPoint, prevLine, currLine, prevPointColor := f.InitialState()
+
+	for step := 0; step < maxSteps; step++ {
+		prevPoint, currPoint, prevLine, currLine, prevPointColor = f.Step(prevPoint, currPoint, prevLine, currLine)
+		x, y := f.GetCenterPoint(&prevPoint)
+		modifiedPoints <- ModifiedPoint{x, y, prevPointColor}
+	}
+	close(modifiedPoints)
+
+}
+
+func isOutside(x, y int, rect image.Rectangle) bool {
+	return x < rect.Min.X+16 || y < rect.Min.Y+16 || x > rect.Max.X-16 || y > rect.Max.Y-16
+}
+
+func (f *Field) ModifiedImagesStepper(modifiedImagesCh chan<- *image.RGBA, maxSteps int, palette []color.RGBA) {
+	prevPoint, currPoint, prevLine, currLine, prevPointColor := f.InitialState()
+	x, y := f.GetCenterPoint(&prevPoint)
+	currentImage := image.NewRGBA(image.Rect(x-128, y-128, x+128, y+128))
+
+	for step := 0; step < maxSteps; step++ {
+		prevPoint, currPoint, prevLine, currLine, prevPointColor = f.Step(prevPoint, currPoint, prevLine, currLine)
+		x, y := f.GetCenterPoint(&prevPoint)
+		if isOutside(x, y, currentImage.Rect) {
+			modifiedImagesCh <- currentImage
+			currentImage = image.NewRGBA(image.Rect(x-128, y-128, x+128, y+128))
+		}
+		currentImage.Set(x, y, palette[prevPointColor+1])
+
+	}
+	modifiedImagesCh <- currentImage
+	close(modifiedImagesCh)
 }

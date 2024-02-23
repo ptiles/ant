@@ -56,12 +56,8 @@ func init() {
 }
 
 func Get(coords PackedCoordinates) uint8 {
-	return get(coords.Offset0, coords.Offset1, coords.PackedAxes)
-}
-
-func get(offset0, offset1 int16, packedAxes uint8) uint8 {
-	packedOffsets := uint32(uint16(offset1))<<16 + uint32(uint16(offset0))
-	result := values[packedAxes][packedOffsets]
+	packedOffsets := uint32(uint16(coords.Offset1))<<16 + uint32(uint16(coords.Offset0))
+	result := values[coords.PackedAxes][packedOffsets]
 	return result
 }
 
