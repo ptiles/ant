@@ -31,28 +31,29 @@ const (
 )
 
 func main() {
-	var r int
-	var dist int
-	var minWidth int
-	var minHeight int
-	var whiteBackground bool
-	var openResults bool
-	var openResult bool
-	var antName string
-	var maxSteps int
-	var partialSteps int
-	var startingPoint string
+	var (
+		cpuprofile    string
+		dist          int
+		startingPoint string
+		antName       string
+		//openResults   bool
+		openResult bool
+		//partialSteps  int
+		radius   int
+		maxSteps int
+		verbose  bool
+	)
 
-	var cpuprofile = flag.String("cpuprofile", "", "Write cpu profile to file")
-	flag.IntVar(&r, "r", 2, "Radius")
+	flag.StringVar(&cpuprofile, "cpuprofile", "", "Write cpu profile to file")
 	flag.IntVar(&dist, "d", 8, "Distance")
-	flag.StringVar(&startingPoint, "s", "A0+B0", "Starting axes and direction")
-	flag.IntVar(&partialSteps, "p", 0, "Save partial result every N steps, 0 to disable")
-	flag.BoolVar(&whiteBackground, "w", false, "White background")
-	flag.BoolVar(&openResults, "oo", false, "Open partial resulting files")
+	flag.StringVar(&startingPoint, "i", "A0+B0", "Initial axes and direction")
+	flag.StringVar(&antName, "n", "", "Ant name")
+	//flag.BoolVar(&openResults, "oo", false, "Open partial resulting files")
 	flag.BoolVar(&openResult, "o", false, "Open resulting file")
-	flag.IntVar(&minWidth, "W", 128, "Canvas min width")
-	flag.IntVar(&minHeight, "H", 128, "Canvas min height")
+	//flag.IntVar(&partialSteps, "p", 0, "Save partial result every N steps, 0 to disable")
+	flag.IntVar(&radius, "r", 2, "Radius")
+	flag.IntVar(&maxSteps, "s", maxStepsDefault, "Steps")
+	flag.BoolVar(&verbose, "v", false, "Verbose output")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, usageText, programName, programName)
@@ -66,25 +67,24 @@ func main() {
 
 	switch len(args) {
 	case 0:
-		fmt.Fprintf(os.Stderr, "Name is required. Try to run: %s LLLRLRL", programName)
-		fmt.Fprintf(os.Stderr, usageTextShort, programName)
-		os.Exit(1)
+		if antName == "" {
+			fmt.Fprintf(os.Stderr, "Name is required. Try to run: %s LLLRLRL", programName)
+			fmt.Fprintf(os.Stderr, usageTextShort, programName)
+			os.Exit(1)
+		}
 	case 1:
 		antName = args[0]
-		maxSteps = maxStepsDefault
 	case 2:
 		antName = args[0]
-		var err error
-		maxSteps, err = strconv.Atoi(args[1])
-		if err != nil {
-			maxSteps = maxStepsDefault
+		maxStepsFromArg, err := strconv.Atoi(args[1])
+		if err == nil {
+			maxSteps = maxStepsFromArg
 		}
 	default:
 		antName = args[0]
-		var err error
-		maxSteps, err = strconv.Atoi(args[1])
-		if err != nil {
-			maxSteps = maxStepsDefault
+		maxStepsFromArg, err := strconv.Atoi(args[1])
+		if err == nil {
+			maxSteps = maxStepsFromArg
 		}
 		fmt.Fprintln(os.Stderr, "Warning: Extra positional arguments ignored")
 	}
@@ -96,8 +96,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	field := pgrid.New(float64(r), float64(dist), rules, startingPoint)
-	palette := utils.GetPalette(int(field.Limit), whiteBackground)
+	field := pgrid.New(float64(radius), float64(dist), rules, startingPoint, verbose)
+	palette := utils.GetPalette(int(field.Limit))
 
 	modifiedImagesCh := make(chan *image.RGBA, 1024)
 
@@ -107,7 +107,8 @@ func main() {
 
 	saveImageFromModifiedImages(modifiedImagesCh, fileName, maxSteps)
 
-	if openResult || openResults {
+	//if openResult || openResults {
+	if openResult {
 		utils.Open(fileName)
 	}
 }

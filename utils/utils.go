@@ -15,13 +15,8 @@ func FromDegrees(deg int) float64 {
 	return float64(deg) * math.Pi / 180.0
 }
 
-func GetPalette(steps int, whiteBackground bool) []color.RGBA {
-	var palette = make([]color.RGBA, steps+1)
-	if whiteBackground {
-		palette[0] = color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}
-	} else {
-		palette[0] = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xff}
-	}
+func GetPalette(steps int) []color.RGBA {
+	var palette = make([]color.RGBA, steps)
 
 	for c := 0; c < steps; c++ {
 		step := c * 360 / steps
@@ -38,14 +33,14 @@ func GetPalette(steps int, whiteBackground bool) []color.RGBA {
 		g := uint8(math.Round(gs * 0xb0))
 		b := uint8(math.Round(bs*0xb0 + 0x4f))
 
-		palette[c+1] = color.RGBA{R: r, G: g, B: b, A: 255}
+		palette[c] = color.RGBA{R: r, G: g, B: b, A: 255}
 	}
 	return palette
 }
 
-func StartCPUProfile(cpuprofile *string) {
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
+func StartCPUProfile(cpuprofile string) {
+	if cpuprofile != "" {
+		f, err := os.Create(cpuprofile)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (f *Field) InitialState() (GridPoint, GridPoint, GridLine, GridLine, uint8) {
+func (f *Field) initialState() (GridPoint, GridPoint, GridLine, GridLine, uint8) {
 	re := regexp.MustCompile(`([A-E])(-?\d+)([+-]?)([A-E])(-?\d+)`)
 	result := re.FindStringSubmatch(f.InitialPoint)
 
@@ -22,14 +22,16 @@ func (f *Field) InitialState() (GridPoint, GridPoint, GridLine, GridLine, uint8)
 	nextLine := GridLine{Axis: uint8(nextAxis), Offset: int16(nextOffset)}
 
 	currAxIncreasing := dir != "-"
-	currPoint := f.MakeGridPoint(currLine, nextLine)
+	currPoint := f.makeGridPoint(currLine, nextLine)
 
-	prevPoint, prevLine := f.NearestNeighbor(currPoint, nextLine, currLine, !currAxIncreasing)
+	prevPoint, prevLine := f.nearestNeighbor(currPoint, nextLine, currLine, !currAxIncreasing)
 
-	axisNames := [5]string{"A", "B", "C", "D", "E"}
-	fmt.Printf("Initial step: ")
-	fmt.Printf("%s%d%s%d=>", axisNames[currLine.Axis], currLine.Offset, axisNames[prevLine.Axis], prevLine.Offset)
-	fmt.Printf("%s%d%s%d\n", axisNames[nextLine.Axis], nextLine.Offset, axisNames[currLine.Axis], currLine.Offset)
+	if f.verbose {
+		axisNames := [5]string{"A", "B", "C", "D", "E"}
+		fmt.Printf("Initial step: ")
+		fmt.Printf("%s%d%s%d=>", axisNames[currLine.Axis], currLine.Offset, axisNames[prevLine.Axis], prevLine.Offset)
+		fmt.Printf("%s%d%s%d\n", axisNames[nextLine.Axis], nextLine.Offset, axisNames[currLine.Axis], currLine.Offset)
+	}
 
 	return prevPoint, currPoint, prevLine, currLine, 0
 }

@@ -66,15 +66,3 @@ func Set(coords PackedCoordinates, value uint8) {
 	packedOffsets := uint32(uint16(offset1))<<16 + uint32(uint16(offset0))
 	values[packedAxes][packedOffsets] = value
 }
-
-func ForEach(callback func(axis0, axis1 uint8, off0, off1 int16, color uint8)) {
-	for packedAxes := uint8(0); packedAxes < 10; packedAxes++ {
-		for packedOffsets, color := range values[packedAxes] {
-			if color > 0 {
-				axis0, axis1 := UnpackAxes(packedAxes)
-				off1, off0 := int16(uint16(packedOffsets>>16)), int16(uint16(packedOffsets))
-				callback(axis0, axis1, off0, off1, color)
-			}
-		}
-	}
-}

@@ -42,17 +42,18 @@ func toggleFullScreenWindow(windowWidth, windowHeight int) rl.Vector2 {
 }
 
 func main() {
+	var cpuprofile string
 	var r int
 	var dist int
-	var whiteBackground bool
 	var antName string
 	var startingPoint string
+	var verbose bool
 
-	var cpuprofile = flag.String("cpuprofile", "", "Write cpu profile to file")
+	flag.StringVar(&cpuprofile, "cpuprofile", "", "Write cpu profile to file")
 	flag.IntVar(&r, "r", 2, "Radius")
 	flag.IntVar(&dist, "d", 8, "Distance")
 	flag.StringVar(&startingPoint, "s", "A0+B0", "Starting axes and direction")
-	flag.BoolVar(&whiteBackground, "w", false, "White background")
+	flag.BoolVar(&verbose, "v", false, "Verbose output")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, usageText, programName, programName)
@@ -83,9 +84,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	field := pgrid.New(float64(r), float64(dist), rules, startingPoint)
+	field := pgrid.New(float64(r), float64(dist), rules, startingPoint, verbose)
 
-	palette := utils.GetPalette(len(rules), whiteBackground)
+	palette := utils.GetPalette(len(rules))
 
 	const (
 		screenWidth  = 1680

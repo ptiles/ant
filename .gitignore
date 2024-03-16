@@ -3,6 +3,10 @@
 
 /ant
 /ant-rl
+/batch-gen
+/bin/ant
+/bin/ant-rl
+/bin/batch-gen
 /results
 /tmp
 /*.prof

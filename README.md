@@ -1,21 +1,23 @@
-# Building
+# Running Langton's ant on Penrose tiling
+
+## Building
 
 ```
-go build ./cmd/ant
+make
 ```
 
-# Running
+## Running
 
 ```
-go run ./cmd/ant -o -s A0+B0 RLLRL 50000
+./bin/ant -o LLLRLRL 200000
 ```
 
-For usage, run:
+For full usage, run:
 
 ```
-./ant -h
+./bin/ant -h
 ```
 
-# Result
+## Result
 
-![](example/LLLRLRL-200000.png)
+![](example/LLLRLRL-A0+B0-200000.png)
