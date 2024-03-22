@@ -1,0 +1,3 @@
+#!/bin/bash
+
+./bin/batch-gen "$@" | xargs -L1 -P 4 -t ./bin/ant

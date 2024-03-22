@@ -66,3 +66,11 @@ func Set(coords PackedCoordinates, value uint8) {
 	packedOffsets := uint32(uint16(offset1))<<16 + uint32(uint16(offset0))
 	values[packedAxes][packedOffsets] = value
 }
+
+func Uniq() int {
+	count := 0
+	for pa := 0; pa < 10; pa++ {
+		count += len(values[pa])
+	}
+	return count
+}

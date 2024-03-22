@@ -8,7 +8,6 @@ import (
 	"image"
 	"os"
 	"path/filepath"
-	"strconv"
 )
 
 var (
@@ -16,7 +15,7 @@ var (
 	usageText   = `Run Langton's ant on Penrose tiling (pentagrid)
 
 Usage of %s:
-	%s [flags] [name RLRRLRR...] [steps]
+	%s [flags] [name RLRRLRR...].[initial point A0+B0].[steps number]
 
 Name should consist of letters R, L, r, l.
 Steps (default: 1000000) should be a positive integer.
@@ -26,89 +25,59 @@ Flags:
 	usageTextShort = "\nFor usage run: %s -h\n"
 )
 
-const (
-	maxStepsDefault = 1000000
-)
+type Flags struct {
+	maxDimension  int
+	openResults   bool
+	openResult    bool
+	partialImages int
+}
 
-func main() {
-	var (
-		cpuprofile    string
-		dist          int
-		startingPoint string
-		antName       string
-		//openResults   bool
-		openResult bool
-		//partialSteps  int
-		radius   int
-		maxSteps int
-		verbose  bool
-	)
+func flagsSetup() *Flags {
+	flags := &Flags{}
 
-	flag.StringVar(&cpuprofile, "cpuprofile", "", "Write cpu profile to file")
-	flag.IntVar(&dist, "d", 8, "Distance")
-	flag.StringVar(&startingPoint, "i", "A0+B0", "Initial axes and direction")
-	flag.StringVar(&antName, "n", "", "Ant name")
-	//flag.BoolVar(&openResults, "oo", false, "Open partial resulting files")
-	flag.BoolVar(&openResult, "o", false, "Open resulting file")
-	//flag.IntVar(&partialSteps, "p", 0, "Save partial result every N steps, 0 to disable")
-	flag.IntVar(&radius, "r", 2, "Radius")
-	flag.IntVar(&maxSteps, "s", maxStepsDefault, "Steps")
-	flag.BoolVar(&verbose, "v", false, "Verbose output")
+	flag.IntVar(&flags.maxDimension, "m", 4096, "Max image size")
+	//flag.BoolVar(&flags.openResults, "oo", false, "Open partial resulting files")
+	flag.BoolVar(&flags.openResult, "o", false, "Open resulting file")
+	flag.IntVar(&flags.partialImages, "p", 0, "Save partial result every N intermediate images")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, usageText, programName, programName)
 		flag.PrintDefaults()
 	}
-	flag.Parse()
-	args := flag.Args()
 
-	utils.StartCPUProfile(cpuprofile)
+	return flags
+}
+
+func main() {
+	commonFlags := utils.CommonFlagsSetup()
+	flags := flagsSetup()
+	flag.Parse()
+	utils.ParseArgs(commonFlags)
+
+	utils.StartCPUProfile(commonFlags.Cpuprofile)
 	defer utils.StopCPUProfile()
 
-	switch len(args) {
-	case 0:
-		if antName == "" {
-			fmt.Fprintf(os.Stderr, "Name is required. Try to run: %s LLLRLRL", programName)
-			fmt.Fprintf(os.Stderr, usageTextShort, programName)
-			os.Exit(1)
-		}
-	case 1:
-		antName = args[0]
-	case 2:
-		antName = args[0]
-		maxStepsFromArg, err := strconv.Atoi(args[1])
-		if err == nil {
-			maxSteps = maxStepsFromArg
-		}
-	default:
-		antName = args[0]
-		maxStepsFromArg, err := strconv.Atoi(args[1])
-		if err == nil {
-			maxSteps = maxStepsFromArg
-		}
-		fmt.Fprintln(os.Stderr, "Warning: Extra positional arguments ignored")
-	}
-
-	rules, err := utils.GetRules(antName)
+	rules, err := utils.GetRules(commonFlags.AntName)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Invalid name.  Should consist of at least two letters R L r l.")
 		fmt.Fprintf(os.Stderr, usageTextShort, programName)
 		os.Exit(1)
 	}
 
-	field := pgrid.New(float64(radius), float64(dist), rules, startingPoint, verbose)
+	field := pgrid.New(float64(commonFlags.Radius), float64(commonFlags.Dist), rules, commonFlags.InitialPoint, commonFlags.Verbose)
 	palette := utils.GetPalette(int(field.Limit))
 
 	modifiedImagesCh := make(chan *image.RGBA, 1024)
 
-	go field.ModifiedImagesStepper(modifiedImagesCh, maxSteps, palette)
+	go field.ModifiedImagesStepper(modifiedImagesCh, commonFlags.MaxSteps, palette)
 
-	fileName := fmt.Sprintf("results/%s-%s-%d.png", antName, startingPoint, maxSteps)
+	fileNameFmt := fmt.Sprintf("results/%s.%s.%%d.png", commonFlags.AntName, commonFlags.InitialPoint)
 
-	saveImageFromModifiedImages(modifiedImagesCh, fileName, maxSteps)
+	saveImageFromModifiedImages(modifiedImagesCh, fileNameFmt, flags.maxDimension, commonFlags.MaxSteps, flags.partialImages)
 
-	//if openResult || openResults {
-	if openResult {
+	//if flags.openResult || flags.openResults {
+	if flags.openResult {
+		fileName := fmt.Sprintf(fileNameFmt, commonFlags.MaxSteps)
 		utils.Open(fileName)
 	}
 }

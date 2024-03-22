@@ -42,50 +42,25 @@ func toggleFullScreenWindow(windowWidth, windowHeight int) rl.Vector2 {
 }
 
 func main() {
-	var cpuprofile string
-	var r int
-	var dist int
-	var antName string
-	var startingPoint string
-	var verbose bool
-
-	flag.StringVar(&cpuprofile, "cpuprofile", "", "Write cpu profile to file")
-	flag.IntVar(&r, "r", 2, "Radius")
-	flag.IntVar(&dist, "d", 8, "Distance")
-	flag.StringVar(&startingPoint, "s", "A0+B0", "Starting axes and direction")
-	flag.BoolVar(&verbose, "v", false, "Verbose output")
-
+	commonFlags := utils.CommonFlagsSetup()
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, usageText, programName, programName)
 		flag.PrintDefaults()
 	}
 	flag.Parse()
-	args := flag.Args()
+	utils.ParseArgs(commonFlags)
 
-	utils.StartCPUProfile(cpuprofile)
-	defer utils.StopCPUProfile()
-
-	switch len(args) {
-	case 0:
-		fmt.Fprintf(os.Stderr, "Name is required. Try to run: %s LLLRLRL", programName)
-		fmt.Fprintf(os.Stderr, usageTextShort, programName)
-		os.Exit(1)
-	case 1:
-		antName = args[0]
-	default:
-		antName = args[0]
-		fmt.Fprintln(os.Stderr, "Warning: Extra positional arguments ignored")
-	}
-
-	rules, err := utils.GetRules(antName)
+	rules, err := utils.GetRules(commonFlags.AntName)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Invalid name.  Should consist of at least two letters R L r l.")
 		fmt.Fprintf(os.Stderr, usageTextShort, programName)
 		os.Exit(1)
 	}
 
-	field := pgrid.New(float64(r), float64(dist), rules, startingPoint, verbose)
+	utils.StartCPUProfile(commonFlags.Cpuprofile)
+	defer utils.StopCPUProfile()
 
+	field := pgrid.New(float64(commonFlags.Radius), float64(commonFlags.Dist), rules, commonFlags.InitialPoint, commonFlags.Verbose)
 	palette := utils.GetPalette(len(rules))
 
 	const (
@@ -94,7 +69,7 @@ func main() {
 	)
 	const zoomIncrement float32 = 0.025
 
-	title := fmt.Sprintf("ant-rl %s %s", startingPoint, antName)
+	title := fmt.Sprintf("ant-rl %s %s", commonFlags.InitialPoint, commonFlags.AntName)
 	rl.InitWindow(screenWidth, screenHeight, title)
 
 	var camera rl.Camera2D

@@ -5,23 +5,40 @@ import (
 	"image/color"
 )
 
-func isOutside(x, y int, rect image.Rectangle) bool {
-	return x < rect.Min.X+16 || y < rect.Min.Y+16 || x > rect.Max.X-16 || y > rect.Max.Y-16
+func pointSnap(p image.Point, gridSize int) image.Point {
+	return image.Point{X: p.X / gridSize * gridSize, Y: p.Y / gridSize * gridSize}
+}
+
+func rectGrow(r image.Rectangle, maxDimension int) image.Rectangle {
+	halfImage := image.Point{X: maxDimension / 2, Y: maxDimension / 2}
+	centerPoint := r.Min.Add(r.Max).Div(2)
+	return image.Rectangle{Min: centerPoint.Sub(halfImage), Max: centerPoint.Add(halfImage)}
+}
+
+func pointRect(p image.Point, maxDimension int) image.Rectangle {
+	gridSize := 16
+	snapped := pointSnap(p, gridSize)
+	return rectGrow(image.Rectangle{Min: snapped, Max: snapped.Add(image.Point{X: gridSize, Y: gridSize})}, maxDimension)
+}
+
+func isOutside(point image.Point, rect image.Rectangle) bool {
+	return point.X < rect.Min.X+16 || point.Y < rect.Min.Y+16 ||
+		point.X > rect.Max.X-16 || point.Y > rect.Max.Y-16
 }
 
 func (f *Field) ModifiedImagesStepper(modifiedImagesCh chan<- *image.RGBA, maxSteps int, palette []color.RGBA) {
 	prevPoint, currPoint, prevLine, currLine, prevPointColor := f.initialState()
-	xs, ys := f.getCenterPoint(&prevPoint)
-	currentImage := image.NewRGBA(image.Rect(xs-128, ys-128, xs+128, ys+128))
+	initialPoint := f.getCenterPoint(&prevPoint)
+	currentImage := image.NewRGBA(pointRect(initialPoint, 256))
 
 	for step := 0; step < maxSteps; step++ {
 		prevPoint, currPoint, prevLine, currLine, prevPointColor = f.step(prevPoint, currPoint, prevLine, currLine)
-		x, y := f.getCenterPoint(&prevPoint)
-		if isOutside(x, y, currentImage.Rect) {
+		point := f.getCenterPoint(&prevPoint)
+		if isOutside(point, currentImage.Rect) {
 			modifiedImagesCh <- currentImage
-			currentImage = image.NewRGBA(image.Rect(x-128, y-128, x+128, y+128))
+			currentImage = image.NewRGBA(pointRect(point, 256))
 		}
-		currentImage.Set(x, y, palette[prevPointColor])
+		currentImage.Set(point.X, point.Y, palette[prevPointColor])
 
 	}
 	modifiedImagesCh <- currentImage

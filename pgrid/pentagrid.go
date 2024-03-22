@@ -3,6 +3,7 @@ package pgrid
 import (
 	"github.com/ptiles/ant/store"
 	"github.com/ptiles/ant/utils"
+	"image"
 	"math"
 )
 
@@ -170,7 +171,7 @@ func deBruijn(floatOffsets *[5]float64) (float64, float64) {
 	return y, x
 }
 
-func (f *Field) getCenterPoint(gp *GridPoint) (int, int) {
+func (f *Field) getCenterPoint(gp *GridPoint) image.Point {
 	var floatOffsets [5]float64
 	for i := 0; i < 5; i++ {
 		floatOffsets[i] = float64(gp.Offsets[i])
@@ -181,7 +182,7 @@ func (f *Field) getCenterPoint(gp *GridPoint) (int, int) {
 	floatOffsets[axis1] += 0.5
 
 	x, y := deBruijn(&floatOffsets)
-	return int(x * 2), int(y * 2)
+	return image.Point{X: int(x * 2), Y: int(y * 2)}
 	//return geom.Point{x, y}
 }
 
