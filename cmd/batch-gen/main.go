@@ -87,7 +87,7 @@ func main() {
 		for i := 0; i < flags.initialPointCount; i++ {
 			randomInitialPoint := genRandomInitialPoint(minInitialPointOffset, maxInitialPointOffset)
 
-			fmt.Printf("-n %s -i %s -s %d\n", commonFlags.AntName, randomInitialPoint, commonFlags.MaxSteps)
+			fmt.Printf("-j %s.%s.%d\n", commonFlags.AntName, randomInitialPoint, commonFlags.MaxSteps)
 		}
 
 	case NameRange:
@@ -99,7 +99,7 @@ func main() {
 			for num := uint64(1); num < 1<<bitWidth-1; num++ {
 				name := numToName(num, bitWidth)
 
-				fmt.Printf("%s.%s.%d\n", name, commonFlags.InitialPoint, commonFlags.MaxSteps)
+				fmt.Printf("-j %s.%s.%d\n", name, commonFlags.InitialPoint, commonFlags.MaxSteps)
 			}
 		}
 
@@ -119,7 +119,7 @@ func main() {
 				for i := 0; i < flags.initialPointCount; i++ {
 					randomInitialPoint := genRandomInitialPoint(minInitialPointOffset, maxInitialPointOffset)
 
-					fmt.Printf("%s.%s.%d\n", name, randomInitialPoint, commonFlags.MaxSteps)
+					fmt.Printf("-j %s.%s.%d\n", name, randomInitialPoint, commonFlags.MaxSteps)
 				}
 			}
 		}

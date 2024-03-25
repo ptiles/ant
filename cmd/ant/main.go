@@ -26,6 +26,7 @@ Flags:
 )
 
 type Flags struct {
+	jsonStats     bool
 	maxDimension  int
 	openResults   bool
 	openResult    bool
@@ -35,6 +36,7 @@ type Flags struct {
 func flagsSetup() *Flags {
 	flags := &Flags{}
 
+	flag.BoolVar(&flags.jsonStats, "j", false, "Save stats in json file")
 	flag.IntVar(&flags.maxDimension, "m", 4096, "Max image size")
 	//flag.BoolVar(&flags.openResults, "oo", false, "Open partial resulting files")
 	flag.BoolVar(&flags.openResult, "o", false, "Open resulting file")
@@ -71,9 +73,9 @@ func main() {
 
 	go field.ModifiedImagesStepper(modifiedImagesCh, commonFlags.MaxSteps, palette)
 
-	fileNameFmt := fmt.Sprintf("results/%s.%s.%%d.png", commonFlags.AntName, commonFlags.InitialPoint)
+	fileNameFmt := fmt.Sprintf("results/%s.%s.%%d.%%s", commonFlags.AntName, commonFlags.InitialPoint)
 
-	saveImageFromModifiedImages(modifiedImagesCh, fileNameFmt, flags.maxDimension, commonFlags.MaxSteps, flags.partialImages)
+	saveImageFromModifiedImages(modifiedImagesCh, fileNameFmt, flags, commonFlags)
 
 	//if flags.openResult || flags.openResults {
 	if flags.openResult {

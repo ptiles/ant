@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/ptiles/ant/store"
+	"github.com/ptiles/ant/utils"
 	"golang.org/x/image/draw"
 	"image"
 	"image/png"
@@ -33,8 +35,12 @@ func drawImg(activeImageS, img *image.RGBA, scaleFactor int) {
 	draw.CatmullRom.Scale(activeImageS, rectDiv(img.Rect, scaleFactor), img, img.Rect, draw.Over, nil)
 }
 
-func saveImageFromModifiedImages(modifiedImagesCh <-chan *image.RGBA, fileNameFmt string, maxDimension, steps, partialImages int) {
-	imagesCount := 0
+func saveImageFromModifiedImages(modifiedImagesCh <-chan *image.RGBA, fileNameFmt string, flags *Flags, commonFlags *utils.CommonFlags) {
+	maxDimension := flags.maxDimension
+	partialImages := flags.partialImages
+	steps := commonFlags.MaxSteps
+
+	imagesCount := 1
 	scaleFactor := 1
 
 	img0 := <-modifiedImagesCh
@@ -65,16 +71,36 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan *image.RGBA, fileNameFm
 
 	saveImage(activeImageS, activeRectN, scaleFactor, fileNameFmt, steps)
 
-	fileName := fmt.Sprintf(fileNameFmt, steps)
+	fileName := fmt.Sprintf(fileNameFmt, steps, "png")
 	uniqPct := 100 * store.Uniq() / steps
+	dimensions := fmt.Sprintf("%dx%d", activeRectN.Dx(), activeRectN.Dy())
+	dimensionsScaled := fmt.Sprintf("%dx%d", activeRectN.Dx()/scaleFactor, activeRectN.Dy()/scaleFactor)
 	fmt.Printf(
-		"%s %d steps; %d%% uniq; %d images; %dx%d (%dx%d)\n",
-		fileName, steps, uniqPct, imagesCount, activeRectN.Dx()/scaleFactor, activeRectN.Dy()/scaleFactor, activeRectN.Dx(), activeRectN.Dy(),
+		"%s %d steps; %d%% uniq; %d images; %s (%s)\n",
+		fileName, steps, uniqPct, imagesCount, dimensionsScaled, dimensions,
 	)
+
+	maxSide := activeRectN.Dx()
+	if activeRectN.Dx() < activeRectN.Dy() {
+		maxSide = activeRectN.Dy()
+	}
+
+	if flags.jsonStats {
+		writeStats(fileNameFmt, statsType{
+			AntName:          commonFlags.AntName,
+			FileName:         fileName,
+			Steps:            steps,
+			UniqPct:          uniqPct,
+			ImagesCount:      imagesCount,
+			MaxSide:          maxSide,
+			Dimensions:       dimensions,
+			DimensionsScaled: dimensionsScaled,
+		})
+	}
 }
 
 func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps int) {
-	fileName := fmt.Sprintf(fileNameFmt, steps)
+	fileName := fmt.Sprintf(fileNameFmt, steps, "png")
 
 	if steps < 0 {
 		fmt.Println(fileName)
@@ -92,4 +118,31 @@ func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFacto
 	if err != nil {
 		panic(err)
 	}
+}
+
+type statsType struct {
+	AntName          string `json:"antName"`
+	FileName         string `json:"fileName"`
+	Steps            int    `json:"steps"`
+	UniqPct          int    `json:"uniqPct"`
+	ImagesCount      int    `json:"imagesCount"`
+	MaxSide          int    `json:"maxSide"`
+	Dimensions       string `json:"dimensions"`
+	DimensionsScaled string `json:"dimensionsScaled"`
+}
+
+func writeStats(fileNameFmt string, stats statsType) {
+	fileName := fmt.Sprintf(fileNameFmt, stats.Steps, "json")
+	file, err := os.Create(fileName)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	b, err := json.MarshalIndent(&stats, "", "  ")
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	file.Write(b)
+	file.WriteString("\n")
 }
