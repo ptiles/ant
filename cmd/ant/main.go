@@ -7,6 +7,7 @@ import (
 	"github.com/ptiles/ant/utils"
 	"image"
 	"os"
+	"path"
 	"path/filepath"
 )
 
@@ -73,7 +74,7 @@ func main() {
 
 	go field.ModifiedImagesStepper(modifiedImagesCh, commonFlags.MaxSteps, palette)
 
-	fileNameFmt := fmt.Sprintf("results/%s.%s.%%d.%%s", commonFlags.AntName, commonFlags.InitialPoint)
+	fileNameFmt := fmt.Sprintf("%s/%s.%s.%%d.%%s", path.Clean(commonFlags.Dir), commonFlags.AntName, commonFlags.InitialPoint)
 
 	saveImageFromModifiedImages(modifiedImagesCh, fileNameFmt, flags, commonFlags)
 

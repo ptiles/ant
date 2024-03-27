@@ -8,6 +8,7 @@ import (
 
 type CommonFlags struct {
 	Cpuprofile   string
+	Dir          string
 	Dist         int
 	InitialPoint string
 	AntName      string
@@ -20,11 +21,12 @@ func CommonFlagsSetup() *CommonFlags {
 	commonFlags := &CommonFlags{}
 
 	flag.StringVar(&commonFlags.Cpuprofile, "cpuprofile", "", "Write cpu profile to file")
-	flag.IntVar(&commonFlags.Dist, "d", 8, "Distance")
+	flag.StringVar(&commonFlags.Dir, "d", "results", "Results directory")
 	flag.StringVar(&commonFlags.InitialPoint, "i", "A0+B0", "Initial axes and direction")
 	flag.StringVar(&commonFlags.AntName, "n", "", "Ant name")
-	flag.IntVar(&commonFlags.Radius, "r", 2, "Radius")
 	flag.IntVar(&commonFlags.MaxSteps, "s", 1000000, "Steps")
+	flag.IntVar(&commonFlags.Dist, "td", 8, "Tiles config - distance")
+	flag.IntVar(&commonFlags.Radius, "tr", 2, "Tiles config - radius")
 	flag.BoolVar(&commonFlags.Verbose, "v", false, "Verbose output")
 
 	return commonFlags

@@ -6,6 +6,7 @@ import (
 	"github.com/ptiles/ant/utils"
 	"math/rand/v2"
 	"os"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -87,7 +88,10 @@ func main() {
 		for i := 0; i < flags.initialPointCount; i++ {
 			randomInitialPoint := genRandomInitialPoint(minInitialPointOffset, maxInitialPointOffset)
 
-			fmt.Printf("-j %s.%s.%d\n", commonFlags.AntName, randomInitialPoint, commonFlags.MaxSteps)
+			fmt.Printf(
+				"-d %s -j %s.%s.%d\n",
+				path.Clean(commonFlags.Dir), commonFlags.AntName, randomInitialPoint, commonFlags.MaxSteps,
+			)
 		}
 
 	case NameRange:
@@ -99,7 +103,10 @@ func main() {
 			for num := uint64(1); num < 1<<bitWidth-1; num++ {
 				name := numToName(num, bitWidth)
 
-				fmt.Printf("-j %s.%s.%d\n", name, commonFlags.InitialPoint, commonFlags.MaxSteps)
+				fmt.Printf(
+					"-d %s -j %s.%s.%d\n",
+					path.Clean(commonFlags.Dir), name, commonFlags.InitialPoint, commonFlags.MaxSteps,
+				)
 			}
 		}
 
@@ -119,7 +126,10 @@ func main() {
 				for i := 0; i < flags.initialPointCount; i++ {
 					randomInitialPoint := genRandomInitialPoint(minInitialPointOffset, maxInitialPointOffset)
 
-					fmt.Printf("-j %s.%s.%d\n", name, randomInitialPoint, commonFlags.MaxSteps)
+					fmt.Printf(
+						"-d %s -j %s.%s.%d\n",
+						path.Clean(commonFlags.Dir), name, randomInitialPoint, commonFlags.MaxSteps,
+					)
 				}
 			}
 		}

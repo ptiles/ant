@@ -9,6 +9,7 @@ import (
 	"image"
 	"image/png"
 	"os"
+	"path"
 )
 
 func newBoundFromRect(r image.Rectangle, maxDimension int) image.Rectangle {
@@ -106,6 +107,11 @@ func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFacto
 		fmt.Println(fileName)
 	}
 
+	err := os.MkdirAll(path.Dir(fileName), 0755)
+	if err != nil {
+		panic(err)
+	}
+
 	file, err := os.Create(fileName)
 	if err != nil {
 		panic(err)
@@ -133,6 +139,12 @@ type statsType struct {
 
 func writeStats(fileNameFmt string, stats statsType) {
 	fileName := fmt.Sprintf(fileNameFmt, stats.Steps, "json")
+
+	err := os.MkdirAll(path.Dir(fileName), 0755)
+	if err != nil {
+		panic(err)
+	}
+
 	file, err := os.Create(fileName)
 	if err != nil {
 		panic(err)

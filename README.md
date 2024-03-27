@@ -2,7 +2,7 @@
 
 ## Building
 
-```
+```shell
 make
 ```
 
@@ -10,23 +10,29 @@ make
 
 For full usage, run:
 
-```
+```shell
 ./bin/ant -h
 ```
 
 ## Example results
 
-```
+```shell
 ./bin/ant -o LLLRLRL 200000
 ```
 
 ![LLLRLRL.A0+B0.200000.png](example/LLLRLRL.A0+B0.200000.png)
 
-```
+```shell
 ./bin/ant -m 1024 -o RRLRRLRRRR.E90+C-99.5000000
 ```
 
 ![RRLRRLRRRR.E90+C-99.5000000.png](example/RRLRRLRRRR.E90+C-99.5000000.png)
+
+## Batch run
+
+```shell
+./bin/ant-batch -im 512 -ic 5 -nr 3-4 -s 2500000
+```
 
 ## References
 
