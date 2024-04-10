@@ -83,8 +83,9 @@ func main() {
 	modifiedImagesCh := make(chan *image.RGBA, 256)
 	fullViewRectCh := make(chan image.Rectangle)
 	positionedImagesCh := make(chan *PositionedImage)
+	commandCh := make(chan pgrid.CommandType, 1)
 
-	go field.ModifiedImagesStepper(modifiedImagesCh, 30_000_000_000, palette)
+	go field.ControlledInfiniteStepper(modifiedImagesCh, commandCh, palette)
 
 	go imageTilesServer(modifiedImagesCh, fullViewRectCh, positionedImagesCh)
 
@@ -112,6 +113,16 @@ func main() {
 
 		if rl.IsKeyPressed(rl.KeyF) {
 			bottomRightScreen = toggleFullScreenWindow(screenWidth, screenHeight)
+		}
+		if rl.IsKeyPressed(rl.KeyR) {
+			commandCh <- pgrid.Reset
+
+			for _, texture := range textures {
+				rl.UnloadTexture(texture)
+			}
+			textures = make(map[Pair]rl.Texture2D)
+
+			fullViewRectCh <- image.Rectangle{}
 		}
 
 		rl.BeginDrawing()

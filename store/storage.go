@@ -67,6 +67,12 @@ func Set(coords PackedCoordinates, value uint8) {
 	values[packedAxes][packedOffsets] = value
 }
 
+func Reset() {
+	for pa := 0; pa < 10; pa++ {
+		values[pa] = axisValues{}
+	}
+}
+
 func Uniq() int {
 	count := 0
 	for pa := 0; pa < 10; pa++ {

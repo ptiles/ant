@@ -92,8 +92,15 @@ func imageTilesServer(
 			}
 		default:
 		}
+
 		// This waits for next animation frame
 		fullViewRect := <-fullViewRectCh
+
+		if fullViewRect.Min.Eq(fullViewRect.Max) {
+			imageTiles = map[Pair]ImageTile{}
+			continue
+		}
+
 		for _, viewRect := range splitViewRect(fullViewRect) {
 			imageTile := imageTiles[viewRect]
 			if imageTile.updated {
