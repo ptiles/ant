@@ -13,13 +13,13 @@ import (
 	"strings"
 )
 
-const GRID_LINES_TOTAL = uint(pgrid.GRID_LINES_TOTAL)
+const GridLinesTotal = uint(pgrid.GridLinesTotal)
 
 func genRandomInitialPoint(min, max int) string {
 	dirNames := [2]string{"-", "+"}
 
-	ax1 := rand.UintN(GRID_LINES_TOTAL)
-	ax2 := (ax1 + 1 + rand.UintN(GRID_LINES_TOTAL-1)) % GRID_LINES_TOTAL
+	ax1 := rand.UintN(GridLinesTotal)
+	ax2 := (ax1 + 1 + rand.UintN(GridLinesTotal-1)) % GridLinesTotal
 
 	dir := rand.IntN(2)
 
@@ -64,7 +64,7 @@ func flagsSetup() *Flags {
 }
 
 func main() {
-	commonFlags := utils.CommonFlagsSetup(pgrid.GRID_LINES_TOTAL)
+	commonFlags := utils.CommonFlagsSetup(pgrid.GridLinesTotal)
 	flags := flagsSetup()
 	flag.Parse()
 

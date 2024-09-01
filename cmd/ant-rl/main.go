@@ -42,7 +42,7 @@ func toggleFullScreenWindow(windowWidth, windowHeight int) rl.Vector2 {
 }
 
 func main() {
-	commonFlags := utils.CommonFlagsSetup(pgrid.GRID_LINES_TOTAL)
+	commonFlags := utils.CommonFlagsSetup(pgrid.GridLinesTotal)
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, usageText, programName, programName)
 		flag.PrintDefaults()

@@ -1,14 +1,14 @@
 package pgrid
 
-var axesRotation = [GRID_LINES_TOTAL][GRID_LINES_TOTAL]bool{}
+var axesRotation = [GridLinesTotal][GridLinesTotal]bool{}
 
 func init() {
-	for ax0 := range GRID_LINES_TOTAL {
-		for i := range GRID_LINES_TOTAL {
-			ax1 := (ax0 + i) % GRID_LINES_TOTAL
+	for ax0 := range GridLinesTotal {
+		for i := range GridLinesTotal {
+			ax1 := (ax0 + i) % GridLinesTotal
 			// {true, true, true, false, false}
 			// {false, true, true, true, false}
-			axesRotation[ax0][ax1] = i <= GRID_LINES_TOTAL/2
+			axesRotation[ax0][ax1] = i <= GridLinesTotal/2
 		}
 	}
 }

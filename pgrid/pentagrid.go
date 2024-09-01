@@ -11,7 +11,7 @@ import (
 const X = 0
 const Y = 1
 
-const GRID_LINES_TOTAL = uint8(5)
+const GridLinesTotal = uint8(5)
 
 type Field struct {
 	Rules        []bool
@@ -19,16 +19,16 @@ type Field struct {
 	InitialPoint string
 	verbose      bool
 
-	anchors          [GRID_LINES_TOTAL]Point
-	anchorLines      [GRID_LINES_TOTAL]Line
-	axisUnits        [GRID_LINES_TOTAL]Point
-	normals          [GRID_LINES_TOTAL]Point
-	intersectAnchors [GRID_LINES_TOTAL][GRID_LINES_TOTAL]Point
-	intersectVectors [GRID_LINES_TOTAL][GRID_LINES_TOTAL]Point
+	anchors          [GridLinesTotal]Point
+	anchorLines      [GridLinesTotal]Line
+	axisUnits        [GridLinesTotal]Point
+	normals          [GridLinesTotal]Point
+	intersectAnchors [GridLinesTotal][GridLinesTotal]Point
+	intersectVectors [GridLinesTotal][GridLinesTotal]Point
 }
 
 func New(r float64, rules []bool, initialPoint string, verbose bool) *Field {
-	phi := utils.FromDegrees(360 / int(GRID_LINES_TOTAL))
+	phi := utils.FromDegrees(360 / int(GridLinesTotal))
 	axisAngle0 := utils.FromDegrees(90) + phi/2
 
 	result := &Field{
@@ -36,7 +36,7 @@ func New(r float64, rules []bool, initialPoint string, verbose bool) *Field {
 		InitialPoint: initialPoint, verbose: verbose,
 	}
 
-	for ax := range GRID_LINES_TOTAL {
+	for ax := range GridLinesTotal {
 		phiAx := phi * float64(ax)
 
 		result.anchors[ax][X] = r * math.Cos(phiAx)
@@ -55,8 +55,8 @@ func New(r float64, rules []bool, initialPoint string, verbose bool) *Field {
 		result.anchorLines[ax] = Line{result.anchors[ax], anchorEnd}
 	}
 
-	for ax0 := range GRID_LINES_TOTAL {
-		for ax1 := range GRID_LINES_TOTAL {
+	for ax0 := range GridLinesTotal {
+		for ax1 := range GridLinesTotal {
 			line0 := result.getLine(GridLine{ax0, 0})
 			line1 := result.getLine(GridLine{ax1, 0})
 			intersectAnchor := intersection(line0, line1)
@@ -122,7 +122,7 @@ type GridAxes struct {
 	Offset1 offsetInt
 }
 
-type GridOffsets [GRID_LINES_TOTAL]offsetInt
+type GridOffsets [GridLinesTotal]offsetInt
 
 func (gp *GridPoint) String() string {
 	offsets := gp.Offsets
@@ -166,7 +166,7 @@ func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine, point Point) GridPo
 	gridPoint.Offsets[gridLine0.Axis] = gridLine0.Offset
 	gridPoint.Offsets[gridLine1.Axis] = gridLine1.Offset
 
-	for ax := range GRID_LINES_TOTAL {
+	for ax := range GridLinesTotal {
 		if ax == gridLine0.Axis || ax == gridLine1.Axis {
 			continue
 		}
@@ -177,17 +177,17 @@ func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine, point Point) GridPo
 	return gridPoint
 }
 
-var deBruijnX = [GRID_LINES_TOTAL]float64{}
-var deBruijnY = [GRID_LINES_TOTAL]float64{}
+var deBruijnX = [GridLinesTotal]float64{}
+var deBruijnY = [GridLinesTotal]float64{}
 
 func init() {
-	if GRID_LINES_TOTAL%2 == 0 || GRID_LINES_TOTAL < 5 || GRID_LINES_TOTAL > 25 {
+	if GridLinesTotal%2 == 0 || GridLinesTotal < 5 || GridLinesTotal > 25 {
 		fmt.Println("GRID_LINES_TOTAL should be odd number between 5 and 25")
 		os.Exit(1)
 	}
 
-	floatLines := float64(GRID_LINES_TOTAL)
-	for i := range GRID_LINES_TOTAL {
+	floatLines := float64(GridLinesTotal)
+	for i := range GridLinesTotal {
 		floatI := float64(i)
 		deBruijnX[i] = math.Sin(2 * math.Pi * floatI / floatLines)
 		deBruijnY[i] = math.Cos(2 * math.Pi * floatI / floatLines)
@@ -200,7 +200,7 @@ func (gp *GridPoint) getCenterPoint() image.Point {
 	x := 0.5*deBruijnX[gp.Axes.Axis0] + 0.5*deBruijnX[gp.Axes.Axis1]
 	y := 0.5*deBruijnY[gp.Axes.Axis0] + 0.5*deBruijnY[gp.Axes.Axis1]
 
-	for i := range GRID_LINES_TOTAL {
+	for i := range GridLinesTotal {
 		floatOffset := float64(gp.Offsets[i])
 		x += floatOffset * deBruijnX[i]
 		y += floatOffset * deBruijnY[i]
@@ -215,7 +215,7 @@ func (f *Field) nearestNeighbor(currentPointOffsets GridOffsets, prevLine, curre
 	currentDistance := 1000000.0
 	prevLineLine := f.getLine(prevLine)
 
-	for axis := range GRID_LINES_TOTAL {
+	for axis := range GridLinesTotal {
 		if axis == prevLine.Axis || axis == currentLine.Axis {
 			continue
 		}
