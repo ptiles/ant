@@ -92,13 +92,21 @@ func modifiedPointsToImages(modifiedPointsCh <-chan []gridPointColor, modifiedIm
 		}
 
 		currentImage := image.NewRGBA(snapRect(rect))
-		for i := range points {
-			currentImage.Set(
-				points[i].centerPoint.X, points[i].centerPoint.Y,
-				palette[points[i].color],
-			)
-			if drawTiles {
+
+		if drawTiles {
+			for i := range points {
+				currentImage.Set(
+					points[i].centerPoint.X, points[i].centerPoint.Y,
+					palette[points[i].color],
+				)
 				drawTile(currentImage, points[i].gridPoint, palette[points[i].color])
+			}
+		} else {
+			for i := range points {
+				currentImage.Set(
+					points[i].centerPoint.X, points[i].centerPoint.Y,
+					palette[points[i].color],
+				)
 			}
 		}
 		modifiedImagesCh <- currentImage
