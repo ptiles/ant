@@ -74,7 +74,7 @@ func New(r float64, rules []bool, initialPoint string, verbose bool) *Field {
 	return result
 }
 
-var AxisNames = []string{
+var AxisNames = [25]string{
 	"A", "B", "C", "D", "E",
 	"F", "G", "H", "I", "J",
 	"K", "L", "M", "N", "O",
@@ -192,7 +192,7 @@ func init() {
 	}
 }
 
-const deBruijnScale = 2 // 32
+const deBruijnScale = 2 // 48
 
 func (gp *GridPoint) getCenterPoint() image.Point {
 	x := 0.5*deBruijnX[gp.Axes.Axis0] + 0.5*deBruijnX[gp.Axes.Axis1]
@@ -207,7 +207,7 @@ func (gp *GridPoint) getCenterPoint() image.Point {
 	return image.Point{X: int(x * deBruijnScale), Y: int(y * deBruijnScale)}
 }
 
-func (gp *GridPoint) getCornerPoints() []image.Point {
+func (gp *GridPoint) getCornerPoints() [4]image.Point {
 	x := float64(0)
 	y := float64(0)
 
@@ -225,11 +225,11 @@ func (gp *GridPoint) getCornerPoints() []image.Point {
 	dax1x := deBruijnX[gp.Axes.Axis1]
 	dax1y := deBruijnY[gp.Axes.Axis1]
 
-	return []image.Point{
-		{X: int((x+_0*dax0x+_0*dax1x)*deBruijnScale) - 1, Y: int((y + _0*dax0y + _0*dax1y) * deBruijnScale)},
-		{X: int((x + _0*dax0x + _0*dax1x) * deBruijnScale), Y: int((y+_0*dax0y+_0*dax1y)*deBruijnScale) - 1},
-		{X: int((x+_0*dax0x+_0*dax1x)*deBruijnScale) + 1, Y: int((y + _0*dax0y + _0*dax1y) * deBruijnScale)},
-		{X: int((x + _0*dax0x + _0*dax1x) * deBruijnScale), Y: int((y+_0*dax0y+_0*dax1y)*deBruijnScale) + 1},
+	return [4]image.Point{
+		//{X: int((x+_0*dax0x+_0*dax1x)*deBruijnScale) - 1, Y: int((y + _0*dax0y + _0*dax1y) * deBruijnScale)},
+		//{X: int((x + _0*dax0x + _0*dax1x) * deBruijnScale), Y: int((y+_0*dax0y+_0*dax1y)*deBruijnScale) - 1},
+		//{X: int((x+_0*dax0x+_0*dax1x)*deBruijnScale) + 1, Y: int((y + _0*dax0y + _0*dax1y) * deBruijnScale)},
+		//{X: int((x + _0*dax0x + _0*dax1x) * deBruijnScale), Y: int((y+_0*dax0y+_0*dax1y)*deBruijnScale) + 1},
 
 		{X: int((x + _0*dax0x + _0*dax1x) * deBruijnScale), Y: int((y + _0*dax0y + _0*dax1y) * deBruijnScale)},
 		{X: int((x + _0*dax0x + _1*dax1x) * deBruijnScale), Y: int((y + _0*dax0y + _1*dax1y) * deBruijnScale)},

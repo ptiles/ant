@@ -3,6 +3,7 @@ module github.com/ptiles/ant
 go 1.23.0
 
 require (
+	github.com/StephaneBunel/bresenham v0.0.0-20211027152503-ec76d7b8e923
 	github.com/crazy3lf/colorconv v1.2.0
 	github.com/gen2brain/raylib-go/raylib v0.0.0-20240807111636-8861ee437da9
 	golang.org/x/image v0.19.0

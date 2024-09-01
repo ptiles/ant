@@ -1,3 +1,5 @@
+github.com/StephaneBunel/bresenham v0.0.0-20211027152503-ec76d7b8e923 h1:tiBl/Mvf7sSO5y3OVK7wznaQkLOCfHhX9KReDeN9WjE=
+github.com/StephaneBunel/bresenham v0.0.0-20211027152503-ec76d7b8e923/go.mod h1:IEPPVq1llBFm+OeVCgoAyFiTqK5aE2c2tH4QEsjnQCM=
 github.com/crazy3lf/colorconv v1.2.0 h1:UM7kSZWnwFMGiC+PpYrjxQSOd6sEyWb+dRKKTd3KslA=
 github.com/crazy3lf/colorconv v1.2.0/go.mod h1:2jTJ7QCWCj2sSLOhF4Gzi0J5/hoX8/VY8VzNvXAlD1I=
 github.com/ebitengine/purego v0.7.1 h1:6/55d26lG3o9VCZX8lping+bZcmShseiqlh2bnUDiPA=

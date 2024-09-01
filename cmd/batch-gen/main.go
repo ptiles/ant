@@ -112,7 +112,7 @@ func main() {
 			}
 		}
 	} else if commonFlags.AntName != "" {
-		antNames = []string{commonFlags.AntName}
+		antNames = strings.Split(commonFlags.AntName, ",")
 	} else {
 		fmt.Fprintln(os.Stderr, "Ant name or range required")
 		os.Exit(1)

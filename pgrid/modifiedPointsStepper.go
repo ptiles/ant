@@ -2,6 +2,7 @@ package pgrid
 
 import (
 	"fmt"
+	"github.com/StephaneBunel/bresenham"
 	"image"
 	"image/color"
 	"math"
@@ -49,6 +50,7 @@ func ceilSnap(v int) int {
 	return int(math.Ceil(float64(v)/256.0)) * 256
 }
 
+// const padding = deBruijnScale
 const padding = deBruijnScale * 4
 
 func snapRect(rect image.Rectangle) image.Rectangle {
@@ -96,15 +98,26 @@ func modifiedPointsToImages(modifiedPointsCh <-chan []gridPointColor, modifiedIm
 				palette[points[i].color],
 			)
 			if drawTiles {
-				for _, cornerPoint := range points[i].gridPoint.getCornerPoints() {
-					currentImage.Set(
-						cornerPoint.X, cornerPoint.Y,
-						palette[points[i].color],
-					)
-				}
+				drawTile(currentImage, points[i].gridPoint, palette[points[i].color])
 			}
 		}
 		modifiedImagesCh <- currentImage
 	}
 	close(modifiedImagesCh)
+}
+
+func drawTile(currentImage *image.RGBA, gridPoint GridPoint, color color.RGBA) {
+	cornerPoints := gridPoint.getCornerPoints()
+	p0, p1, p2, p3 := cornerPoints[0], cornerPoints[1], cornerPoints[2], cornerPoints[3]
+
+	currentImage.Set(p0.X, p0.Y, color)
+	currentImage.Set(p1.X, p1.Y, color)
+	currentImage.Set(p2.X, p2.Y, color)
+	currentImage.Set(p3.X, p3.Y, color)
+
+	bresenham.DrawLine(currentImage, p0.X, p0.Y, p1.X, p1.Y, color)
+	bresenham.DrawLine(currentImage, p1.X, p1.Y, p2.X, p2.Y, color)
+	bresenham.DrawLine(currentImage, p2.X, p2.Y, p3.X, p3.Y, color)
+	bresenham.DrawLine(currentImage, p3.X, p3.Y, p0.X, p0.Y, color)
+
 }
