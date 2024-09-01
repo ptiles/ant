@@ -3,10 +3,13 @@ package pgrid
 import (
 	"fmt"
 	"github.com/StephaneBunel/bresenham"
+	"github.com/schollz/progressbar/v3"
+	"golang.org/x/time/rate"
 	"image"
 	"image/color"
 	"math"
 	"os"
+	"time"
 )
 
 type gridPointColor struct {
@@ -18,17 +21,25 @@ type gridPointColor struct {
 const MaxModifiedPoints = 32 * 1024
 
 func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- *image.RGBA, maxSteps int64, palette []color.RGBA) {
+	bar := progressbar.NewOptions64(maxSteps,
+		progressbar.OptionSetWidth(75),
+		progressbar.OptionClearOnFinish(),
+		progressbar.OptionShowDescriptionAtLineEnd(),
+		progressbar.OptionShowIts(),
+	)
+
 	currPoint, currLine, prevLine, prevPointSign, pointColor := f.initialState()
 
 	modifiedPointsCh := make(chan []gridPointColor, 1024)
 
-	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, palette)
+	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, palette, len(f.Rules), bar)
 
 	points := make([]gridPointColor, MaxModifiedPoints)
 	modifiedCount := 0
 
 	for range maxSteps {
 		if modifiedCount == MaxModifiedPoints {
+			bar.Add(modifiedCount)
 			modifiedPointsCh <- points
 			modifiedCount = 0
 			points = make([]gridPointColor, MaxModifiedPoints)
@@ -38,6 +49,7 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- *image.RGBA, maxSt
 		points[modifiedCount] = gridPointColor{gridPoint: currPoint, color: pointColor}
 		modifiedCount += 1
 	}
+	bar.Add(modifiedCount)
 	modifiedPointsCh <- points[:modifiedCount]
 	close(modifiedPointsCh)
 }
@@ -72,14 +84,25 @@ func overflowCheck(centerPoint, prevPoint image.Point) {
 
 const drawTiles = false
 
-func modifiedPointsToImages(modifiedPointsCh <-chan []gridPointColor, modifiedImagesCh chan<- *image.RGBA, palette []color.RGBA) {
+func modifiedPointsToImages(
+	modifiedPointsCh <-chan []gridPointColor,
+	modifiedImagesCh chan<- *image.RGBA,
+	palette []color.RGBA, rulesLength int, bar *progressbar.ProgressBar,
+) {
+	s := rate.Sometimes{Interval: 1 * time.Second}
+	pointsCount := 0
+	uniqPointsCount := 0
+
 	for points := range modifiedPointsCh {
 		rect := image.Rectangle{}
 		pixelRect := image.Point{X: 1, Y: 1}
 		prevPoint := image.Point{}
+		uniqPoints := make(map[GridAxes]struct{})
 
 		for i := range points {
-			centerPoint := points[i].gridPoint.getCenterPoint()
+			gridPoint := points[i].gridPoint
+			uniqPoints[gridPoint.Axes] = struct{}{}
+			centerPoint := gridPoint.getCenterPoint()
 			if !rect.Empty() {
 				overflowCheck(centerPoint, prevPoint)
 			}
@@ -91,6 +114,13 @@ func modifiedPointsToImages(modifiedPointsCh <-chan []gridPointColor, modifiedIm
 			points[i].centerPoint = centerPoint
 		}
 
+		pointsCount += len(points)
+		uniqPointsCount += len(uniqPoints)
+		s.Do(func() {
+			bar.Describe(fmt.Sprintf("Uniq: %d%%", 100*rulesLength*uniqPointsCount/pointsCount))
+			pointsCount = 0
+			uniqPointsCount = 0
+		})
 		currentImage := image.NewRGBA(snapRect(rect))
 
 		if drawTiles {

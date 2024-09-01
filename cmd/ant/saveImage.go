@@ -73,12 +73,12 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan *image.RGBA, fileNameFm
 	saveImage(activeImageS, activeRectN, scaleFactor, fileNameFmt, steps)
 
 	fileName := fmt.Sprintf(fileNameFmt, steps, "png")
-	uniqPct := 100 * pgrid.Uniq() / int(steps)
+	uniqPct := 100 * len(commonFlags.AntName) * pgrid.Uniq() / int(steps)
 	dimensions := fmt.Sprintf("%dx%d", activeRectN.Dx(), activeRectN.Dy())
 	dimensionsScaled := fmt.Sprintf("%dx%d", activeRectN.Dx()/scaleFactor, activeRectN.Dy()/scaleFactor)
 	fmt.Printf(
-		"%s %d steps; %d images; %s (%s); %d%% uniq\n",
-		fileName, steps, imagesCount, dimensionsScaled, dimensions, uniqPct,
+		"%s %d steps; %s (%s); %d%% uniq\n",
+		fileName, steps, dimensionsScaled, dimensions, uniqPct,
 	)
 
 	maxSide := activeRectN.Dx()
