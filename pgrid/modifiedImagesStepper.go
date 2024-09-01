@@ -1,7 +1,6 @@
 package pgrid
 
 import (
-	"github.com/ptiles/ant/store"
 	"image"
 	"image/color"
 )
@@ -83,7 +82,7 @@ func (f *Field) ControlledInfiniteStepper(modifiedImagesCh chan<- *image.RGBA, c
 
 			currentImage = image.NewRGBA(pointRect(point, 256))
 
-			store.Reset()
+			ResetValues()
 		}
 
 		step += 1

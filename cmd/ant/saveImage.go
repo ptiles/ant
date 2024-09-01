@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ptiles/ant/store"
+	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/utils"
 	"golang.org/x/image/draw"
 	"image"
@@ -73,7 +73,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan *image.RGBA, fileNameFm
 	saveImage(activeImageS, activeRectN, scaleFactor, fileNameFmt, steps)
 
 	fileName := fmt.Sprintf(fileNameFmt, steps, "png")
-	uniqPct := 100 * store.Uniq() / steps
+	uniqPct := 100 * pgrid.Uniq() / steps
 	dimensions := fmt.Sprintf("%dx%d", activeRectN.Dx(), activeRectN.Dy())
 	dimensionsScaled := fmt.Sprintf("%dx%d", activeRectN.Dx()/scaleFactor, activeRectN.Dy()/scaleFactor)
 	fmt.Printf(

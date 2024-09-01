@@ -1,7 +1,7 @@
 package pgrid
 
 import (
-	"github.com/ptiles/ant/store"
+	"fmt"
 	"github.com/ptiles/ant/utils"
 	"image"
 	"math"
@@ -72,9 +72,18 @@ func New(r, dist float64, rules []bool, initialPoint string, verbose bool) *Fiel
 	return result
 }
 
+var axisNames = [5]string{"A", "B", "C", "D", "E"}
+
 type GridLine struct {
 	Axis   uint8
 	Offset int16
+}
+
+func (gl GridLine) Sprint() string {
+	return fmt.Sprintf("%s%d", axisNames[gl.Axis], gl.Offset)
+}
+func (gl GridLine) Print() {
+	fmt.Println(gl.Sprint())
 }
 
 func (f *Field) getLine(gl GridLine) Line {
@@ -89,9 +98,31 @@ func (f *Field) getLine(gl GridLine) Line {
 }
 
 type GridPoint struct {
-	Offsets      [5]int16
-	Point        Point
-	PackedCoords store.PackedCoordinates
+	Axes    GridAxes
+	Offsets GridOffsets
+	Point   Point
+}
+
+type GridAxes struct {
+	Axis0   uint8
+	Axis1   uint8
+	Offset0 int16
+	Offset1 int16
+}
+
+type GridOffsets [5]int16
+
+func (gp GridPoint) Sprint() string {
+	offsets := gp.Offsets
+	ax0, ax1 := gp.Axes.Axis0, gp.Axes.Axis1
+	return fmt.Sprintf(
+		"%s%d:%s%d [A:%d, B:%d, C:%d, D:%d, E:%d]",
+		axisNames[ax0], offsets[ax0], axisNames[ax1], offsets[ax1],
+		offsets[0], offsets[1], offsets[2], offsets[3], offsets[4],
+	)
+}
+func (gp GridPoint) Print() {
+	fmt.Println(gp.Sprint())
 }
 
 func (f *Field) gridPointToPoint(gridLine0, gridLine1 GridLine) Point {
@@ -111,6 +142,10 @@ func (f *Field) gridPointToPoint(gridLine0, gridLine1 GridLine) Point {
 func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine) GridPoint {
 	gridPoint := GridPoint{}
 
+	if gridLine0.Axis > gridLine1.Axis {
+		gridLine0, gridLine1 = gridLine1, gridLine0
+	}
+
 	gridPoint.Offsets[gridLine0.Axis] = gridLine0.Offset
 	gridPoint.Offsets[gridLine1.Axis] = gridLine1.Offset
 	gridPoint.Point = f.gridPointToPoint(gridLine0, gridLine1)
@@ -122,9 +157,9 @@ func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine) GridPoint {
 		}
 	}
 
-	gridPoint.PackedCoords = store.PackCoordinates(
+	gridPoint.Axes = GridAxes{
 		gridLine0.Axis, gridLine1.Axis, gridLine0.Offset, gridLine1.Offset,
-	)
+	}
 
 	return gridPoint
 }
@@ -177,9 +212,8 @@ func (f *Field) getCenterPoint(gp *GridPoint) image.Point {
 		floatOffsets[i] = float64(gp.Offsets[i])
 	}
 
-	axis0, axis1 := store.UnpackAxes(gp.PackedCoords.PackedAxes)
-	floatOffsets[axis0] += 0.5
-	floatOffsets[axis1] += 0.5
+	floatOffsets[gp.Axes.Axis0] += 0.5
+	floatOffsets[gp.Axes.Axis1] += 0.5
 
 	x, y := deBruijn(&floatOffsets)
 	return image.Point{X: int(x * 2), Y: int(y * 2)}
@@ -198,22 +232,21 @@ func (f *Field) nearestNeighbor(currentPoint GridPoint, prevLine, currentLine Gr
 			for _, offset := range [2]int16{axisOffset, axisOffset - 1} {
 				nextLine := GridLine{axis, offset}
 				// TODO: look how many times makeGridPoint gets called unnecessarily here
-				nextPoint := f.makeGridPoint(currentLine, nextLine)
-				dist := distance(prevLineLine, nextPoint.Point)
-				//axisNames := [5]string{"A", "B", "C", "D", "E"}
+				nextPointPoint := f.gridPointToPoint(currentLine, nextLine)
+				dist := distance(prevLineLine, nextPointPoint)
 				//fmt.Printf("Neighbor %s %d ; %s %d ", axisNames[currentLine.Axis], currentLine.Offset, axisNames[nextLine.Axis], nextLine.Offset)
 				//fmt.Printf("distance=%.1f\n", dist)
 				if (positiveSide && dist > 0) || (!positiveSide && dist < 0) {
 					if math.Abs(dist) < currentDistance {
 						currentDistance = math.Abs(dist)
 						nextLineResult = nextLine
-						nextPointResult = nextPoint
 					}
 				}
 			}
 		}
 	}
 
+	nextPointResult = f.makeGridPoint(currentLine, nextLineResult)
 	//fmt.Printf("currentDistance=%.1f, positiveSide=%t\n", currentDistance, positiveSide)
 	return nextPointResult, nextLineResult
 }
