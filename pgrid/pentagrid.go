@@ -75,7 +75,7 @@ var axisNames = [5]string{"A", "B", "C", "D", "E"}
 
 type GridLine struct {
 	Axis   uint8
-	Offset int16
+	Offset offsetInt
 }
 
 func (gl *GridLine) Sprint() string {
@@ -102,14 +102,16 @@ type GridPoint struct {
 	Point   Point
 }
 
+type offsetInt int16
+
 type GridAxes struct {
 	Axis0   uint8
 	Axis1   uint8
-	Offset0 int16
-	Offset1 int16
+	Offset0 offsetInt
+	Offset1 offsetInt
 }
 
-type GridOffsets [5]int16
+type GridOffsets [5]offsetInt
 
 func (gp *GridPoint) Sprint() string {
 	offsets := gp.Offsets
@@ -158,7 +160,7 @@ func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine, point Point) GridPo
 			continue
 		}
 		dist := distance(f.anchorLines[ax], point)
-		gridPoint.Offsets[ax] = int16(math.Ceil(dist))
+		gridPoint.Offsets[ax] = offsetInt(math.Ceil(dist))
 	}
 
 	return gridPoint
@@ -223,7 +225,7 @@ func (f *Field) nearestNeighbor(currentPointOffsets GridOffsets, prevLine, curre
 			continue
 		}
 		axisOffset := currentPointOffsets[axis]
-		for _, offset := range [2]int16{axisOffset, axisOffset - 1} {
+		for _, offset := range [2]offsetInt{axisOffset, axisOffset - 1} {
 			line := GridLine{axis, offset}
 			pointPoint := f.gridPointToPoint(currentLine, line)
 			dist := distance(prevLineLine, pointPoint)

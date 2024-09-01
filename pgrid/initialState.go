@@ -15,11 +15,11 @@ func (f *Field) initialState() (Point, GridPoint, GridLine, GridLine, uint8) {
 
 	currAxis := strings.Index("ABCDE", currAx)
 	currOffset, _ := strconv.Atoi(currOff)
-	currLine := GridLine{Axis: uint8(currAxis), Offset: int16(currOffset)}
+	currLine := GridLine{Axis: uint8(currAxis), Offset: offsetInt(currOffset)}
 
 	nextAxis := strings.Index("ABCDE", nextAx)
 	nextOffset, _ := strconv.Atoi(nextOff)
-	nextLine := GridLine{Axis: uint8(nextAxis), Offset: int16(nextOffset)}
+	nextLine := GridLine{Axis: uint8(nextAxis), Offset: offsetInt(nextOffset)}
 
 	currAxIncreasing := dir != "-"
 	currPointPoint := f.gridPointToPoint(currLine, nextLine)
