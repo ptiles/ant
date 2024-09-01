@@ -82,64 +82,93 @@ func overflowCheck(centerPoint, prevPoint image.Point) {
 	}
 }
 
-const drawTiles = false
+const drawTilesAndPoints = false
+
+func drawTiles(rect image.Rectangle, points []gridPointColor, palette []color.RGBA) *image.RGBA {
+	img := image.NewRGBA(snapRect(rect))
+	for i := range points {
+		img.Set(
+			points[i].centerPoint.X, points[i].centerPoint.Y,
+			palette[points[i].color],
+		)
+		drawTile(img, points[i].gridPoint, palette[points[i].color])
+	}
+	return img
+}
+
+func drawPoints(rect image.Rectangle, points []gridPointColor, palette []color.RGBA) *image.RGBA {
+	img := image.NewRGBA(snapRect(rect))
+	for i := range points {
+		img.Set(
+			points[i].centerPoint.X, points[i].centerPoint.Y,
+			palette[points[i].color],
+		)
+	}
+	return img
+}
+
+func rectIsLarge(rect image.Rectangle) bool {
+	rectSize := rect.Size()
+	return rectSize.X > 2048 || rectSize.Y > 2048
+}
 
 func modifiedPointsToImages(
 	modifiedPointsCh <-chan []gridPointColor,
 	modifiedImagesCh chan<- *image.RGBA,
 	palette []color.RGBA, rulesLength int, bar *progressbar.ProgressBar,
 ) {
-	s := rate.Sometimes{Interval: 1 * time.Second}
+	s := rate.Sometimes{Interval: time.Second / 2 * 3}
 	pointsCount := 0
-	uniqPointsCount := 0
+	prevPoint := image.Point{}
+	uniqPoints := make(map[GridAxes]struct{})
 
 	for points := range modifiedPointsCh {
+		start := 0
 		rect := image.Rectangle{}
 		pixelRect := image.Point{X: 1, Y: 1}
-		prevPoint := image.Point{}
-		uniqPoints := make(map[GridAxes]struct{})
 
 		for i := range points {
 			gridPoint := points[i].gridPoint
 			uniqPoints[gridPoint.Axes] = struct{}{}
+
 			centerPoint := gridPoint.getCenterPoint()
 			if !rect.Empty() {
 				overflowCheck(centerPoint, prevPoint)
 			}
+			prevPoint = centerPoint
+
+			points[i].centerPoint = centerPoint
+
 			rect = rect.Union(image.Rectangle{
 				Min: centerPoint,
 				Max: centerPoint.Add(pixelRect),
 			})
-			prevPoint = centerPoint
-			points[i].centerPoint = centerPoint
+
+			if rectIsLarge(rect) {
+				if drawTilesAndPoints {
+					modifiedImagesCh <- drawTiles(rect, points[start:i], palette)
+				} else {
+					modifiedImagesCh <- drawPoints(rect, points[start:i], palette)
+				}
+				rect = image.Rectangle{}
+				start = i
+			}
+		}
+
+		if drawTilesAndPoints {
+			modifiedImagesCh <- drawTiles(rect, points[start:], palette)
+		} else {
+			modifiedImagesCh <- drawPoints(rect, points[start:], palette)
 		}
 
 		pointsCount += len(points)
-		uniqPointsCount += len(uniqPoints)
 		s.Do(func() {
-			bar.Describe(fmt.Sprintf("Uniq: %d%%", 100*rulesLength*uniqPointsCount/pointsCount))
+			bar.Describe(fmt.Sprintf(
+				"Uniq: %d%%", 100*rulesLength*len(uniqPoints)/pointsCount),
+			)
 			pointsCount = 0
-			uniqPointsCount = 0
+			uniqPoints = make(map[GridAxes]struct{})
 		})
-		currentImage := image.NewRGBA(snapRect(rect))
-
-		if drawTiles {
-			for i := range points {
-				currentImage.Set(
-					points[i].centerPoint.X, points[i].centerPoint.Y,
-					palette[points[i].color],
-				)
-				drawTile(currentImage, points[i].gridPoint, palette[points[i].color])
-			}
-		} else {
-			for i := range points {
-				currentImage.Set(
-					points[i].centerPoint.X, points[i].centerPoint.Y,
-					palette[points[i].color],
-				)
-			}
-		}
-		modifiedImagesCh <- currentImage
 	}
 	close(modifiedImagesCh)
 }
