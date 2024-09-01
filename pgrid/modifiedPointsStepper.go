@@ -7,9 +7,9 @@ import (
 )
 
 type pointColor struct {
-	gridPoint GridPoint
-	point     image.Point
-	color     uint8
+	gridPoint   GridPoint
+	centerPoint image.Point
+	color       uint8
 }
 
 const MaxModifiedPoints = 32 * 1024
@@ -54,10 +54,10 @@ func modifiedPointsToImages(modifiedPointsCh <-chan []pointColor, modifiedImages
 		pixelRect := image.Point{X: 1, Y: 1}
 
 		for i := range points {
-			points[i].point = points[i].gridPoint.getCenterPoint()
+			points[i].centerPoint = points[i].gridPoint.getCenterPoint()
 			rect = rect.Union(image.Rectangle{
-				Min: points[i].point,
-				Max: points[i].point.Add(pixelRect),
+				Min: points[i].centerPoint,
+				Max: points[i].centerPoint.Add(pixelRect),
 			})
 		}
 
@@ -67,8 +67,8 @@ func modifiedPointsToImages(modifiedPointsCh <-chan []pointColor, modifiedImages
 		})
 		for i := range points {
 			currentImage.Set(
-				points[i].point.X,
-				points[i].point.Y,
+				points[i].centerPoint.X,
+				points[i].centerPoint.Y,
 				palette[points[i].color],
 			)
 		}
