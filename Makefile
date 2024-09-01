@@ -18,8 +18,8 @@ bench:
 
 compare:
 	make bench-prep
-	./bin/ant-old -o RLLRL.A-644+E633.50000001
-	./bin/ant     -o RLLRL.A-644+E633.50000002
+	./bin/ant-old RLLRL.A-644+E633.50000001
+	./bin/ant     RLLRL.A-644+E633.50000002
 	open results5/RLLRL.A-644+E633.50000001.png
 	open results5/RLLRL.A-644+E633.50000002.png
 

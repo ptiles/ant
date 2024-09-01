@@ -13,16 +13,16 @@ func init() {
 	}
 }
 
-func (f *Field) next(prevPointPoint Point, currPoint GridPoint, prevLine, currLine GridLine) (Point, GridPoint, GridLine, GridLine, uint8) {
+func (f *Field) next(prevPointSign bool, currPoint GridPoint, prevLine, currLine GridLine) (bool, GridPoint, GridLine, GridLine, uint8) {
 	isRightTurn, currPointColor := f.step(currPoint.Axes)
 
 	axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
-	prevPointSign := distance(f.getLine(currLine), prevPointPoint) < 0
 	positiveSide := isRightTurn != axisRotation != prevPointSign
 
 	nextPoint, nextLine := f.nearestNeighbor(currPoint.Offsets, prevLine, currLine, positiveSide)
+	currPointSign := distance(f.getLine(nextLine), currPoint.Point) < 0
 
-	return currPoint.Point, nextPoint, currLine, nextLine, currPointColor
+	return currPointSign, nextPoint, currLine, nextLine, currPointColor
 }
 
 func (f *Field) step(axes GridAxes) (bool, uint8) {
