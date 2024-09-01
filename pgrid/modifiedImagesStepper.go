@@ -7,12 +7,12 @@ import (
 
 func (f *Field) ModifiedImagesStepper(modifiedImagesCh chan<- *image.RGBA, maxSteps int, palette []color.RGBA) {
 	prevPoint, currPoint, prevLine, currLine, prevPointColor := f.initialState()
-	initialPoint := f.getCenterPoint(&prevPoint)
+	initialPoint := prevPoint.getCenterPoint()
 	currentImage := image.NewRGBA(pointRect(initialPoint, 256))
 
 	for range maxSteps {
 		prevPoint, currPoint, prevLine, currLine, prevPointColor = f.next(prevPoint, currPoint, prevLine, currLine)
-		point := f.getCenterPoint(&prevPoint)
+		point := prevPoint.getCenterPoint()
 		if isOutside(point, currentImage.Rect) {
 			modifiedImagesCh <- currentImage
 			currentImage = image.NewRGBA(pointRect(point, 256))

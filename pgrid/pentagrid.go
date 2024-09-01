@@ -78,10 +78,10 @@ type GridLine struct {
 	Offset int16
 }
 
-func (gl GridLine) Sprint() string {
+func (gl *GridLine) Sprint() string {
 	return fmt.Sprintf("%s%d", axisNames[gl.Axis], gl.Offset)
 }
-func (gl GridLine) Print() {
+func (gl *GridLine) Print() {
 	fmt.Println(gl.Sprint())
 }
 
@@ -111,7 +111,7 @@ type GridAxes struct {
 
 type GridOffsets [5]int16
 
-func (gp GridPoint) Sprint() string {
+func (gp *GridPoint) Sprint() string {
 	offsets := gp.Offsets
 	ax0, ax1 := gp.Axes.Axis0, gp.Axes.Axis1
 	return fmt.Sprintf(
@@ -120,7 +120,7 @@ func (gp GridPoint) Sprint() string {
 		offsets[0], offsets[1], offsets[2], offsets[3], offsets[4],
 	)
 }
-func (gp GridPoint) Print() {
+func (gp *GridPoint) Print() {
 	fmt.Println(gp.Sprint())
 }
 
@@ -206,7 +206,7 @@ func deBruijn(floatOffsets *[5]float64) (float64, float64) {
 	return y, x
 }
 
-func (f *Field) getCenterPoint(gp *GridPoint) image.Point {
+func (gp *GridPoint) getCenterPoint() image.Point {
 	var floatOffsets [5]float64
 	for i := range 5 {
 		floatOffsets[i] = float64(gp.Offsets[i])

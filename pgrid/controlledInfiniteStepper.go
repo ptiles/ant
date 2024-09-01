@@ -13,7 +13,7 @@ const (
 
 func (f *Field) ControlledInfiniteStepper(modifiedImagesCh chan<- *image.RGBA, commandCh <-chan CommandType, palette []color.RGBA) {
 	prevPoint, currPoint, prevLine, currLine, prevPointColor := f.initialState()
-	initialPoint := f.getCenterPoint(&prevPoint)
+	initialPoint := prevPoint.getCenterPoint()
 	currentImage := image.NewRGBA(pointRect(initialPoint, 256))
 
 	step := 0
@@ -23,7 +23,7 @@ func (f *Field) ControlledInfiniteStepper(modifiedImagesCh chan<- *image.RGBA, c
 	for shouldRun {
 		prevPoint, currPoint, prevLine, currLine, prevPointColor = f.next(prevPoint, currPoint, prevLine, currLine)
 
-		point := f.getCenterPoint(&prevPoint)
+		point := prevPoint.getCenterPoint()
 		if !shouldReset && isOutside(point, currentImage.Rect) {
 			modifiedImagesCh <- currentImage
 			currentImage = image.NewRGBA(pointRect(point, 256))
