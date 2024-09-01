@@ -100,7 +100,8 @@ func main() {
 		maxBitWidth, _ := strconv.Atoi(result[2])
 
 		for bitWidth := minBitWidth; bitWidth <= maxBitWidth; bitWidth++ {
-			for num := uint64(1); num < 1<<bitWidth-1; num++ {
+			maxNum := uint64(1<<bitWidth) - 1
+			for num := uint64(1); num < maxNum; num++ {
 				name := numToName(num, bitWidth)
 
 				fmt.Printf(
