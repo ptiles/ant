@@ -1,6 +1,6 @@
 package pgrid
 
-var axesRotation = [5][5]bool{
+var axesRotation = [GRID_LINES_TOTAL][GRID_LINES_TOTAL]bool{
 	{true, true, true, false, false},
 	{false, true, true, true, false},
 	{false, false, true, true, true},

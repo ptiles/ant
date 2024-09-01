@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/utils"
 	"math/rand/v2"
 	"os"
@@ -12,12 +13,14 @@ import (
 	"strings"
 )
 
+const GRID_LINES_TOTAL = uint(pgrid.GRID_LINES_TOTAL)
+
 func genRandomInitialPoint(min, max int) string {
-	axisNames := [5]string{"A", "B", "C", "D", "E"}
+	axisNames := [GRID_LINES_TOTAL]string{"A", "B", "C", "D", "E"}
 	dirNames := [2]string{"-", "+"}
 
-	ax1 := rand.IntN(5)
-	ax2 := (ax1 + 1 + rand.IntN(4)) % 5
+	ax1 := rand.UintN(GRID_LINES_TOTAL)
+	ax2 := (ax1 + 1 + rand.UintN(GRID_LINES_TOTAL-1)) % GRID_LINES_TOTAL
 
 	dir := rand.IntN(2)
 
