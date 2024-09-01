@@ -22,7 +22,8 @@ func (f *Field) initialState() (GridPoint, GridPoint, GridLine, GridLine, uint8)
 	nextLine := GridLine{Axis: uint8(nextAxis), Offset: int16(nextOffset)}
 
 	currAxIncreasing := dir != "-"
-	currPoint := f.makeGridPoint(currLine, nextLine)
+	currPointPoint := f.gridPointToPoint(currLine, nextLine)
+	currPoint := f.makeGridPoint(currLine, nextLine, currPointPoint)
 
 	prevPoint, prevLine := f.nearestNeighbor(currPoint, nextLine, currLine, !currAxIncreasing)
 

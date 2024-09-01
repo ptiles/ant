@@ -139,26 +139,27 @@ func (f *Field) gridPointToPoint(gridLine0, gridLine1 GridLine) Point {
 	}
 }
 
-func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine) GridPoint {
-	gridPoint := GridPoint{}
-
+func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine, point Point) GridPoint {
 	if gridLine0.Axis > gridLine1.Axis {
 		gridLine0, gridLine1 = gridLine1, gridLine0
 	}
 
-	gridPoint.Offsets[gridLine0.Axis] = gridLine0.Offset
-	gridPoint.Offsets[gridLine1.Axis] = gridLine1.Offset
-	gridPoint.Point = f.gridPointToPoint(gridLine0, gridLine1)
-
-	for ax := range uint8(5) {
-		if ax != gridLine0.Axis && ax != gridLine1.Axis {
-			dist := distance(f.anchorLines[ax], gridPoint.Point)
-			gridPoint.Offsets[ax] = int16(math.Ceil(dist / f.dist))
-		}
+	gridPoint := GridPoint{
+		Axes: GridAxes{
+			gridLine0.Axis, gridLine1.Axis, gridLine0.Offset, gridLine1.Offset,
+		},
+		Point: point,
 	}
 
-	gridPoint.Axes = GridAxes{
-		gridLine0.Axis, gridLine1.Axis, gridLine0.Offset, gridLine1.Offset,
+	gridPoint.Offsets[gridLine0.Axis] = gridLine0.Offset
+	gridPoint.Offsets[gridLine1.Axis] = gridLine1.Offset
+
+	for ax := range uint8(5) {
+		if ax == gridLine0.Axis || ax == gridLine1.Axis {
+			continue
+		}
+		dist := distance(f.anchorLines[ax], gridPoint.Point)
+		gridPoint.Offsets[ax] = int16(math.Ceil(dist / f.dist))
 	}
 
 	return gridPoint
@@ -221,32 +222,33 @@ func (f *Field) getCenterPoint(gp *GridPoint) image.Point {
 }
 
 func (f *Field) nearestNeighbor(currentPoint GridPoint, prevLine, currentLine GridLine, positiveSide bool) (GridPoint, GridLine) {
-	var nextLineResult GridLine
-	var nextPointResult GridPoint
+	var nextLine GridLine
+	var nextPointPoint Point
 	currentDistance := 1000000.0
 	prevLineLine := f.getLine(prevLine)
 
 	for axis := uint8(0); axis < 5; axis++ {
-		if axis != prevLine.Axis && axis != currentLine.Axis {
-			axisOffset := currentPoint.Offsets[axis]
-			for _, offset := range [2]int16{axisOffset, axisOffset - 1} {
-				nextLine := GridLine{axis, offset}
-				// TODO: look how many times makeGridPoint gets called unnecessarily here
-				nextPointPoint := f.gridPointToPoint(currentLine, nextLine)
-				dist := distance(prevLineLine, nextPointPoint)
-				//fmt.Printf("Neighbor %s %d ; %s %d ", axisNames[currentLine.Axis], currentLine.Offset, axisNames[nextLine.Axis], nextLine.Offset)
-				//fmt.Printf("distance=%.1f\n", dist)
-				if (positiveSide && dist > 0) || (!positiveSide && dist < 0) {
-					if math.Abs(dist) < currentDistance {
-						currentDistance = math.Abs(dist)
-						nextLineResult = nextLine
-					}
+		if axis == prevLine.Axis || axis == currentLine.Axis {
+			continue
+		}
+		axisOffset := currentPoint.Offsets[axis]
+		for _, offset := range [2]int16{axisOffset, axisOffset - 1} {
+			line := GridLine{axis, offset}
+			pointPoint := f.gridPointToPoint(currentLine, line)
+			dist := distance(prevLineLine, pointPoint)
+			//fmt.Printf("Neighbor %s %d ; %s %d ", axisNames[currentLine.Axis], currentLine.Offset, axisNames[line.Axis], line.Offset)
+			//fmt.Printf("distance=%.1f\n", dist)
+			if (positiveSide && dist > 0) || (!positiveSide && dist < 0) {
+				if math.Abs(dist) < currentDistance {
+					currentDistance = math.Abs(dist)
+					nextLine = line
+					nextPointPoint = pointPoint
 				}
 			}
 		}
 	}
 
-	nextPointResult = f.makeGridPoint(currentLine, nextLineResult)
+	nextPoint := f.makeGridPoint(currentLine, nextLine, nextPointPoint)
 	//fmt.Printf("currentDistance=%.1f, positiveSide=%t\n", currentDistance, positiveSide)
-	return nextPointResult, nextLineResult
+	return nextPoint, nextLine
 }
