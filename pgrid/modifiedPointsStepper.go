@@ -1,9 +1,11 @@
 package pgrid
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"math"
+	"os"
 )
 
 type pointColor struct {
@@ -40,31 +42,51 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- *image.RGBA, maxSt
 	close(modifiedPointsCh)
 }
 
-func floor(v int) int {
+func floorSnap(v int) int {
 	return int(math.Floor(float64(v)/256.0)) * 256
 }
 
-func ceil(v int) int {
+func ceilSnap(v int) int {
 	return int(math.Ceil(float64(v)/256.0)) * 256
+}
+
+func snapRect(rect image.Rectangle) image.Rectangle {
+	return image.Rectangle{
+		Min: image.Point{X: floorSnap(rect.Min.X), Y: floorSnap(rect.Min.Y)},
+		Max: image.Point{X: ceilSnap(rect.Max.X), Y: ceilSnap(rect.Max.Y)},
+	}
+}
+
+const OverflowOffset = 1024
+
+func overflowCheck(centerPoint, prevPoint image.Point) {
+	diff := image.Rectangle{Min: centerPoint, Max: prevPoint}.Canon()
+	if diff.Dx() > OverflowOffset || diff.Dy() > OverflowOffset {
+		fmt.Println("Point is way too far (integer overflow)", centerPoint, prevPoint)
+		os.Exit(0)
+	}
 }
 
 func modifiedPointsToImages(modifiedPointsCh <-chan []pointColor, modifiedImagesCh chan<- *image.RGBA, palette []color.RGBA) {
 	for points := range modifiedPointsCh {
 		rect := image.Rectangle{}
 		pixelRect := image.Point{X: 1, Y: 1}
+		prevPoint := image.Point{}
 
 		for i := range points {
-			points[i].centerPoint = points[i].gridPoint.getCenterPoint()
+			centerPoint := points[i].gridPoint.getCenterPoint()
+			if !rect.Empty() {
+				overflowCheck(centerPoint, prevPoint)
+			}
 			rect = rect.Union(image.Rectangle{
-				Min: points[i].centerPoint,
-				Max: points[i].centerPoint.Add(pixelRect),
+				Min: centerPoint,
+				Max: centerPoint.Add(pixelRect),
 			})
+			prevPoint = centerPoint
+			points[i].centerPoint = centerPoint
 		}
 
-		currentImage := image.NewRGBA(image.Rectangle{
-			Min: image.Point{X: floor(rect.Min.X), Y: floor(rect.Min.Y)},
-			Max: image.Point{X: ceil(rect.Max.X), Y: ceil(rect.Max.Y)},
-		})
+		currentImage := image.NewRGBA(snapRect(rect))
 		for i := range points {
 			currentImage.Set(
 				points[i].centerPoint.X,
