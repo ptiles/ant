@@ -157,7 +157,7 @@ func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine, point Point) GridPo
 		if ax == gridLine0.Axis || ax == gridLine1.Axis {
 			continue
 		}
-		dist := distance(f.anchorLines[ax], gridPoint.Point)
+		dist := distance(f.anchorLines[ax], point)
 		gridPoint.Offsets[ax] = int16(math.Ceil(dist))
 	}
 

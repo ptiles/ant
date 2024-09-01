@@ -26,7 +26,7 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- *image.RGBA, maxSt
 	modifiedCount := 1
 
 	for range maxSteps {
-		prevPoint, currPoint, prevLine, currLine, prevPointColor = f.next(prevPoint, currPoint, prevLine, currLine)
+		prevPoint, currPoint, prevLine, currLine, prevPointColor = f.next(prevPoint.Point, currPoint, prevLine, currLine)
 
 		if modifiedCount == MaxModifiedPoints {
 			modifiedPointsCh <- points
