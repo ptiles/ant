@@ -21,7 +21,7 @@ func (f *Field) ControlledInfiniteStepper(modifiedImagesCh chan<- *image.RGBA, c
 	shouldRun := true
 
 	for shouldRun {
-		prevPoint, currPoint, prevLine, currLine, prevPointColor = f.step(prevPoint, currPoint, prevLine, currLine)
+		prevPoint, currPoint, prevLine, currLine, prevPointColor = f.next(prevPoint, currPoint, prevLine, currLine)
 
 		point := f.getCenterPoint(&prevPoint)
 		if !shouldReset && isOutside(point, currentImage.Rect) {
