@@ -38,7 +38,7 @@ func flagsSetup() *Flags {
 	flags := &Flags{}
 
 	flag.BoolVar(&flags.jsonStats, "j", false, "Save stats in json file")
-	flag.IntVar(&flags.maxDimension, "m", 4096, "Max image size")
+	flag.IntVar(&flags.maxDimension, "w", 16*1024, "Max image size")
 	//flag.BoolVar(&flags.openResults, "oo", false, "Open partial resulting files")
 	flag.BoolVar(&flags.openResult, "o", false, "Open resulting file")
 	flag.IntVar(&flags.partialImages, "p", 0, "Save partial result every N intermediate images")
@@ -72,7 +72,7 @@ func main() {
 
 	modifiedImagesCh := make(chan *image.RGBA, 1024)
 
-	go field.ModifiedImagesStepper(modifiedImagesCh, commonFlags.MaxSteps, palette)
+	go field.ModifiedPointsStepper(modifiedImagesCh, commonFlags.MaxSteps, palette)
 
 	fileNameFmt := fmt.Sprintf("%s/%s.%s.%%d.%%s", path.Clean(commonFlags.Dir), commonFlags.AntName, commonFlags.InitialPoint)
 
