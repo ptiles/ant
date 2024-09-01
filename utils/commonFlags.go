@@ -14,7 +14,7 @@ type CommonFlags struct {
 	InitialPoint string
 	AntName      string
 	Radius       float64
-	MaxSteps     int64
+	MaxSteps     uint64
 	Verbose      bool
 }
 
@@ -30,7 +30,7 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 	flag.StringVar(&cf.Dir, "d", fmt.Sprintf("results%d", gridLinesTotal), "Results directory")
 	flag.StringVar(&cf.InitialPoint, "i", "A0+B0", "Initial axes and direction")
 	flag.StringVar(&cf.AntName, "n", "RLLLL", "Ant name")
-	flag.Int64Var(&cf.MaxSteps, "s", 1000000, "Steps")
+	flag.Uint64Var(&cf.MaxSteps, "s", 1000000, "Steps")
 	flag.Float64Var(&cf.Radius, "tr", 0.5, "Tiles config - radius")
 	flag.BoolVar(&cf.Verbose, "v", false, "Verbose output")
 }
@@ -67,7 +67,7 @@ func (cf *CommonFlags) ParseShorthand(shorthand string) {
 	cf.InitialPoint = matches["initialPoint"]
 
 	maxStepsS := strings.Replace(matches["maxSteps"], "_", "", -1)
-	maxSteps, maxStepsErr := strconv.ParseInt(maxStepsS, 10, 0)
+	maxSteps, maxStepsErr := strconv.ParseUint(maxStepsS, 10, 0)
 	if maxStepsErr == nil {
 		cf.MaxSteps = maxSteps
 	}
@@ -83,7 +83,7 @@ func (cf *CommonFlags) parseShorthandOld(shorthand string) {
 	case 2:
 		println(shortSplit[0], shortSplit[1])
 		cf.AntName = shortSplit[0]
-		maxStepsFromShort, err := strconv.ParseInt(shortSplit[1], 10, 64)
+		maxStepsFromShort, err := strconv.ParseUint(shortSplit[1], 10, 64)
 		if err == nil {
 			cf.MaxSteps = maxStepsFromShort
 		}
@@ -91,7 +91,7 @@ func (cf *CommonFlags) parseShorthandOld(shorthand string) {
 		println(shortSplit[0], shortSplit[1], shortSplit[2])
 		cf.AntName = shortSplit[0]
 		cf.InitialPoint = shortSplit[1]
-		maxStepsFromShort, err := strconv.ParseInt(shortSplit[2], 10, 64)
+		maxStepsFromShort, err := strconv.ParseUint(shortSplit[2], 10, 64)
 		if err == nil {
 			cf.MaxSteps = maxStepsFromShort
 		}

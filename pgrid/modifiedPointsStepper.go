@@ -20,8 +20,8 @@ type gridPointColor struct {
 
 const MaxModifiedPoints = 32 * 1024
 
-func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- *image.RGBA, maxSteps int64, palette []color.RGBA) {
-	bar := progressbar.NewOptions64(maxSteps,
+func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, maxSteps, partialSteps uint64, palette []color.RGBA) {
+	bar := progressbar.NewOptions64(int64(maxSteps),
 		progressbar.OptionSetWidth(75),
 		progressbar.OptionClearOnFinish(),
 		progressbar.OptionShowDescriptionAtLineEnd(),
@@ -32,7 +32,7 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- *image.RGBA, maxSt
 
 	modifiedPointsCh := make(chan []gridPointColor, 1024)
 
-	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, palette, len(f.Rules), bar)
+	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, palette, len(f.Rules), partialSteps, bar)
 
 	points := make([]gridPointColor, MaxModifiedPoints)
 	modifiedCount := 0
@@ -77,33 +77,33 @@ const OverflowOffset = 1024
 func overflowCheck(centerPoint, prevPoint image.Point) {
 	diff := image.Rectangle{Min: centerPoint, Max: prevPoint}.Canon()
 	if diff.Dx() > OverflowOffset || diff.Dy() > OverflowOffset {
-		fmt.Println("Point is way too far (integer overflow)", centerPoint, prevPoint)
+		fmt.Println("\nPoint is way too far (integer overflow)", centerPoint, prevPoint)
 		os.Exit(0)
 	}
 }
 
 const drawTilesAndPoints = false
 
-func drawTiles(rect image.Rectangle, points []gridPointColor, palette []color.RGBA) *image.RGBA {
-	img := image.NewRGBA(snapRect(rect))
-	for i := range points {
-		img.Set(
-			points[i].centerPoint.X, points[i].centerPoint.Y,
-			palette[points[i].color],
-		)
-		drawTile(img, points[i].gridPoint, palette[points[i].color])
-	}
-	return img
-}
-
 func drawPoints(rect image.Rectangle, points []gridPointColor, palette []color.RGBA) *image.RGBA {
 	img := image.NewRGBA(snapRect(rect))
-	for i := range points {
-		img.Set(
-			points[i].centerPoint.X, points[i].centerPoint.Y,
-			palette[points[i].color],
-		)
+
+	if drawTilesAndPoints {
+		for i := range points {
+			img.Set(
+				points[i].centerPoint.X, points[i].centerPoint.Y,
+				palette[points[i].color],
+			)
+			drawTile(img, points[i].gridPoint, palette[points[i].color])
+		}
+	} else {
+		for i := range points {
+			img.Set(
+				points[i].centerPoint.X, points[i].centerPoint.Y,
+				palette[points[i].color],
+			)
+		}
 	}
+
 	return img
 }
 
@@ -112,14 +112,24 @@ func rectIsLarge(rect image.Rectangle) bool {
 	return rectSize.X > 2048 || rectSize.Y > 2048
 }
 
+type ModifiedImage struct {
+	Img   *image.RGBA
+	Steps uint64
+	Save  bool
+}
+
 func modifiedPointsToImages(
 	modifiedPointsCh <-chan []gridPointColor,
-	modifiedImagesCh chan<- *image.RGBA,
-	palette []color.RGBA, rulesLength int, bar *progressbar.ProgressBar,
+	modifiedImagesCh chan<- ModifiedImage,
+	palette []color.RGBA,
+	rulesLength int, partialSteps uint64,
+	bar *progressbar.ProgressBar,
 ) {
 	s := rate.Sometimes{Interval: time.Second / 2 * 3}
-	pointsCount := 0
+	stepsCount := uint64(0)
 	prevPoint := image.Point{}
+
+	uniqPointsCount := 0
 	uniqPoints := make(map[GridAxes]struct{})
 
 	for points := range modifiedPointsCh {
@@ -144,29 +154,28 @@ func modifiedPointsToImages(
 				Max: centerPoint.Add(pixelRect),
 			})
 
-			if rectIsLarge(rect) {
-				if drawTilesAndPoints {
-					modifiedImagesCh <- drawTiles(rect, points[start:i], palette)
-				} else {
-					modifiedImagesCh <- drawPoints(rect, points[start:i], palette)
-				}
+			shouldSave := stepsCount > 0 && stepsCount%partialSteps == 0
+			if rectIsLarge(rect) || shouldSave {
+				mImage := ModifiedImage{Steps: stepsCount, Save: shouldSave}
+				mImage.Img = drawPoints(rect, points[start:i], palette)
+				modifiedImagesCh <- mImage
+
 				rect = image.Rectangle{}
-				start = i
+				start = i + 1
 			}
+			stepsCount += 1
 		}
 
-		if drawTilesAndPoints {
-			modifiedImagesCh <- drawTiles(rect, points[start:], palette)
-		} else {
-			modifiedImagesCh <- drawPoints(rect, points[start:], palette)
-		}
+		mImage := ModifiedImage{Steps: stepsCount}
+		mImage.Img = drawPoints(rect, points[start:], palette)
+		modifiedImagesCh <- mImage
 
-		pointsCount += len(points)
+		uniqPointsCount += len(points)
 		s.Do(func() {
 			bar.Describe(fmt.Sprintf(
-				"Uniq: %d%%", 100*rulesLength*len(uniqPoints)/pointsCount),
+				"Uniq: %d%%", 100*rulesLength*len(uniqPoints)/uniqPointsCount),
 			)
-			pointsCount = 0
+			uniqPointsCount = 0
 			uniqPoints = make(map[GridAxes]struct{})
 		})
 	}

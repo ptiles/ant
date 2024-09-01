@@ -36,25 +36,26 @@ func drawImg(activeImageS, img *image.RGBA, scaleFactor int) {
 	draw.CatmullRom.Scale(activeImageS, rectDiv(img.Rect, scaleFactor), img, img.Rect, draw.Over, nil)
 }
 
-func saveImageFromModifiedImages(modifiedImagesCh <-chan *image.RGBA, fileNameFmt string, flags *Flags, commonFlags *utils.CommonFlags) {
+func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fileNameFmt string, flags *Flags, commonFlags *utils.CommonFlags) {
 	maxDimension := flags.maxDimension
-	partialImages := flags.partialImages
 	steps := commonFlags.MaxSteps
 
 	imagesCount := 1
 	scaleFactor := 1
 
-	img0 := <-modifiedImagesCh
+	mImg0 := <-modifiedImagesCh
+	img0 := mImg0.Img
 
 	activeRectN := img0.Rect
 	boundRectN := newBoundFromRect(img0.Rect, maxDimension)
 	activeImageS := image.NewRGBA(boundRectN)
 	drawImg(activeImageS, img0, scaleFactor)
 
-	for img := range modifiedImagesCh {
+	for mImg := range modifiedImagesCh {
+		img := mImg.Img
 		imagesCount += 1
-		if partialImages > 0 && imagesCount%partialImages == 0 {
-			saveImage(activeImageS, activeRectN, scaleFactor, fileNameFmt, -int64(imagesCount))
+		if mImg.Save {
+			saveImage(activeImageS, activeRectN, scaleFactor, fileNameFmt, mImg.Steps)
 		}
 		activeRectN = activeRectN.Union(img.Rect)
 
@@ -100,7 +101,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan *image.RGBA, fileNameFm
 	}
 }
 
-func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps int64) {
+func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps uint64) {
 	fileName := fmt.Sprintf(fileNameFmt, steps, "png")
 
 	if steps < 0 {
@@ -129,7 +130,7 @@ func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFacto
 type statsType struct {
 	AntName          string `json:"antName"`
 	FileName         string `json:"fileName"`
-	Steps            int64  `json:"steps"`
+	Steps            uint64 `json:"steps"`
 	UniqPct          int    `json:"uniqPct"`
 	ImagesCount      int    `json:"imagesCount"`
 	MaxSide          int    `json:"maxSide"`

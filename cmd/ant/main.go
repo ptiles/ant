@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/utils"
-	"image"
 	"os"
 	"path/filepath"
 )
@@ -26,11 +25,11 @@ Flags:
 )
 
 type Flags struct {
-	jsonStats     bool
-	maxDimension  int
-	openResults   bool
-	openResult    bool
-	partialImages int
+	jsonStats    bool
+	maxDimension int
+	openResults  bool
+	openResult   bool
+	partialSteps uint64
 }
 
 func flagsSetup() *Flags {
@@ -40,7 +39,7 @@ func flagsSetup() *Flags {
 	flag.IntVar(&flags.maxDimension, "w", 16*1024, "Max image size")
 	//flag.BoolVar(&flags.openResults, "oo", false, "Open partial resulting files")
 	flag.BoolVar(&flags.openResult, "o", false, "Open resulting file")
-	flag.IntVar(&flags.partialImages, "p", 0, "Save partial result every N intermediate images")
+	flag.Uint64Var(&flags.partialSteps, "p", 0, "Save partial result every N steps")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, usageText, programName, programName)
@@ -70,9 +69,9 @@ func main() {
 	field := pgrid.New(commonFlags.Radius, rules, commonFlags.InitialPoint, commonFlags.Verbose)
 	palette := utils.GetPalette(int(field.Limit))
 
-	modifiedImagesCh := make(chan *image.RGBA, 1024)
+	modifiedImagesCh := make(chan pgrid.ModifiedImage, 1024)
 
-	go field.ModifiedPointsStepper(modifiedImagesCh, commonFlags.MaxSteps, palette)
+	go field.ModifiedPointsStepper(modifiedImagesCh, commonFlags.MaxSteps, flags.partialSteps, palette)
 
 	fileNameFmt := fmt.Sprintf(
 		"%s/%s__%f__%s__%%d.%%s",
