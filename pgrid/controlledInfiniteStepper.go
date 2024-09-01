@@ -5,19 +5,48 @@ import (
 	"image/color"
 )
 
-func (f *Field) ModifiedImagesStepper(modifiedImagesCh chan<- *image.RGBA, maxSteps int, palette []color.RGBA) {
+type CommandType int
+
+const (
+	Reset CommandType = iota
+)
+
+func (f *Field) ControlledInfiniteStepper(modifiedImagesCh chan<- *image.RGBA, commandCh <-chan CommandType, palette []color.RGBA) {
 	prevPoint, currPoint, prevLine, currLine, prevPointColor := f.initialState()
 	initialPoint := f.getCenterPoint(&prevPoint)
 	currentImage := image.NewRGBA(pointRect(initialPoint, 256))
 
-	for step := 0; step < maxSteps; step++ {
+	step := 0
+	shouldReset := false
+	shouldRun := true
+
+	for shouldRun {
 		prevPoint, currPoint, prevLine, currLine, prevPointColor = f.step(prevPoint, currPoint, prevLine, currLine)
+
 		point := f.getCenterPoint(&prevPoint)
-		if isOutside(point, currentImage.Rect) {
+		if !shouldReset && isOutside(point, currentImage.Rect) {
 			modifiedImagesCh <- currentImage
 			currentImage = image.NewRGBA(pointRect(point, 256))
 		}
 		currentImage.Set(point.X, point.Y, palette[prevPointColor])
+
+		select {
+		case command := <-commandCh:
+			if command == Reset {
+				shouldReset = true
+			}
+		default:
+		}
+
+		if shouldReset && prevPointColor == 0 {
+			shouldReset = false
+
+			currentImage = image.NewRGBA(pointRect(point, 256))
+
+			ResetValues()
+		}
+
+		step += 1
 	}
 	modifiedImagesCh <- currentImage
 	close(modifiedImagesCh)
