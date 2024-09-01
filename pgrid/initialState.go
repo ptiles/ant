@@ -28,7 +28,6 @@ func (f *Field) initialState() (GridPoint, GridPoint, GridLine, GridLine, uint8)
 	prevPoint, prevLine := f.nearestNeighbor(currPoint, nextLine, currLine, !currAxIncreasing)
 
 	if f.verbose {
-		axisNames := [5]string{"A", "B", "C", "D", "E"}
 		fmt.Printf("Initial step: ")
 		fmt.Printf("%s%d%s%d=>", axisNames[currLine.Axis], currLine.Offset, axisNames[prevLine.Axis], prevLine.Offset)
 		fmt.Printf("%s%d%s%d\n", axisNames[nextLine.Axis], nextLine.Offset, axisNames[currLine.Axis], currLine.Offset)

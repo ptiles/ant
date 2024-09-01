@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"github.com/crazy3lf/colorconv"
 	"image/color"
 	"log"
 	"math"
@@ -33,6 +34,8 @@ func GetPalette(steps int) []color.RGBA {
 		g := uint8(math.Round(gs * 0xb0))
 		b := uint8(math.Round(bs*0xb0 + 0x4f))
 
+		h, s, _ := colorconv.RGBToHSL(r, g, b)
+		r, g, b, _ = colorconv.HSLToRGB(h, s, 0.75)
 		palette[c] = color.RGBA{R: r, G: g, B: b, A: 255}
 	}
 	return palette

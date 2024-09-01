@@ -9,10 +9,9 @@ import (
 type CommonFlags struct {
 	Cpuprofile   string
 	Dir          string
-	Dist         int
 	InitialPoint string
 	AntName      string
-	Radius       int
+	Radius       float64
 	MaxSteps     int
 	Verbose      bool
 }
@@ -25,8 +24,7 @@ func CommonFlagsSetup() *CommonFlags {
 	flag.StringVar(&commonFlags.InitialPoint, "i", "A0+B0", "Initial axes and direction")
 	flag.StringVar(&commonFlags.AntName, "n", "", "Ant name")
 	flag.IntVar(&commonFlags.MaxSteps, "s", 1000000, "Steps")
-	flag.IntVar(&commonFlags.Dist, "td", 8, "Tiles config - distance")
-	flag.IntVar(&commonFlags.Radius, "tr", 2, "Tiles config - radius")
+	flag.Float64Var(&commonFlags.Radius, "tr", 0.5, "Tiles config - radius")
 	flag.BoolVar(&commonFlags.Verbose, "v", false, "Verbose output")
 
 	return commonFlags

@@ -11,7 +11,6 @@ const X = 0
 const Y = 1
 
 type Field struct {
-	dist         float64
 	Rules        []bool
 	Limit        uint8
 	InitialPoint string
@@ -25,12 +24,12 @@ type Field struct {
 	intersectVectors [5][5]Point
 }
 
-func New(r, dist float64, rules []bool, initialPoint string, verbose bool) *Field {
+func New(r float64, rules []bool, initialPoint string, verbose bool) *Field {
 	phi := utils.FromDegrees(72)
 	axisAngle0 := utils.FromDegrees(180 - 54)
 
 	result := &Field{
-		dist: dist, Rules: rules, Limit: uint8(len(rules)),
+		Rules: rules, Limit: uint8(len(rules)),
 		InitialPoint: initialPoint, verbose: verbose,
 	}
 
@@ -43,8 +42,8 @@ func New(r, dist float64, rules []bool, initialPoint string, verbose bool) *Fiel
 		result.axisUnits[ax][X] = 1 * math.Cos(axisAngle0+phiAx)
 		result.axisUnits[ax][Y] = 1 * math.Sin(axisAngle0+phiAx)
 
-		result.normals[ax][X] = dist * math.Cos(0.5*phi+phiAx)
-		result.normals[ax][Y] = dist * math.Sin(0.5*phi+phiAx)
+		result.normals[ax][X] = 1 * math.Cos(0.5*phi+phiAx)
+		result.normals[ax][Y] = 1 * math.Sin(0.5*phi+phiAx)
 
 		anchorEnd := Point{
 			result.anchors[ax][X] + result.axisUnits[ax][X],
@@ -159,7 +158,7 @@ func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine, point Point) GridPo
 			continue
 		}
 		dist := distance(f.anchorLines[ax], gridPoint.Point)
-		gridPoint.Offsets[ax] = int16(math.Ceil(dist / f.dist))
+		gridPoint.Offsets[ax] = int16(math.Ceil(dist))
 	}
 
 	return gridPoint

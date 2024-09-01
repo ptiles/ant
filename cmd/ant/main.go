@@ -67,7 +67,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	field := pgrid.New(float64(commonFlags.Radius), float64(commonFlags.Dist), rules, commonFlags.InitialPoint, commonFlags.Verbose)
+	field := pgrid.New(commonFlags.Radius, rules, commonFlags.InitialPoint, commonFlags.Verbose)
 	palette := utils.GetPalette(int(field.Limit))
 
 	modifiedImagesCh := make(chan *image.RGBA, 1024)
