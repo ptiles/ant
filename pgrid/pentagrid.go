@@ -164,43 +164,35 @@ func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine, point Point) GridPo
 	return gridPoint
 }
 
-var deBruijnConstants = [5][2]float64{
-	{
-		math.Cos(2 * math.Pi * float64(0) / 5),
-		math.Sin(2 * math.Pi * float64(0) / 5),
-	},
-	{
-		math.Cos(2 * math.Pi * float64(1) / 5),
-		math.Sin(2 * math.Pi * float64(1) / 5),
-	},
-	{
-		math.Cos(2 * math.Pi * float64(2) / 5),
-		math.Sin(2 * math.Pi * float64(2) / 5),
-	},
-	{
-		math.Cos(2 * math.Pi * float64(3) / 5),
-		math.Sin(2 * math.Pi * float64(3) / 5),
-	},
-	{
-		math.Cos(2 * math.Pi * float64(4) / 5),
-		math.Sin(2 * math.Pi * float64(4) / 5),
-	},
+var deBruijnX = [5]float64{
+	math.Cos(2 * math.Pi * float64(0) / 5),
+	math.Cos(2 * math.Pi * float64(1) / 5),
+	math.Cos(2 * math.Pi * float64(2) / 5),
+	math.Cos(2 * math.Pi * float64(3) / 5),
+	math.Cos(2 * math.Pi * float64(4) / 5),
+}
+var deBruijnY = [5]float64{
+	math.Sin(2 * math.Pi * float64(0) / 5),
+	math.Sin(2 * math.Pi * float64(1) / 5),
+	math.Sin(2 * math.Pi * float64(2) / 5),
+	math.Sin(2 * math.Pi * float64(3) / 5),
+	math.Sin(2 * math.Pi * float64(4) / 5),
 }
 
 func deBruijn(floatOffsets *[5]float64) (float64, float64) {
 	x := 0 +
-		floatOffsets[0]*deBruijnConstants[0][0] +
-		floatOffsets[1]*deBruijnConstants[1][0] +
-		floatOffsets[2]*deBruijnConstants[2][0] +
-		floatOffsets[3]*deBruijnConstants[3][0] +
-		floatOffsets[4]*deBruijnConstants[4][0]
+		floatOffsets[0]*deBruijnX[0] +
+		floatOffsets[1]*deBruijnX[1] +
+		floatOffsets[2]*deBruijnX[2] +
+		floatOffsets[3]*deBruijnX[3] +
+		floatOffsets[4]*deBruijnX[4]
 
 	y := 0 +
-		floatOffsets[0]*deBruijnConstants[0][1] +
-		floatOffsets[1]*deBruijnConstants[1][1] +
-		floatOffsets[2]*deBruijnConstants[2][1] +
-		floatOffsets[3]*deBruijnConstants[3][1] +
-		floatOffsets[4]*deBruijnConstants[4][1]
+		floatOffsets[0]*deBruijnY[0] +
+		floatOffsets[1]*deBruijnY[1] +
+		floatOffsets[2]*deBruijnY[2] +
+		floatOffsets[3]*deBruijnY[3] +
+		floatOffsets[4]*deBruijnY[4]
 
 	// Flip X and Y axes to make stars vertically symmetrical
 	return y, x
