@@ -54,6 +54,8 @@ type Flags struct {
 	initialPointCount    int
 	initialPointMax      int
 	initialPointRelative bool
+
+	radiusCount int
 }
 
 func flagsSetup() *Flags {
@@ -64,6 +66,8 @@ func flagsSetup() *Flags {
 	flag.IntVar(&flags.initialPointCount, "ic", 0, "Initial point count")
 	flag.IntVar(&flags.initialPointMax, "im", 0, "Initial point max offset")
 	flag.BoolVar(&flags.initialPointRelative, "ir", false, "Relative initial point")
+
+	flag.IntVar(&flags.radiusCount, "rc", 0, "Random radius count")
 
 	flag.Usage = func() {
 		flag.PrintDefaults()
@@ -139,12 +143,26 @@ func main() {
 		initialPoints = []string{commonFlags.InitialPoint}
 	}
 
-	for _, initialPoint := range initialPoints {
-		for _, antName := range antNames {
-			fmt.Printf(
-				"-d %s -j %s__0.5__%s__%d\n",
-				commonFlags.Dir, antName, initialPoint, commonFlags.MaxSteps,
-			)
+	precision := uint(10_000)
+	var radii []float64
+	if flags.radiusCount > 0 {
+		radii = make([]float64, flags.radiusCount)
+		for i := range flags.radiusCount {
+			radii[i] = float64(precision-rand.UintN(precision)) / float64(precision)
+		}
+	} else {
+		radii = []float64{0.5}
+	}
+
+	for _, radius := range radii {
+		for _, initialPoint := range initialPoints {
+			for _, antName := range antNames {
+				fmt.Printf(
+					//"-d %s -j %s__%f__%s__%d\n",
+					"-d %s %s__%f__%s__%d\n",
+					commonFlags.Dir, antName, radius, initialPoint, commonFlags.MaxSteps,
+				)
+			}
 		}
 	}
 }
