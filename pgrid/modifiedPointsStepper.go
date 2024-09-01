@@ -50,10 +50,12 @@ func ceilSnap(v int) int {
 	return int(math.Ceil(float64(v)/256.0)) * 256
 }
 
+const padding = deBruijnScale * 4
+
 func snapRect(rect image.Rectangle) image.Rectangle {
 	return image.Rectangle{
-		Min: image.Point{X: floorSnap(rect.Min.X), Y: floorSnap(rect.Min.Y)},
-		Max: image.Point{X: ceilSnap(rect.Max.X), Y: ceilSnap(rect.Max.Y)},
+		Min: image.Point{X: floorSnap(rect.Min.X - padding), Y: floorSnap(rect.Min.Y - padding)},
+		Max: image.Point{X: ceilSnap(rect.Max.X + padding), Y: ceilSnap(rect.Max.Y + padding)},
 	}
 }
 
@@ -66,6 +68,8 @@ func overflowCheck(centerPoint, prevPoint image.Point) {
 		os.Exit(0)
 	}
 }
+
+const drawTiles = false
 
 func modifiedPointsToImages(modifiedPointsCh <-chan []pointColor, modifiedImagesCh chan<- *image.RGBA, palette []color.RGBA) {
 	for points := range modifiedPointsCh {
@@ -89,10 +93,17 @@ func modifiedPointsToImages(modifiedPointsCh <-chan []pointColor, modifiedImages
 		currentImage := image.NewRGBA(snapRect(rect))
 		for i := range points {
 			currentImage.Set(
-				points[i].centerPoint.X,
-				points[i].centerPoint.Y,
+				points[i].centerPoint.X, points[i].centerPoint.Y,
 				palette[points[i].color],
 			)
+			if drawTiles {
+				for _, cornerPoint := range points[i].gridPoint.getCornerPoints() {
+					currentImage.Set(
+						cornerPoint.X, cornerPoint.Y,
+						palette[points[i].color],
+					)
+				}
+			}
 		}
 		modifiedImagesCh <- currentImage
 	}

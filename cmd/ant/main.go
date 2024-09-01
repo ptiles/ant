@@ -80,7 +80,7 @@ func main() {
 
 	//if flags.openResult || flags.openResults {
 	if flags.openResult {
-		fileName := fmt.Sprintf(fileNameFmt, commonFlags.MaxSteps)
+		fileName := fmt.Sprintf(fileNameFmt, commonFlags.MaxSteps, "png")
 		utils.Open(fileName)
 	}
 }

@@ -128,9 +128,9 @@ func (gp *GridPoint) String() string {
 	offsets := gp.Offsets
 	ax0, ax1 := gp.Axes.Axis0, gp.Axes.Axis1
 	return fmt.Sprintf(
-		"%s%d:%s%d [A:%d, B:%d, C:%d, D:%d, E:%d]",
-		AxisNames[ax0], offsets[ax0], AxisNames[ax1], offsets[ax1],
+		"[A:%d, B:%d, C:%d, D:%d, E:%d] %s%d:%s%d",
 		offsets[0], offsets[1], offsets[2], offsets[3], offsets[4],
+		AxisNames[ax0], offsets[ax0], AxisNames[ax1], offsets[ax1],
 	)
 }
 func (gp *GridPoint) Print() {
@@ -194,7 +194,7 @@ func init() {
 	}
 }
 
-const deBruijnScale = 2
+const deBruijnScale = 2 // 32
 
 func (gp *GridPoint) getCenterPoint() image.Point {
 	x := 0.5*deBruijnX[gp.Axes.Axis0] + 0.5*deBruijnX[gp.Axes.Axis1]
@@ -207,6 +207,37 @@ func (gp *GridPoint) getCenterPoint() image.Point {
 	}
 
 	return image.Point{X: int(x * deBruijnScale), Y: int(y * deBruijnScale)}
+}
+
+func (gp *GridPoint) getCornerPoints() []image.Point {
+	x := float64(0)
+	y := float64(0)
+
+	for i := range GridLinesTotal {
+		floatOffset := float64(gp.Offsets[i])
+		x += floatOffset * deBruijnX[i]
+		y += floatOffset * deBruijnY[i]
+	}
+
+	// TODO: prepare this in init() and store in counter-clockwise order
+	_0 := 0.05
+	_1 := 0.95
+	dax0x := deBruijnX[gp.Axes.Axis0]
+	dax0y := deBruijnY[gp.Axes.Axis0]
+	dax1x := deBruijnX[gp.Axes.Axis1]
+	dax1y := deBruijnY[gp.Axes.Axis1]
+
+	return []image.Point{
+		{X: int((x+_0*dax0x+_0*dax1x)*deBruijnScale) - 1, Y: int((y + _0*dax0y + _0*dax1y) * deBruijnScale)},
+		{X: int((x + _0*dax0x + _0*dax1x) * deBruijnScale), Y: int((y+_0*dax0y+_0*dax1y)*deBruijnScale) - 1},
+		{X: int((x+_0*dax0x+_0*dax1x)*deBruijnScale) + 1, Y: int((y + _0*dax0y + _0*dax1y) * deBruijnScale)},
+		{X: int((x + _0*dax0x + _0*dax1x) * deBruijnScale), Y: int((y+_0*dax0y+_0*dax1y)*deBruijnScale) + 1},
+
+		{X: int((x + _0*dax0x + _0*dax1x) * deBruijnScale), Y: int((y + _0*dax0y + _0*dax1y) * deBruijnScale)},
+		{X: int((x + _0*dax0x + _1*dax1x) * deBruijnScale), Y: int((y + _0*dax0y + _1*dax1y) * deBruijnScale)},
+		{X: int((x + _1*dax0x + _1*dax1x) * deBruijnScale), Y: int((y + _1*dax0y + _1*dax1y) * deBruijnScale)},
+		{X: int((x + _1*dax0x + _0*dax1x) * deBruijnScale), Y: int((y + _1*dax0y + _0*dax1y) * deBruijnScale)},
+	}
 }
 
 func (f *Field) nearestNeighbor(currentPointOffsets GridOffsets, prevLine, currentLine GridLine, positiveSide bool) (GridPoint, GridLine) {
