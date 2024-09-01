@@ -16,7 +16,6 @@ import (
 const GRID_LINES_TOTAL = uint(pgrid.GRID_LINES_TOTAL)
 
 func genRandomInitialPoint(min, max int) string {
-	axisNames := [GRID_LINES_TOTAL]string{"A", "B", "C", "D", "E"}
 	dirNames := [2]string{"-", "+"}
 
 	ax1 := rand.UintN(GRID_LINES_TOTAL)
@@ -27,7 +26,7 @@ func genRandomInitialPoint(min, max int) string {
 	off1 := rand.IntN(max+1-min) + min
 	off2 := rand.IntN(max+1-min) + min
 
-	return fmt.Sprintf("%s%d%s%s%d", axisNames[ax1], off1, dirNames[dir], axisNames[ax2], off2)
+	return fmt.Sprintf("%s%d%s%s%d", pgrid.AxisNames[ax1], off1, dirNames[dir], pgrid.AxisNames[ax2], off2)
 }
 
 func numToName(num uint64, bitWidth int) string {

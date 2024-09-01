@@ -8,16 +8,16 @@ import (
 )
 
 func (f *Field) initialState() (Point, GridPoint, GridLine, GridLine, uint8) {
-	re := regexp.MustCompile(`([A-E])(-?\d+)([+-]?)([A-E])(-?\d+)`)
+	re := regexp.MustCompile(`([A-X])(-?\d+)([+-]?)([A-X])(-?\d+)`)
 	result := re.FindStringSubmatch(f.InitialPoint)
 
 	currAx, currOff, dir, nextAx, nextOff := result[1], result[2], result[3], result[4], result[5]
 
-	currAxis := strings.Index("ABCDE", currAx)
+	currAxis := strings.Index(AxisCharacters, currAx)
 	currOffset, _ := strconv.Atoi(currOff)
 	currLine := GridLine{Axis: uint8(currAxis), Offset: offsetInt(currOffset)}
 
-	nextAxis := strings.Index("ABCDE", nextAx)
+	nextAxis := strings.Index(AxisCharacters, nextAx)
 	nextOffset, _ := strconv.Atoi(nextOff)
 	nextLine := GridLine{Axis: uint8(nextAxis), Offset: offsetInt(nextOffset)}
 
@@ -29,8 +29,8 @@ func (f *Field) initialState() (Point, GridPoint, GridLine, GridLine, uint8) {
 
 	if f.verbose {
 		fmt.Printf("Initial step: ")
-		fmt.Printf("%s%d%s%d=>", axisNames[currLine.Axis], currLine.Offset, axisNames[prevLine.Axis], prevLine.Offset)
-		fmt.Printf("%s%d%s%d\n", axisNames[nextLine.Axis], nextLine.Offset, axisNames[currLine.Axis], currLine.Offset)
+		fmt.Printf("%s%d%s%d=>", AxisNames[currLine.Axis], currLine.Offset, AxisNames[prevLine.Axis], prevLine.Offset)
+		fmt.Printf("%s%d%s%d\n", AxisNames[nextLine.Axis], nextLine.Offset, AxisNames[currLine.Axis], currLine.Offset)
 	}
 
 	return prevPoint.Point, currPoint, prevLine, currLine, 0

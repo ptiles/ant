@@ -74,7 +74,15 @@ func New(r float64, rules []bool, initialPoint string, verbose bool) *Field {
 	return result
 }
 
-var axisNames = [GRID_LINES_TOTAL]string{"A", "B", "C", "D", "E"}
+var AxisNames = []string{
+	"A", "B", "C", "D", "E",
+	"F", "G", "H", "I", "J",
+	"K", "L", "M", "N", "O",
+	"P", "Q", "R", "S", "T",
+	"U", "V", "W", "X", "Y",
+}
+
+const AxisCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXY"
 
 type GridLine struct {
 	Axis   uint8
@@ -82,7 +90,7 @@ type GridLine struct {
 }
 
 func (gl *GridLine) String() string {
-	return fmt.Sprintf("%s%d", axisNames[gl.Axis], gl.Offset)
+	return fmt.Sprintf("%s%d", AxisNames[gl.Axis], gl.Offset)
 }
 func (gl *GridLine) Print() {
 	fmt.Println(gl)
@@ -121,7 +129,7 @@ func (gp *GridPoint) String() string {
 	ax0, ax1 := gp.Axes.Axis0, gp.Axes.Axis1
 	return fmt.Sprintf(
 		"%s%d:%s%d [A:%d, B:%d, C:%d, D:%d, E:%d]",
-		axisNames[ax0], offsets[ax0], axisNames[ax1], offsets[ax1],
+		AxisNames[ax0], offsets[ax0], AxisNames[ax1], offsets[ax1],
 		offsets[0], offsets[1], offsets[2], offsets[3], offsets[4],
 	)
 }
@@ -173,8 +181,8 @@ var deBruijnX = [GRID_LINES_TOTAL]float64{}
 var deBruijnY = [GRID_LINES_TOTAL]float64{}
 
 func init() {
-	if GRID_LINES_TOTAL < 5 || GRID_LINES_TOTAL%2 == 0 {
-		fmt.Println("GRID_LINES_TOTAL should odd and at least 5")
+	if GRID_LINES_TOTAL%2 == 0 || GRID_LINES_TOTAL < 5 || GRID_LINES_TOTAL > 25 {
+		fmt.Println("GRID_LINES_TOTAL should be odd number between 5 and 25")
 		os.Exit(1)
 	}
 
@@ -216,7 +224,7 @@ func (f *Field) nearestNeighbor(currentPointOffsets GridOffsets, prevLine, curre
 			line := GridLine{axis, offset}
 			pointPoint := f.gridPointToPoint(currentLine, line)
 			dist := distance(prevLineLine, pointPoint)
-			//fmt.Printf("Neighbor %s %d ; %s %d ", axisNames[currentLine.Axis], currentLine.Offset, axisNames[line.Axis], line.Offset)
+			//fmt.Printf("Neighbor %s %d ; %s %d ", AxisNames[currentLine.Axis], currentLine.Offset, AxisNames[line.Axis], line.Offset)
 			//fmt.Printf("distance=%.1f\n", dist)
 			if (positiveSide && dist > 0) || (!positiveSide && dist < 0) {
 				if math.Abs(dist) < currentDistance {
