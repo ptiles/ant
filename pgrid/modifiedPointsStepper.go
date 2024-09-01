@@ -24,17 +24,16 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- *image.RGBA, maxSt
 	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, palette)
 
 	points := make([]gridPointColor, MaxModifiedPoints)
-	points[0] = gridPointColor{gridPoint: currPoint, color: pointColor}
-	modifiedCount := 1
+	modifiedCount := 0
 
 	for range maxSteps {
-		currPoint, currLine, prevLine, prevPointSign, pointColor = f.next(currPoint, currLine, prevLine, prevPointSign)
-
 		if modifiedCount == MaxModifiedPoints {
 			modifiedPointsCh <- points
 			modifiedCount = 0
 			points = make([]gridPointColor, MaxModifiedPoints)
 		}
+
+		currPoint, currLine, prevLine, prevPointSign, pointColor = f.next(currPoint, currLine, prevLine, prevPointSign)
 		points[modifiedCount] = gridPointColor{gridPoint: currPoint, color: pointColor}
 		modifiedCount += 1
 	}
