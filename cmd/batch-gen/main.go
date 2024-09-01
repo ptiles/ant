@@ -122,11 +122,10 @@ func main() {
 		minInitialPointOffset := -flags.initialPointMax
 		maxInitialPointOffset := +flags.initialPointMax
 
-		for bitWidth := minBitWidth; bitWidth <= maxBitWidth; bitWidth++ {
-			for num := uint64(1); num < 1<<bitWidth-1; num++ {
-				name := numToName(num, bitWidth)
-
-				for range flags.initialPointCount {
+		for range flags.initialPointCount {
+			for bitWidth := minBitWidth; bitWidth <= maxBitWidth; bitWidth++ {
+				for num := uint64(1); num < 1<<bitWidth-1; num++ {
+					name := numToName(num, bitWidth)
 					randomInitialPoint := genRandomInitialPoint(minInitialPointOffset, maxInitialPointOffset)
 
 					fmt.Printf(
