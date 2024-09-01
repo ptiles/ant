@@ -1,11 +1,16 @@
 package pgrid
 
-var axesRotation = [GRID_LINES_TOTAL][GRID_LINES_TOTAL]bool{
-	{true, true, true, false, false},
-	{false, true, true, true, false},
-	{false, false, true, true, true},
-	{true, false, false, true, true},
-	{true, true, false, false, true},
+var axesRotation = [GRID_LINES_TOTAL][GRID_LINES_TOTAL]bool{}
+
+func init() {
+	for ax0 := range GRID_LINES_TOTAL {
+		for i := range GRID_LINES_TOTAL {
+			ax1 := (ax0 + i) % GRID_LINES_TOTAL
+			// {true, true, true, false, false}
+			// {false, true, true, true, false}
+			axesRotation[ax0][ax1] = i <= GRID_LINES_TOTAL/2
+		}
+	}
 }
 
 func (f *Field) next(prevPointPoint Point, currPoint GridPoint, prevLine, currLine GridLine) (Point, GridPoint, GridLine, GridLine, uint8) {

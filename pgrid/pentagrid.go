@@ -5,13 +5,13 @@ import (
 	"github.com/ptiles/ant/utils"
 	"image"
 	"math"
+	"os"
 )
 
 const X = 0
 const Y = 1
 
 const GRID_LINES_TOTAL = uint8(5)
-const GRID_LINES_TOTAL_FLOAT = float64(GRID_LINES_TOTAL)
 
 type Field struct {
 	Rules        []bool
@@ -45,8 +45,8 @@ func New(r float64, rules []bool, initialPoint string, verbose bool) *Field {
 		result.axisUnits[ax][X] = math.Cos(axisAngle0 + phiAx)
 		result.axisUnits[ax][Y] = math.Sin(axisAngle0 + phiAx)
 
-		result.normals[ax][X] = math.Cos(0.5*phi + phiAx)
-		result.normals[ax][Y] = math.Sin(0.5*phi + phiAx)
+		result.normals[ax][X] = math.Cos(phi/2 + phiAx)
+		result.normals[ax][Y] = math.Sin(phi/2 + phiAx)
 
 		anchorEnd := Point{
 			result.anchors[ax][X] + result.axisUnits[ax][X],
@@ -169,19 +169,21 @@ func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine, point Point) GridPo
 	return gridPoint
 }
 
-var deBruijnX = [GRID_LINES_TOTAL]float64{
-	math.Sin(2 * math.Pi * float64(0) / GRID_LINES_TOTAL_FLOAT),
-	math.Sin(2 * math.Pi * float64(1) / GRID_LINES_TOTAL_FLOAT),
-	math.Sin(2 * math.Pi * float64(2) / GRID_LINES_TOTAL_FLOAT),
-	math.Sin(2 * math.Pi * float64(3) / GRID_LINES_TOTAL_FLOAT),
-	math.Sin(2 * math.Pi * float64(4) / GRID_LINES_TOTAL_FLOAT),
-}
-var deBruijnY = [GRID_LINES_TOTAL]float64{
-	math.Cos(2 * math.Pi * float64(0) / GRID_LINES_TOTAL_FLOAT),
-	math.Cos(2 * math.Pi * float64(1) / GRID_LINES_TOTAL_FLOAT),
-	math.Cos(2 * math.Pi * float64(2) / GRID_LINES_TOTAL_FLOAT),
-	math.Cos(2 * math.Pi * float64(3) / GRID_LINES_TOTAL_FLOAT),
-	math.Cos(2 * math.Pi * float64(4) / GRID_LINES_TOTAL_FLOAT),
+var deBruijnX = [GRID_LINES_TOTAL]float64{}
+var deBruijnY = [GRID_LINES_TOTAL]float64{}
+
+func init() {
+	if GRID_LINES_TOTAL < 5 || GRID_LINES_TOTAL%2 == 0 {
+		fmt.Println("GRID_LINES_TOTAL should odd and at least 5")
+		os.Exit(1)
+	}
+
+	floatLines := float64(GRID_LINES_TOTAL)
+	for i := range GRID_LINES_TOTAL {
+		floatI := float64(i)
+		deBruijnX[i] = math.Sin(2 * math.Pi * floatI / floatLines)
+		deBruijnY[i] = math.Cos(2 * math.Pi * floatI / floatLines)
+	}
 }
 
 const deBruijnScale = 2
