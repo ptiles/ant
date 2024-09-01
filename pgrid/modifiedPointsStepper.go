@@ -15,25 +15,25 @@ type pointColor struct {
 const MaxModifiedPoints = 32 * 1024
 
 func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- *image.RGBA, maxSteps int, palette []color.RGBA) {
-	prevPoint, currPoint, prevLine, currLine, prevPointColor := f.initialState()
+	prevPointPoint, currPoint, prevLine, currLine, currPointColor := f.initialState()
 
 	modifiedPointsCh := make(chan []pointColor, 1024)
 
 	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, palette)
 
 	points := make([]pointColor, MaxModifiedPoints)
-	points[0] = pointColor{gridPoint: prevPoint, color: prevPointColor}
+	points[0] = pointColor{gridPoint: currPoint, color: currPointColor}
 	modifiedCount := 1
 
 	for range maxSteps {
-		prevPoint, currPoint, prevLine, currLine, prevPointColor = f.next(prevPoint.Point, currPoint, prevLine, currLine)
+		prevPointPoint, currPoint, prevLine, currLine, currPointColor = f.next(prevPointPoint, currPoint, prevLine, currLine)
 
 		if modifiedCount == MaxModifiedPoints {
 			modifiedPointsCh <- points
 			modifiedCount = 0
 			points = make([]pointColor, MaxModifiedPoints)
 		}
-		points[modifiedCount] = pointColor{gridPoint: prevPoint, color: prevPointColor}
+		points[modifiedCount] = pointColor{gridPoint: currPoint, color: currPointColor}
 		modifiedCount += 1
 	}
 	modifiedPointsCh <- points[:modifiedCount]

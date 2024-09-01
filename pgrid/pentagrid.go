@@ -212,7 +212,7 @@ func (gp *GridPoint) getCenterPoint() image.Point {
 	//return geom.Point{x, y}
 }
 
-func (f *Field) nearestNeighbor(currentPoint GridPoint, prevLine, currentLine GridLine, positiveSide bool) (GridPoint, GridLine) {
+func (f *Field) nearestNeighbor(currentPointOffsets GridOffsets, prevLine, currentLine GridLine, positiveSide bool) (GridPoint, GridLine) {
 	var nextLine GridLine
 	var nextPointPoint Point
 	currentDistance := 1000000.0
@@ -222,7 +222,7 @@ func (f *Field) nearestNeighbor(currentPoint GridPoint, prevLine, currentLine Gr
 		if axis == prevLine.Axis || axis == currentLine.Axis {
 			continue
 		}
-		axisOffset := currentPoint.Offsets[axis]
+		axisOffset := currentPointOffsets[axis]
 		for _, offset := range [2]int16{axisOffset, axisOffset - 1} {
 			line := GridLine{axis, offset}
 			pointPoint := f.gridPointToPoint(currentLine, line)

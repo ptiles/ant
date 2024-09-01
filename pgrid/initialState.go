@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (f *Field) initialState() (GridPoint, GridPoint, GridLine, GridLine, uint8) {
+func (f *Field) initialState() (Point, GridPoint, GridLine, GridLine, uint8) {
 	re := regexp.MustCompile(`([A-E])(-?\d+)([+-]?)([A-E])(-?\d+)`)
 	result := re.FindStringSubmatch(f.InitialPoint)
 
@@ -25,7 +25,7 @@ func (f *Field) initialState() (GridPoint, GridPoint, GridLine, GridLine, uint8)
 	currPointPoint := f.gridPointToPoint(currLine, nextLine)
 	currPoint := f.makeGridPoint(currLine, nextLine, currPointPoint)
 
-	prevPoint, prevLine := f.nearestNeighbor(currPoint, nextLine, currLine, !currAxIncreasing)
+	prevPoint, prevLine := f.nearestNeighbor(currPoint.Offsets, nextLine, currLine, !currAxIncreasing)
 
 	if f.verbose {
 		fmt.Printf("Initial step: ")
@@ -33,5 +33,5 @@ func (f *Field) initialState() (GridPoint, GridPoint, GridLine, GridLine, uint8)
 		fmt.Printf("%s%d%s%d\n", axisNames[nextLine.Axis], nextLine.Offset, axisNames[currLine.Axis], currLine.Offset)
 	}
 
-	return prevPoint, currPoint, prevLine, currLine, 0
+	return prevPoint.Point, currPoint, prevLine, currLine, 0
 }
