@@ -7,7 +7,6 @@ import (
 	"github.com/ptiles/ant/utils"
 	"image"
 	"os"
-	"path"
 	"path/filepath"
 )
 
@@ -52,10 +51,11 @@ func flagsSetup() *Flags {
 }
 
 func main() {
-	commonFlags := utils.CommonFlagsSetup(pgrid.GridLinesTotal)
+	commonFlags := &utils.CommonFlags{}
+	commonFlags.CommonFlagsSetup(pgrid.GridLinesTotal)
 	flags := flagsSetup()
 	flag.Parse()
-	utils.ParseArgs(commonFlags)
+	commonFlags.ParseArgs()
 
 	utils.StartCPUProfile(commonFlags.Cpuprofile)
 	defer utils.StopCPUProfile()
@@ -74,7 +74,10 @@ func main() {
 
 	go field.ModifiedPointsStepper(modifiedImagesCh, commonFlags.MaxSteps, palette)
 
-	fileNameFmt := fmt.Sprintf("%s/%s.%s.%%d.%%s", path.Clean(commonFlags.Dir), commonFlags.AntName, commonFlags.InitialPoint)
+	fileNameFmt := fmt.Sprintf(
+		"%s/%s__%f__%s__%%d.%%s",
+		commonFlags.Dir, commonFlags.AntName, commonFlags.Radius, commonFlags.InitialPoint,
+	)
 
 	saveImageFromModifiedImages(modifiedImagesCh, fileNameFmt, flags, commonFlags)
 

@@ -82,8 +82,6 @@ var AxisNames = []string{
 	"U", "V", "W", "X", "Y",
 }
 
-const AxisCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXY"
-
 type GridLine struct {
 	Axis   uint8
 	Offset offsetInt

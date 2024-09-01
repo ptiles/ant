@@ -7,7 +7,6 @@ import (
 	"github.com/ptiles/ant/utils"
 	"math/rand/v2"
 	"os"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -15,18 +14,32 @@ import (
 
 const GridLinesTotal = uint(pgrid.GridLinesTotal)
 
-func genRandomInitialPoint(min, max int) string {
+func genRandomPoint(min, max int) string {
 	dirNames := [2]string{"-", "+"}
 
 	ax1 := rand.UintN(GridLinesTotal)
-	ax2 := (ax1 + 1 + rand.UintN(GridLinesTotal-1)) % GridLinesTotal
+	ax2 := rand.UintN(GridLinesTotal - 1)
+	if ax2 == ax1 {
+		ax2 = GridLinesTotal - 1
+	}
 
-	dir := rand.IntN(2)
+	dir := dirNames[rand.IntN(2)]
 
 	off1 := rand.IntN(max+1-min) + min
 	off2 := rand.IntN(max+1-min) + min
 
-	return fmt.Sprintf("%s%d%s%s%d", pgrid.AxisNames[ax1], off1, dirNames[dir], pgrid.AxisNames[ax2], off2)
+	return fmt.Sprintf("%s%d%s%s%d", pgrid.AxisNames[ax1], off1, dir, pgrid.AxisNames[ax2], off2)
+}
+
+func genRandomPointAround(ax1, min1, max1, ax2, min2, max2 int) string {
+	dirNames := [2]string{"-", "+"}
+
+	dir := dirNames[rand.IntN(2)]
+
+	off1 := rand.IntN(max1+1-min1) + min1
+	off2 := rand.IntN(max2+1-min2) + min2
+
+	return fmt.Sprintf("%s%d%s%s%d", pgrid.AxisNames[ax1], off1, dir, pgrid.AxisNames[ax2], off2)
 }
 
 func numToName(num uint64, bitWidth int) string {
@@ -35,26 +48,22 @@ func numToName(num uint64, bitWidth int) string {
 	return strings.Replace(strings.Replace(binary, "0", "L", -1), "1", "R", -1)
 }
 
-type runModeType int
-
-const (
-	InitialPointRange runModeType = iota
-	NameRange
-	NameAndInitialPointRange
-)
-
 type Flags struct {
-	initialPointMax   int
-	initialPointCount int
-	antNameRange      string
+	antNameRange string
+
+	initialPointCount    int
+	initialPointMax      int
+	initialPointRelative bool
 }
 
 func flagsSetup() *Flags {
 	flags := &Flags{}
 
-	flag.IntVar(&flags.initialPointMax, "im", 0, "Initial point max offset")
-	flag.IntVar(&flags.initialPointCount, "ic", 0, "Initial point count")
 	flag.StringVar(&flags.antNameRange, "nr", "", "Ant name range MIN-MAX")
+
+	flag.IntVar(&flags.initialPointCount, "ic", 0, "Initial point count")
+	flag.IntVar(&flags.initialPointMax, "im", 0, "Initial point max offset")
+	flag.BoolVar(&flags.initialPointRelative, "ir", false, "Relative initial point")
 
 	flag.Usage = func() {
 		flag.PrintDefaults()
@@ -63,77 +72,79 @@ func flagsSetup() *Flags {
 	return flags
 }
 
+func parseNameRange(antNameRange string) (int, int) {
+	result := regexp.MustCompile(`(\d+)-(\d+)`).FindStringSubmatch(antNameRange)
+	minBitWidth, _ := strconv.Atoi(result[1])
+	maxBitWidth, _ := strconv.Atoi(result[2])
+
+	return minBitWidth, maxBitWidth
+}
+
 func main() {
-	commonFlags := utils.CommonFlagsSetup(pgrid.GridLinesTotal)
+	commonFlags := &utils.CommonFlags{}
+	commonFlags.CommonFlagsSetup(pgrid.GridLinesTotal)
 	flags := flagsSetup()
 	flag.Parse()
+	commonFlags.ParseArgs()
 
-	var runMode runModeType
-	switch {
-	case flags.antNameRange != "" && flags.initialPointMax > 0:
-		runMode = NameAndInitialPointRange
-	case commonFlags.AntName != "":
-		runMode = InitialPointRange
-	case flags.antNameRange != "":
-		runMode = NameRange
-	default:
+	var antNames []string
+	if flags.antNameRange != "" {
+		minBitWidth, maxBitWidth := parseNameRange(flags.antNameRange)
+
+		// TODO: calculate antNames length without loop
+		antNamesLength := 0
+		for bitWidth := minBitWidth; bitWidth <= maxBitWidth; bitWidth++ {
+			antNamesLength += 1<<bitWidth - 2
+		}
+
+		antNames = make([]string, antNamesLength)
+
+		i := 0
+		for bitWidth := minBitWidth; bitWidth <= maxBitWidth; bitWidth++ {
+			maxNum := uint64(1<<bitWidth) - 1
+			for num := uint64(1); num < maxNum; num++ {
+				antNames[i] = numToName(num, bitWidth)
+				i += 1
+			}
+		}
+	} else if commonFlags.AntName != "" {
+		antNames = []string{commonFlags.AntName}
+	} else {
 		fmt.Fprintln(os.Stderr, "Ant name or range required")
 		os.Exit(1)
 	}
 
-	switch runMode {
-	case InitialPointRange:
-		// -ir initial point range -ic random points count
+	var initialPoints []string
+	if flags.initialPointRelative && flags.initialPointCount > 0 && flags.initialPointMax > 0 {
+		ax1, off1, _, ax2, off2 := utils.ParseInitialPoint(commonFlags.InitialPoint)
+
+		min1 := off1 - flags.initialPointMax
+		max1 := off1 + flags.initialPointMax
+		min2 := off2 - flags.initialPointMax
+		max2 := off2 + flags.initialPointMax
+
+		initialPoints = make([]string, flags.initialPointCount)
+		for i := range flags.initialPointCount {
+			initialPoints[i] = genRandomPointAround(ax1, min1, max1, ax2, min2, max2)
+		}
+	} else if flags.initialPointCount > 0 && flags.initialPointMax > 0 {
 		minInitialPointOffset := -flags.initialPointMax
 		maxInitialPointOffset := +flags.initialPointMax
 
-		for range flags.initialPointCount {
-			randomInitialPoint := genRandomInitialPoint(minInitialPointOffset, maxInitialPointOffset)
+		initialPoints = make([]string, flags.initialPointCount)
+		for i := range flags.initialPointCount {
+			initialPoints[i] = genRandomPoint(minInitialPointOffset, maxInitialPointOffset)
+		}
+	} else {
+		initialPoints = []string{commonFlags.InitialPoint}
+	}
 
+	for _, initialPoint := range initialPoints {
+		for _, antName := range antNames {
 			fmt.Printf(
-				"-d %s -j %s.%s.%d\n",
-				path.Clean(commonFlags.Dir), commonFlags.AntName, randomInitialPoint, commonFlags.MaxSteps,
+				"-d %s -j %s__0.5__%s__%d\n",
+				commonFlags.Dir, antName, initialPoint, commonFlags.MaxSteps,
 			)
-		}
-
-	case NameRange:
-		result := regexp.MustCompile(`(\d+)-(\d+)`).FindStringSubmatch(flags.antNameRange)
-		minBitWidth, _ := strconv.Atoi(result[1])
-		maxBitWidth, _ := strconv.Atoi(result[2])
-
-		for bitWidth := minBitWidth; bitWidth <= maxBitWidth; bitWidth++ {
-			maxNum := uint64(1<<bitWidth) - 1
-			for num := uint64(1); num < maxNum; num++ {
-				name := numToName(num, bitWidth)
-
-				fmt.Printf(
-					"-d %s -j %s.%s.%d\n",
-					path.Clean(commonFlags.Dir), name, commonFlags.InitialPoint, commonFlags.MaxSteps,
-				)
-			}
-		}
-
-	case NameAndInitialPointRange:
-		result := regexp.MustCompile(`(\d+)-(\d+)`).FindStringSubmatch(flags.antNameRange)
-		minBitWidth, _ := strconv.Atoi(result[1])
-		maxBitWidth, _ := strconv.Atoi(result[2])
-
-		// -ir initial point range -ic random points count
-		minInitialPointOffset := -flags.initialPointMax
-		maxInitialPointOffset := +flags.initialPointMax
-
-		for range flags.initialPointCount {
-			for bitWidth := minBitWidth; bitWidth <= maxBitWidth; bitWidth++ {
-				for num := uint64(1); num < 1<<bitWidth-1; num++ {
-					name := numToName(num, bitWidth)
-					randomInitialPoint := genRandomInitialPoint(minInitialPointOffset, maxInitialPointOffset)
-
-					fmt.Printf(
-						"-d %s -j %s.%s.%d\n",
-						path.Clean(commonFlags.Dir), name, randomInitialPoint, commonFlags.MaxSteps,
-					)
-				}
-			}
 		}
 	}
 }

@@ -2,26 +2,15 @@ package pgrid
 
 import (
 	"fmt"
-	"regexp"
-	"strconv"
-	"strings"
+	"github.com/ptiles/ant/utils"
 )
 
 func (f *Field) initialState() (GridPoint, GridLine, GridLine, bool, uint8) {
-	re := regexp.MustCompile(`([A-X])(-?\d+)([+-]?)([A-X])(-?\d+)`)
-	result := re.FindStringSubmatch(f.InitialPoint)
+	currAxis, currOffset, currAxIncreasing, nextAxis, nextOffset := utils.ParseInitialPoint(f.InitialPoint)
 
-	currAx, currOff, dir, nextAx, nextOff := result[1], result[2], result[3], result[4], result[5]
-
-	currAxis := strings.Index(AxisCharacters, currAx)
-	currOffset, _ := strconv.Atoi(currOff)
 	currLine := GridLine{Axis: uint8(currAxis), Offset: offsetInt(currOffset)}
-
-	nextAxis := strings.Index(AxisCharacters, nextAx)
-	nextOffset, _ := strconv.Atoi(nextOff)
 	nextLine := GridLine{Axis: uint8(nextAxis), Offset: offsetInt(nextOffset)}
 
-	currAxIncreasing := dir != "-"
 	currPointPoint := f.gridPointToPoint(currLine, nextLine)
 	currPoint := f.makeGridPoint(currLine, nextLine, currPointPoint)
 

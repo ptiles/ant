@@ -54,7 +54,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan *image.RGBA, fileNameFm
 	for img := range modifiedImagesCh {
 		imagesCount += 1
 		if partialImages > 0 && imagesCount%partialImages == 0 {
-			saveImage(activeImageS, activeRectN, scaleFactor, fileNameFmt, -imagesCount)
+			saveImage(activeImageS, activeRectN, scaleFactor, fileNameFmt, -int64(imagesCount))
 		}
 		activeRectN = activeRectN.Union(img.Rect)
 
@@ -73,7 +73,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan *image.RGBA, fileNameFm
 	saveImage(activeImageS, activeRectN, scaleFactor, fileNameFmt, steps)
 
 	fileName := fmt.Sprintf(fileNameFmt, steps, "png")
-	uniqPct := 100 * pgrid.Uniq() / steps
+	uniqPct := 100 * pgrid.Uniq() / int(steps)
 	dimensions := fmt.Sprintf("%dx%d", activeRectN.Dx(), activeRectN.Dy())
 	dimensionsScaled := fmt.Sprintf("%dx%d", activeRectN.Dx()/scaleFactor, activeRectN.Dy()/scaleFactor)
 	fmt.Printf(
@@ -100,7 +100,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan *image.RGBA, fileNameFm
 	}
 }
 
-func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps int) {
+func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps int64) {
 	fileName := fmt.Sprintf(fileNameFmt, steps, "png")
 
 	if steps < 0 {
@@ -129,7 +129,7 @@ func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFacto
 type statsType struct {
 	AntName          string `json:"antName"`
 	FileName         string `json:"fileName"`
-	Steps            int    `json:"steps"`
+	Steps            int64  `json:"steps"`
 	UniqPct          int    `json:"uniqPct"`
 	ImagesCount      int    `json:"imagesCount"`
 	MaxSide          int    `json:"maxSide"`

@@ -16,7 +16,7 @@ type gridPointColor struct {
 
 const MaxModifiedPoints = 32 * 1024
 
-func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- *image.RGBA, maxSteps int, palette []color.RGBA) {
+func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- *image.RGBA, maxSteps int64, palette []color.RGBA) {
 	currPoint, currLine, prevLine, prevPointSign, pointColor := f.initialState()
 
 	modifiedPointsCh := make(chan []gridPointColor, 1024)
