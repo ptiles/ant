@@ -167,51 +167,33 @@ func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine, point Point) GridPo
 }
 
 var deBruijnX = [5]float64{
-	math.Cos(2 * math.Pi * float64(0) / 5),
-	math.Cos(2 * math.Pi * float64(1) / 5),
-	math.Cos(2 * math.Pi * float64(2) / 5),
-	math.Cos(2 * math.Pi * float64(3) / 5),
-	math.Cos(2 * math.Pi * float64(4) / 5),
-}
-var deBruijnY = [5]float64{
 	math.Sin(2 * math.Pi * float64(0) / 5),
 	math.Sin(2 * math.Pi * float64(1) / 5),
 	math.Sin(2 * math.Pi * float64(2) / 5),
 	math.Sin(2 * math.Pi * float64(3) / 5),
 	math.Sin(2 * math.Pi * float64(4) / 5),
 }
-
-func deBruijn(floatOffsets *[5]float64) (float64, float64) {
-	x := 0 +
-		floatOffsets[0]*deBruijnX[0] +
-		floatOffsets[1]*deBruijnX[1] +
-		floatOffsets[2]*deBruijnX[2] +
-		floatOffsets[3]*deBruijnX[3] +
-		floatOffsets[4]*deBruijnX[4]
-
-	y := 0 +
-		floatOffsets[0]*deBruijnY[0] +
-		floatOffsets[1]*deBruijnY[1] +
-		floatOffsets[2]*deBruijnY[2] +
-		floatOffsets[3]*deBruijnY[3] +
-		floatOffsets[4]*deBruijnY[4]
-
-	// Flip X and Y axes to make stars vertically symmetrical
-	return y, x
+var deBruijnY = [5]float64{
+	math.Cos(2 * math.Pi * float64(0) / 5),
+	math.Cos(2 * math.Pi * float64(1) / 5),
+	math.Cos(2 * math.Pi * float64(2) / 5),
+	math.Cos(2 * math.Pi * float64(3) / 5),
+	math.Cos(2 * math.Pi * float64(4) / 5),
 }
 
+const deBruijnScale = 2
+
 func (gp *GridPoint) getCenterPoint() image.Point {
-	var floatOffsets [5]float64
+	x := 0.5*deBruijnX[gp.Axes.Axis0] + 0.5*deBruijnX[gp.Axes.Axis1]
+	y := 0.5*deBruijnY[gp.Axes.Axis0] + 0.5*deBruijnY[gp.Axes.Axis1]
+
 	for i := range 5 {
-		floatOffsets[i] = float64(gp.Offsets[i])
+		floatOffset := float64(gp.Offsets[i])
+		x += floatOffset * deBruijnX[i]
+		y += floatOffset * deBruijnY[i]
 	}
 
-	floatOffsets[gp.Axes.Axis0] += 0.5
-	floatOffsets[gp.Axes.Axis1] += 0.5
-
-	x, y := deBruijn(&floatOffsets)
-	return image.Point{X: int(x * 2), Y: int(y * 2)}
-	//return geom.Point{x, y}
+	return image.Point{X: int(x * deBruijnScale), Y: int(y * deBruijnScale)}
 }
 
 func (f *Field) nearestNeighbor(currentPointOffsets GridOffsets, prevLine, currentLine GridLine, positiveSide bool) (GridPoint, GridLine) {
