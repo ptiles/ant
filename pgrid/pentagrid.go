@@ -34,7 +34,7 @@ func New(r, dist float64, rules []bool, initialPoint string, verbose bool) *Fiel
 		InitialPoint: initialPoint, verbose: verbose,
 	}
 
-	for ax := 0; ax < 5; ax++ {
+	for ax := range 5 {
 		phiAx := phi * float64(ax)
 
 		result.anchors[ax][X] = r * math.Cos(phiAx)
@@ -53,8 +53,8 @@ func New(r, dist float64, rules []bool, initialPoint string, verbose bool) *Fiel
 		result.anchorLines[ax] = Line{result.anchors[ax], anchorEnd}
 	}
 
-	for ax0 := uint8(0); ax0 < 5; ax0++ {
-		for ax1 := uint8(0); ax1 < 5; ax1++ {
+	for ax0 := range uint8(5) {
+		for ax1 := range uint8(5) {
 			line0 := result.getLine(GridLine{ax0, 0})
 			line1 := result.getLine(GridLine{ax1, 0})
 			intersectAnchor := intersection(line0, line1)
@@ -209,7 +209,7 @@ func deBruijn(floatOffsets *[5]float64) (float64, float64) {
 
 func (f *Field) getCenterPoint(gp *GridPoint) image.Point {
 	var floatOffsets [5]float64
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		floatOffsets[i] = float64(gp.Offsets[i])
 	}
 
@@ -227,7 +227,7 @@ func (f *Field) nearestNeighbor(currentPoint GridPoint, prevLine, currentLine Gr
 	currentDistance := 1000000.0
 	prevLineLine := f.getLine(prevLine)
 
-	for axis := uint8(0); axis < 5; axis++ {
+	for axis := range uint8(5) {
 		if axis == prevLine.Axis || axis == currentLine.Axis {
 			continue
 		}

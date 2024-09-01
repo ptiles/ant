@@ -18,7 +18,7 @@ func FromDegrees(deg int) float64 {
 func GetPalette(steps int) []color.RGBA {
 	var palette = make([]color.RGBA, steps)
 
-	for c := 0; c < steps; c++ {
+	for c := range steps {
 		step := c * 360 / steps
 
 		ra := step + 0*120 + 90
