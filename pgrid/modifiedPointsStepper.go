@@ -7,36 +7,36 @@ import (
 )
 
 type pointColor struct {
-	x, y int
-	c    uint8
+	gridPoint GridPoint
+	point     image.Point
+	color     uint8
 }
-type modifiedPoints map[GridPoint]uint8
 
 const MaxModifiedPoints = 32 * 1024
 
 func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- *image.RGBA, maxSteps int, palette []color.RGBA) {
 	prevPoint, currPoint, prevLine, currLine, prevPointColor := f.initialState()
 
-	modifiedPointsCh := make(chan *modifiedPoints, 1024)
+	modifiedPointsCh := make(chan []pointColor, 1024)
 
 	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, palette)
 
-	modifiedPointsCh <- &modifiedPoints{prevPoint: prevPointColor}
-	modifiedCount := 0
-	points := &modifiedPoints{}
+	points := make([]pointColor, MaxModifiedPoints)
+	points[0] = pointColor{gridPoint: prevPoint, color: prevPointColor}
+	modifiedCount := 1
 
 	for range maxSteps {
 		prevPoint, currPoint, prevLine, currLine, prevPointColor = f.next(prevPoint, currPoint, prevLine, currLine)
 
-		(*points)[prevPoint] = prevPointColor
 		if modifiedCount == MaxModifiedPoints {
 			modifiedPointsCh <- points
 			modifiedCount = 0
-			points = &modifiedPoints{}
+			points = make([]pointColor, MaxModifiedPoints)
 		}
+		points[modifiedCount] = pointColor{gridPoint: prevPoint, color: prevPointColor}
 		modifiedCount += 1
 	}
-	modifiedPointsCh <- points
+	modifiedPointsCh <- points[:modifiedCount]
 	close(modifiedPointsCh)
 }
 
@@ -48,29 +48,29 @@ func ceil(v int) int {
 	return int(math.Ceil(float64(v)/256.0)) * 256
 }
 
-func modifiedPointsToImages(modifiedPointsCh <-chan *modifiedPoints, modifiedImagesCh chan<- *image.RGBA, palette []color.RGBA) {
-	for pointsMap := range modifiedPointsCh {
-		i := 0
+func modifiedPointsToImages(modifiedPointsCh <-chan []pointColor, modifiedImagesCh chan<- *image.RGBA, palette []color.RGBA) {
+	for points := range modifiedPointsCh {
 		rect := image.Rectangle{}
 		pixelRect := image.Point{X: 1, Y: 1}
-		points := make([]pointColor, len(*pointsMap))
 
-		for prevPoint, c := range *pointsMap {
-			centerPoint := prevPoint.getCenterPoint()
+		for i := range points {
+			points[i].point = points[i].gridPoint.getCenterPoint()
 			rect = rect.Union(image.Rectangle{
-				Min: centerPoint,
-				Max: centerPoint.Add(pixelRect),
+				Min: points[i].point,
+				Max: points[i].point.Add(pixelRect),
 			})
-			points[i] = pointColor{centerPoint.X, centerPoint.Y, c}
-			i += 1
 		}
 
 		currentImage := image.NewRGBA(image.Rectangle{
 			Min: image.Point{X: floor(rect.Min.X), Y: floor(rect.Min.Y)},
 			Max: image.Point{X: ceil(rect.Max.X), Y: ceil(rect.Max.Y)},
 		})
-		for _, point := range points {
-			currentImage.Set(point.x, point.y, palette[point.c])
+		for i := range points {
+			currentImage.Set(
+				points[i].point.X,
+				points[i].point.Y,
+				palette[points[i].color],
+			)
 		}
 		modifiedImagesCh <- currentImage
 	}

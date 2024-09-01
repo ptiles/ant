@@ -11,7 +11,7 @@ bench:
 	cp ./bin/ant ./bin/ant-old
 	git stash pop
 	make ant
-	hyperfine --warmup 1 './bin/ant-old RLLR.E-441-C393.25000001' './bin/ant RLLR.E-441-C393.25000002'
+	hyperfine --warmup 1 './bin/ant-old RLLRL.E-644+C633.25000001' './bin/ant RLLRL.E-644+C633.25000002'
 
 bench-ant:
 	make ant
