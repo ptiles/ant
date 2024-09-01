@@ -52,7 +52,7 @@ func flagsSetup() *Flags {
 }
 
 func main() {
-	commonFlags := utils.CommonFlagsSetup()
+	commonFlags := utils.CommonFlagsSetup(pgrid.GRID_LINES_TOTAL)
 	flags := flagsSetup()
 	flag.Parse()
 	utils.ParseArgs(commonFlags)

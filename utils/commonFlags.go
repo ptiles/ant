@@ -2,6 +2,7 @@ package utils
 
 import (
 	"flag"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -16,11 +17,11 @@ type CommonFlags struct {
 	Verbose      bool
 }
 
-func CommonFlagsSetup() *CommonFlags {
+func CommonFlagsSetup(gridLinesTotal uint8) *CommonFlags {
 	commonFlags := &CommonFlags{}
 
 	flag.StringVar(&commonFlags.Cpuprofile, "cpuprofile", "", "Write cpu profile to file")
-	flag.StringVar(&commonFlags.Dir, "d", "results", "Results directory")
+	flag.StringVar(&commonFlags.Dir, "d", fmt.Sprintf("results%d", gridLinesTotal), "Results directory")
 	flag.StringVar(&commonFlags.InitialPoint, "i", "A0+B0", "Initial axes and direction")
 	flag.StringVar(&commonFlags.AntName, "n", "", "Ant name")
 	flag.IntVar(&commonFlags.MaxSteps, "s", 1000000, "Steps")

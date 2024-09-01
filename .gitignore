@@ -8,6 +8,6 @@
 /bin/ant-old
 /bin/ant-rl
 /bin/batch-gen
-/results
+/results*
 /tmp
 /*.prof
