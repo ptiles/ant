@@ -81,11 +81,11 @@ type GridLine struct {
 	Offset offsetInt
 }
 
-func (gl *GridLine) Sprint() string {
+func (gl *GridLine) String() string {
 	return fmt.Sprintf("%s%d", axisNames[gl.Axis], gl.Offset)
 }
 func (gl *GridLine) Print() {
-	fmt.Println(gl.Sprint())
+	fmt.Println(gl)
 }
 
 func (f *Field) getLine(gl GridLine) Line {
@@ -116,7 +116,7 @@ type GridAxes struct {
 
 type GridOffsets [GRID_LINES_TOTAL]offsetInt
 
-func (gp *GridPoint) Sprint() string {
+func (gp *GridPoint) String() string {
 	offsets := gp.Offsets
 	ax0, ax1 := gp.Axes.Axis0, gp.Axes.Axis1
 	return fmt.Sprintf(
@@ -126,7 +126,7 @@ func (gp *GridPoint) Sprint() string {
 	)
 }
 func (gp *GridPoint) Print() {
-	fmt.Println(gp.Sprint())
+	fmt.Println(gp)
 }
 
 func (f *Field) gridPointToPoint(gridLine0, gridLine1 GridLine) Point {
