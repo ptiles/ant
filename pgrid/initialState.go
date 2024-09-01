@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (f *Field) initialState() (bool, GridPoint, GridLine, GridLine, uint8) {
+func (f *Field) initialState() (GridPoint, GridLine, GridLine, bool, uint8) {
 	re := regexp.MustCompile(`([A-X])(-?\d+)([+-]?)([A-X])(-?\d+)`)
 	result := re.FindStringSubmatch(f.InitialPoint)
 
@@ -34,5 +34,5 @@ func (f *Field) initialState() (bool, GridPoint, GridLine, GridLine, uint8) {
 		fmt.Printf("%s%d%s%d\n", AxisNames[nextLine.Axis], nextLine.Offset, AxisNames[currLine.Axis], currLine.Offset)
 	}
 
-	return prevPointSign, currPoint, prevLine, currLine, 0
+	return currPoint, currLine, prevLine, prevPointSign, 0
 }

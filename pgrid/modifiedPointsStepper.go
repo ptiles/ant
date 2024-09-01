@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-type pointColor struct {
+type gridPointColor struct {
 	gridPoint   GridPoint
 	centerPoint image.Point
 	color       uint8
@@ -17,25 +17,25 @@ type pointColor struct {
 const MaxModifiedPoints = 32 * 1024
 
 func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- *image.RGBA, maxSteps int, palette []color.RGBA) {
-	prevPointSign, currPoint, prevLine, currLine, currPointColor := f.initialState()
+	currPoint, currLine, prevLine, prevPointSign, pointColor := f.initialState()
 
-	modifiedPointsCh := make(chan []pointColor, 1024)
+	modifiedPointsCh := make(chan []gridPointColor, 1024)
 
 	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, palette)
 
-	points := make([]pointColor, MaxModifiedPoints)
-	points[0] = pointColor{gridPoint: currPoint, color: currPointColor}
+	points := make([]gridPointColor, MaxModifiedPoints)
+	points[0] = gridPointColor{gridPoint: currPoint, color: pointColor}
 	modifiedCount := 1
 
 	for range maxSteps {
-		prevPointSign, currPoint, prevLine, currLine, currPointColor = f.next(prevPointSign, currPoint, prevLine, currLine)
+		currPoint, currLine, prevLine, prevPointSign, pointColor = f.next(currPoint, currLine, prevLine, prevPointSign)
 
 		if modifiedCount == MaxModifiedPoints {
 			modifiedPointsCh <- points
 			modifiedCount = 0
-			points = make([]pointColor, MaxModifiedPoints)
+			points = make([]gridPointColor, MaxModifiedPoints)
 		}
-		points[modifiedCount] = pointColor{gridPoint: currPoint, color: currPointColor}
+		points[modifiedCount] = gridPointColor{gridPoint: currPoint, color: pointColor}
 		modifiedCount += 1
 	}
 	modifiedPointsCh <- points[:modifiedCount]
@@ -71,7 +71,7 @@ func overflowCheck(centerPoint, prevPoint image.Point) {
 
 const drawTiles = false
 
-func modifiedPointsToImages(modifiedPointsCh <-chan []pointColor, modifiedImagesCh chan<- *image.RGBA, palette []color.RGBA) {
+func modifiedPointsToImages(modifiedPointsCh <-chan []gridPointColor, modifiedImagesCh chan<- *image.RGBA, palette []color.RGBA) {
 	for points := range modifiedPointsCh {
 		rect := image.Rectangle{}
 		pixelRect := image.Point{X: 1, Y: 1}
