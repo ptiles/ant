@@ -154,7 +154,7 @@ func modifiedPointsToImages(
 				Max: centerPoint.Add(pixelRect),
 			})
 
-			shouldSave := stepsCount > 0 && stepsCount%partialSteps == 0
+			shouldSave := partialSteps > 0 && stepsCount > 0 && stepsCount%partialSteps == 0
 			if rectIsLarge(rect) || shouldSave {
 				mImage := ModifiedImage{Steps: stepsCount, Save: shouldSave}
 				mImage.Img = drawPoints(rect, points[start:i], palette)

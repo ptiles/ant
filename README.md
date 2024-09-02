@@ -11,28 +11,34 @@ make
 For full usage, run:
 
 ```shell
+./bin/ant-batch -h
+```
+
+```shell
 ./bin/ant -h
 ```
-
-## Example results
-
-```shell
-./bin/ant -o LLLRLRL 200000
-```
-
-![LLLRLRL.A0+B0.200000.png](example/LLLRLRL.A0+B0.200000.png)
-
-```shell
-./bin/ant -m 1024 -o RRLRRLRRRR.E90+C-99.5000000
-```
-
-![RRLRRLRRRR.E90+C-99.5000000.png](example/RRLRRLRRRR.E90+C-99.5000000.png)
 
 ## Batch run
 
 ```shell
-./bin/ant-batch -im 512 -ic 5 -nr 3-4 -s 2500000
+./bin/ant-batch -n LLR,LRR,RLL,RRL -ic 4 -rc 4 -d results_4_4_500k -s 500_000
 ```
+
+![results_4_4_500k.png](example/results_4_4_500k.png)
+
+## Example results
+
+```shell
+./bin/ant LRR__0.641800__D2139+C-8152__2_500_000
+```
+
+![LRR__0.641800__D2139+C-8152__2500000.png](example/LRR__0.641800__D2139%2BC-8152__2500000.png)
+
+```shell
+./bin/ant LRR__0.246000__A7386-B5868__3_500_000_000
+```
+
+![LRR__0.246000__A7386-B5868__3500000000.png](example/LRR__0.246000__A7386-B5868__3500000000.png)
 
 ## References
 

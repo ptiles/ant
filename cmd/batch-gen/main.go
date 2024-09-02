@@ -64,8 +64,8 @@ func flagsSetup() *Flags {
 	flag.StringVar(&flags.antNameRange, "nr", "", "Ant name range MIN-MAX")
 
 	flag.IntVar(&flags.initialPointCount, "ic", 0, "Initial point count")
-	flag.IntVar(&flags.initialPointMax, "im", 0, "Initial point max offset")
-	flag.BoolVar(&flags.initialPointRelative, "ir", false, "Relative initial point")
+	flag.IntVar(&flags.initialPointMax, "im", 8*1024, "Initial point max offset")
+	flag.BoolVar(&flags.initialPointRelative, "ir", false, "Initial point relative to -i value")
 
 	flag.IntVar(&flags.radiusCount, "rc", 0, "Random radius count")
 
@@ -119,7 +119,7 @@ func main() {
 	}
 
 	var initialPoints []string
-	if flags.initialPointRelative && flags.initialPointCount > 0 && flags.initialPointMax > 0 {
+	if flags.initialPointRelative && flags.initialPointCount > 0 {
 		ax1, off1, _, ax2, off2 := utils.ParseInitialPoint(commonFlags.InitialPoint)
 
 		min1 := off1 - flags.initialPointMax
@@ -131,7 +131,7 @@ func main() {
 		for i := range flags.initialPointCount {
 			initialPoints[i] = genRandomPointAround(ax1, min1, max1, ax2, min2, max2)
 		}
-	} else if flags.initialPointCount > 0 && flags.initialPointMax > 0 {
+	} else if flags.initialPointCount > 0 {
 		minInitialPointOffset := -flags.initialPointMax
 		maxInitialPointOffset := +flags.initialPointMax
 
