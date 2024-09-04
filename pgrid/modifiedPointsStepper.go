@@ -18,7 +18,11 @@ type gridPointColor struct {
 	color       uint8
 }
 
-const MaxModifiedPoints = 32 * 1024
+func (gpc gridPointColor) String() string {
+	return fmt.Sprintf("%s %d", gpc.gridPoint.ShortString(), gpc.color)
+}
+
+const MaxModifiedPoints = uint64(32 * 1024)
 
 func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, maxSteps, partialSteps uint64, palette []color.RGBA) {
 	bar := progressbar.NewOptions64(int64(maxSteps),
@@ -35,21 +39,23 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, max
 	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, palette, len(f.Rules), partialSteps, bar)
 
 	points := make([]gridPointColor, MaxModifiedPoints)
-	modifiedCount := 0
+	modifiedCount := uint64(0)
 
 	for range maxSteps {
 		if modifiedCount == MaxModifiedPoints {
-			bar.Add(modifiedCount)
+			bar.Add64(int64(modifiedCount))
 			modifiedPointsCh <- points
 			modifiedCount = 0
 			points = make([]gridPointColor, MaxModifiedPoints)
 		}
 
+		points[modifiedCount] = gridPointColor{gridPoint: currPoint}
 		currPoint, currLine, prevLine, prevPointSign, pointColor = f.next(currPoint, currLine, prevLine, prevPointSign)
-		points[modifiedCount] = gridPointColor{gridPoint: currPoint, color: pointColor}
+		points[modifiedCount].color = pointColor
+
 		modifiedCount += 1
 	}
-	bar.Add(modifiedCount)
+	bar.Add64(int64(modifiedCount))
 	modifiedPointsCh <- points[:modifiedCount]
 	close(modifiedPointsCh)
 }
@@ -89,18 +95,38 @@ func drawPoints(rect image.Rectangle, points []gridPointColor, palette []color.R
 
 	if drawTilesAndPoints {
 		for i := range points {
-			img.Set(
-				points[i].centerPoint.X, points[i].centerPoint.Y,
-				palette[points[i].color],
-			)
+			x, y := points[i].centerPoint.X, points[i].centerPoint.Y
+			img.Set(x, y, palette[points[i].color])
+			if i%9 > 0 {
+				img.Set(x+2, y, palette[points[i].color])
+			}
+			if i%9 > 1 {
+				img.Set(x+4, y, palette[points[i].color])
+			}
+			if i%9 > 2 {
+				img.Set(x, y+2, palette[points[i].color])
+			}
+			if i%9 > 3 {
+				img.Set(x+2, y+2, palette[points[i].color])
+			}
+			if i%9 > 4 {
+				img.Set(x+4, y+2, palette[points[i].color])
+			}
+			if i%9 > 5 {
+				img.Set(x, y+4, palette[points[i].color])
+			}
+			if i%9 > 6 {
+				img.Set(x+2, y+4, palette[points[i].color])
+			}
+			if i%9 > 7 {
+				img.Set(x+4, y+4, palette[points[i].color])
+			}
 			drawTile(img, points[i].gridPoint, palette[points[i].color])
 		}
 	} else {
 		for i := range points {
-			img.Set(
-				points[i].centerPoint.X, points[i].centerPoint.Y,
-				palette[points[i].color],
-			)
+			x, y := points[i].centerPoint.X, points[i].centerPoint.Y
+			img.Set(x, y, palette[points[i].color])
 		}
 	}
 

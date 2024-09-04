@@ -61,7 +61,7 @@ func main() {
 	utils.StartCPUProfile(commonFlags.Cpuprofile)
 	defer utils.StopCPUProfile()
 
-	field := pgrid.New(commonFlags.Radius, rules, commonFlags.InitialPoint, commonFlags.Verbose)
+	field := pgrid.New(commonFlags.Radius, rules, commonFlags.InitialPoint)
 	palette := utils.GetPalette(len(rules))
 
 	const (

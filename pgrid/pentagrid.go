@@ -17,7 +17,6 @@ type Field struct {
 	Rules        []bool
 	Limit        uint8
 	InitialPoint string
-	verbose      bool
 
 	anchors          [GridLinesTotal]Point
 	anchorLines      [GridLinesTotal]Line
@@ -27,13 +26,12 @@ type Field struct {
 	intersectVectors [GridLinesTotal][GridLinesTotal]Point
 }
 
-func New(r float64, rules []bool, initialPoint string, verbose bool) *Field {
+func New(r float64, rules []bool, initialPoint string) *Field {
 	phi := utils.FromDegrees(360 / int(GridLinesTotal))
 	axisAngle0 := utils.FromDegrees(90) + phi/2
 
 	result := &Field{
-		Rules: rules, Limit: uint8(len(rules)),
-		InitialPoint: initialPoint, verbose: verbose,
+		Rules: rules, Limit: uint8(len(rules)), InitialPoint: initialPoint,
 	}
 
 	for ax := range GridLinesTotal {
@@ -128,6 +126,14 @@ func (gp *GridPoint) String() string {
 	return fmt.Sprintf(
 		"[A:%d, B:%d, C:%d, D:%d, E:%d] %s%d:%s%d",
 		offsets[0], offsets[1], offsets[2], offsets[3], offsets[4],
+		AxisNames[ax0], offsets[ax0], AxisNames[ax1], offsets[ax1],
+	)
+}
+func (gp *GridPoint) ShortString() string {
+	offsets := gp.Offsets
+	ax0, ax1 := gp.Axes.Axis0, gp.Axes.Axis1
+	return fmt.Sprintf(
+		"%s%d:%s%d",
 		AxisNames[ax0], offsets[ax0], AxisNames[ax1], offsets[ax1],
 	)
 }

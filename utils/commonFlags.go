@@ -15,7 +15,6 @@ type CommonFlags struct {
 	AntName      string
 	Radius       float64
 	MaxSteps     uint64
-	Verbose      bool
 }
 
 func (cf *CommonFlags) String() string {
@@ -32,7 +31,6 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 	flag.StringVar(&cf.AntName, "n", "RLLLL", "Ant name")
 	flag.Uint64Var(&cf.MaxSteps, "s", 1000000, "Steps")
 	flag.Float64Var(&cf.Radius, "tr", 0.5, "Tiles config - radius")
-	flag.BoolVar(&cf.Verbose, "v", false, "Verbose output")
 }
 
 func (cf *CommonFlags) ParseArgs() {

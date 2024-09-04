@@ -12,15 +12,15 @@ func ParseInitialPoint(initialPoint string) (int, int, bool, int, int) {
 	re := regexp.MustCompile(`([A-X])(-?\d+)([+-]?)([A-X])(-?\d+)`)
 	result := re.FindStringSubmatch(initialPoint)
 
-	currAx, currOff, dir, nextAx, nextOff := result[1], result[2], result[3], result[4], result[5]
+	currAx, currOff, dir, prevAx, prevOff := result[1], result[2], result[3], result[4], result[5]
 
 	currAxis := strings.Index(AxisCharacters, currAx)
 	currOffset, _ := strconv.Atoi(currOff)
 
 	currAxIncreasing := dir != "-"
 
-	nextAxis := strings.Index(AxisCharacters, nextAx)
-	nextOffset, _ := strconv.Atoi(nextOff)
+	prevAxis := strings.Index(AxisCharacters, prevAx)
+	prevOffset, _ := strconv.Atoi(prevOff)
 
-	return currAxis, currOffset, currAxIncreasing, nextAxis, nextOffset
+	return currAxis, currOffset, currAxIncreasing, prevAxis, prevOffset
 }
