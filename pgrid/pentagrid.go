@@ -5,13 +5,10 @@ import (
 	"github.com/ptiles/ant/utils"
 	"image"
 	"math"
-	"os"
 )
 
 const X = 0
 const Y = 1
-
-const GridLinesTotal = uint8(5)
 
 type Field struct {
 	Rules        []bool
@@ -186,8 +183,7 @@ var deBruijnY = [GridLinesTotal]float64{}
 
 func init() {
 	if GridLinesTotal%2 == 0 || GridLinesTotal < 5 || GridLinesTotal > 25 {
-		fmt.Println("GRID_LINES_TOTAL should be odd number between 5 and 25")
-		os.Exit(1)
+		fmt.Println("GridLinesTotal should be odd number between 5 and 25")
 	}
 
 	floatLines := float64(GridLinesTotal)
@@ -197,8 +193,6 @@ func init() {
 		deBruijnY[i] = math.Cos(2 * math.Pi * floatI / floatLines)
 	}
 }
-
-const deBruijnScale = 2 // 48
 
 func (gp *GridPoint) getCenterPoint() image.Point {
 	x := 0.5*deBruijnX[gp.Axes.Axis0] + 0.5*deBruijnX[gp.Axes.Axis1]

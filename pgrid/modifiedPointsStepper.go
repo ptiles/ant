@@ -68,9 +68,6 @@ func ceilSnap(v int) int {
 	return int(math.Ceil(float64(v)/256.0)) * 256
 }
 
-// const padding = deBruijnScale
-const padding = deBruijnScale * 4
-
 func snapRect(rect image.Rectangle) image.Rectangle {
 	return image.Rectangle{
 		Min: image.Point{X: floorSnap(rect.Min.X - padding), Y: floorSnap(rect.Min.Y - padding)},
@@ -87,8 +84,6 @@ func overflowCheck(centerPoint, prevPoint image.Point) {
 		os.Exit(0)
 	}
 }
-
-const drawTilesAndPoints = false
 
 func drawPoints(rect image.Rectangle, points []gridPointColor, palette []color.RGBA) *image.RGBA {
 	img := image.NewRGBA(snapRect(rect))
