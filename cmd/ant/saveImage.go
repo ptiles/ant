@@ -73,7 +73,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 
 	saveImage(activeImageS, activeRectN, scaleFactor, fileNameFmt, steps)
 
-	fileName := fmt.Sprintf(fileNameFmt, steps, "png")
+	fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(steps), "png")
 	uniqPct := 100 * len(commonFlags.AntName) * pgrid.Uniq() / int(steps)
 	dimensions := fmt.Sprintf("%dx%d", activeRectN.Dx(), activeRectN.Dy())
 	dimensionsScaled := fmt.Sprintf("%dx%d", activeRectN.Dx()/scaleFactor, activeRectN.Dy()/scaleFactor)
@@ -102,7 +102,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 }
 
 func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps uint64) {
-	fileName := fmt.Sprintf(fileNameFmt, steps, "png")
+	fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(steps), "png")
 
 	if steps < 0 {
 		fmt.Println(fileName)
@@ -139,7 +139,7 @@ type statsType struct {
 }
 
 func writeStats(fileNameFmt string, stats statsType) {
-	fileName := fmt.Sprintf(fileNameFmt, stats.Steps, "json")
+	fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(stats.Steps), "json")
 
 	err := os.MkdirAll(path.Dir(fileName), 0755)
 	if err != nil {

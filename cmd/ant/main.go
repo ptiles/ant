@@ -74,7 +74,7 @@ func main() {
 	go field.ModifiedPointsStepper(modifiedImagesCh, commonFlags.MaxSteps, flags.partialSteps, palette)
 
 	fileNameFmt := fmt.Sprintf(
-		"%s/%s__%f__%s__%%d.%%s",
+		"%s/%s__%f__%s__%%s.%%s",
 		commonFlags.Dir, commonFlags.AntName, commonFlags.Radius, commonFlags.InitialPoint,
 	)
 
@@ -82,7 +82,7 @@ func main() {
 
 	//if flags.openResult || flags.openResults {
 	if flags.openResult {
-		fileName := fmt.Sprintf(fileNameFmt, commonFlags.MaxSteps, "png")
+		fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(commonFlags.MaxSteps), "png")
 		utils.Open(fileName)
 	}
 }

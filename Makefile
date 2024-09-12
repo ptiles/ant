@@ -14,22 +14,22 @@ bench-prep:
 
 bench:
 	make bench-prep
-	hyperfine --warmup 1 './bin/ant-old RLLRL.A-644+E633.50000001' './bin/ant RLLRL.A-644+E633.50000002'
+	hyperfine --warmup 1 './bin/ant-old LRR__0.246000__A7386-B5868__25_000_001' './bin/ant LRR__0.246000__A7386-B5868__25_000_002'
 
 compare:
 	make bench-prep
-	./bin/ant-old RLLRL.A-644+E633.50000001
-	./bin/ant     RLLRL.A-644+E633.50000002
-	open results5/RLLRL.A-644+E633.50000001.png
-	open results5/RLLRL.A-644+E633.50000002.png
+	./bin/ant-old LRR__0.246000__A7386-B5868__50_000_001
+	./bin/ant     LRR__0.246000__A7386-B5868__50_000_002
+	open results5/LRR__0.246000__A7386-B5868__50_000_001.png
+	open results5/LRR__0.246000__A7386-B5868__50_000_002.png
 
 bench-ant:
 	make ant
-	hyperfine --warmup 1 './bin/ant RLLR.E-441-C393.25000002'
+	hyperfine --warmup 1 './bin/ant LRR__0.246000__A7386-B5868__25_000_002'
 
 prof-ant:
 	make ant
-	./bin/ant -cpuprofile tmp/ant.prof RLLR.E-441-C393.250000009
+	./bin/ant -cpuprofile tmp/ant.prof LRR__0.246000__A7386-B5868__250_000_009
 	go tool pprof -http=: -no_browser tmp/ant.prof
 
 ant-rl:

@@ -10,6 +10,8 @@ import (
 	"os/exec"
 	"runtime"
 	"runtime/pprof"
+	"strconv"
+	"strings"
 )
 
 func FromDegrees(deg int) float64 {
@@ -81,4 +83,19 @@ func GetRules(antName string) ([]bool, error) {
 		return rules, errors.New("invalid name")
 	}
 	return rules, nil
+}
+
+func WithUnderscores(num uint64) string {
+	sl := strings.Split(strconv.FormatUint(num, 10), "")
+
+	n := 3
+	j := (len(sl) + n - 1) / n
+	result := make([]string, j)
+
+	for i := len(sl); i > 0; i -= n {
+		j -= 1
+		result[j] = strings.Join(sl[i-min(n, i):i:i], "")
+	}
+
+	return strings.Join(result, "_")
 }

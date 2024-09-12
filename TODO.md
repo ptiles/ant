@@ -1,7 +1,7 @@
 # TODO
 
 - [x] Parameterize GRID_LINES_TOTAL
-- [ ] Decimal separators in resulting filename
+- [x] Decimal separators in resulting filename
 - [ ] Use tree instead of map for storage
 - [ ] Save results in intermediate .ant file
 - [ ] Separate command for rendering images from .ant file
