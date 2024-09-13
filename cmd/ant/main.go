@@ -69,7 +69,7 @@ func main() {
 	field := pgrid.New(commonFlags.Radius, rules, commonFlags.InitialPoint)
 	palette := utils.GetPalette(int(field.Limit))
 
-	modifiedImagesCh := make(chan pgrid.ModifiedImage, 1024)
+	modifiedImagesCh := make(chan pgrid.ModifiedImage, 64)
 
 	go field.ModifiedPointsStepper(modifiedImagesCh, commonFlags.MaxSteps, flags.partialSteps, palette)
 

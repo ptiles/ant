@@ -9,6 +9,7 @@ import (
 	"image/color"
 	"math"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -41,6 +42,10 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, max
 	points := make([]gridPointColor, MaxModifiedPoints)
 	modifiedCount := uint64(0)
 
+	initialTotal := 25
+	initialCounter := initialTotal
+	initialPoints := make([]string, initialTotal)
+
 	for range maxSteps {
 		if modifiedCount == MaxModifiedPoints {
 			bar.Add64(int64(modifiedCount))
@@ -52,6 +57,15 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, max
 		points[modifiedCount] = gridPointColor{gridPoint: currPoint}
 		currPoint, currLine, prevLine, prevPointSign, pointColor = f.next(currPoint, currLine, prevLine, prevPointSign)
 		points[modifiedCount].color = pointColor
+
+		if initialCounter > 0 && modifiedCount%10_000 == 0 {
+			initialPoints[initialTotal-initialCounter] = f.initialStateString(currLine, prevLine, prevPointSign)
+			initialCounter -= 1
+			if initialCounter == 0 {
+				bar.Clear()
+				println(strings.Join(initialPoints, ","))
+			}
+		}
 
 		modifiedCount += 1
 	}
@@ -147,11 +161,11 @@ func modifiedPointsToImages(
 	bar *progressbar.ProgressBar,
 ) {
 	s := rate.Sometimes{Interval: time.Second / 2 * 3}
-	stepsCount := uint64(0)
-	prevPoint := image.Point{}
-
 	uniqPointsCount := 0
 	uniqPoints := make(map[GridAxes]struct{})
+
+	stepsCount := uint64(0)
+	prevPoint := image.Point{}
 
 	for points := range modifiedPointsCh {
 		start := 0

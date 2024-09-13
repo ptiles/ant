@@ -140,7 +140,7 @@ func main() {
 			initialPoints[i] = genRandomPoint(minInitialPointOffset, maxInitialPointOffset)
 		}
 	} else {
-		initialPoints = []string{commonFlags.InitialPoint}
+		initialPoints = strings.Split(commonFlags.InitialPoint, ",")
 	}
 
 	precision := uint(10_000)

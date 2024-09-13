@@ -1,6 +1,7 @@
 package pgrid
 
 import (
+	"fmt"
 	"github.com/ptiles/ant/utils"
 )
 
@@ -18,4 +19,13 @@ func (f *Field) initialState() (GridPoint, GridLine, GridLine, bool, uint8) {
 	//)
 
 	return currPoint, currLine, prevLine, prevPointSign, 1
+}
+
+func (f *Field) initialStateString(currLine GridLine, prevLine GridLine, prevPointSign bool) string {
+	prevPointSignString := "-"
+	if prevPointSign {
+		prevPointSignString = "+"
+	}
+
+	return fmt.Sprintf("%s%s%s", currLine.String(), prevPointSignString, prevLine.String())
 }
