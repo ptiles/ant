@@ -1,5 +1,11 @@
 package pgrid
 
+import (
+	"github.com/schollz/progressbar/v3"
+	"iter"
+	"strings"
+)
+
 var axesRotation = [GridLinesTotal][GridLinesTotal]bool{}
 
 func init() {
@@ -30,4 +36,39 @@ func (f *Field) step(axes GridAxes) (bool, uint8) {
 	newValue := (value + 1) % f.Limit
 	Set(axes, newValue)
 	return f.Rules[value], newValue
+}
+
+func (f *Field) Run(maxSteps uint64, bar *progressbar.ProgressBar) iter.Seq2[GridPoint, uint8] {
+	return func(yield func(GridPoint, uint8) bool) {
+		initialTotal := 25
+		initialCounter := initialTotal
+		initialPoints := make([]string, initialTotal)
+
+		currPoint, currLine, prevLine, pointSign, _ := f.initialState()
+
+		for step := range maxSteps {
+			if initialCounter > 0 && step%10_000 == 0 {
+				initialPoints[initialTotal-initialCounter] = f.initialStateString(currLine, prevLine, pointSign)
+				initialCounter -= 1
+				if initialCounter == 0 {
+					bar.Clear()
+					println(strings.Join(initialPoints, ","))
+				}
+			}
+
+			isRightTurn, pointColor := f.step(currPoint.Axes)
+
+			if !yield(currPoint, pointColor) {
+				return
+			}
+
+			axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
+			positiveSide := isRightTurn != axisRotation != pointSign
+
+			nextPoint, nextLine := f.nearestNeighbor(currPoint.Offsets, prevLine, currLine, positiveSide)
+			pointSign = distance(f.getLine(nextLine), currPoint.Point) < 0
+
+			currPoint, currLine, prevLine = nextPoint, nextLine, currLine
+		}
+	}
 }

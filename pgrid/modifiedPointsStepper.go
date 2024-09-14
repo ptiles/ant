@@ -9,7 +9,6 @@ import (
 	"image/color"
 	"math"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -33,8 +32,6 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, max
 		progressbar.OptionShowIts(),
 	)
 
-	currPoint, currLine, prevLine, prevPointSign, pointColor := f.initialState()
-
 	modifiedPointsCh := make(chan []gridPointColor, 1024)
 
 	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, palette, len(f.Rules), partialSteps, bar)
@@ -42,30 +39,14 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, max
 	points := make([]gridPointColor, MaxModifiedPoints)
 	modifiedCount := uint64(0)
 
-	initialTotal := 25
-	initialCounter := initialTotal
-	initialPoints := make([]string, initialTotal)
-
-	for range maxSteps {
+	for gridPoint, color := range f.Run(maxSteps, bar) {
 		if modifiedCount == MaxModifiedPoints {
 			bar.Add64(int64(modifiedCount))
 			modifiedPointsCh <- points
 			modifiedCount = 0
 			points = make([]gridPointColor, MaxModifiedPoints)
 		}
-
-		points[modifiedCount] = gridPointColor{gridPoint: currPoint}
-		currPoint, currLine, prevLine, prevPointSign, pointColor = f.next(currPoint, currLine, prevLine, prevPointSign)
-		points[modifiedCount].color = pointColor
-
-		if initialCounter > 0 && modifiedCount%10_000 == 0 {
-			initialPoints[initialTotal-initialCounter] = f.initialStateString(currLine, prevLine, prevPointSign)
-			initialCounter -= 1
-			if initialCounter == 0 {
-				bar.Clear()
-				println(strings.Join(initialPoints, ","))
-			}
-		}
+		points[modifiedCount] = gridPointColor{gridPoint: gridPoint, color: color}
 
 		modifiedCount += 1
 	}
