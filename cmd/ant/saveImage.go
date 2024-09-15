@@ -33,7 +33,7 @@ func croppedImage(activeImage *image.RGBA, r image.Rectangle) *image.RGBA {
 }
 
 func drawImg(activeImageS, img *image.RGBA, scaleFactor int) {
-	draw.CatmullRom.Scale(activeImageS, rectDiv(img.Rect, scaleFactor), img, img.Rect, draw.Over, nil)
+	draw.BiLinear.Scale(activeImageS, rectDiv(img.Rect, scaleFactor), img, img.Rect, draw.Over, nil)
 }
 
 func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fileNameFmt string, flags *Flags, commonFlags *utils.CommonFlags) {
@@ -75,8 +75,8 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 
 	fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(steps), "png")
 	uniqPct := 100 * len(commonFlags.AntName) * pgrid.Uniq() / int(steps)
-	dimensions := fmt.Sprintf("%dx%d", activeRectN.Dx(), activeRectN.Dy())
-	dimensionsScaled := fmt.Sprintf("%dx%d", activeRectN.Dx()/scaleFactor, activeRectN.Dy()/scaleFactor)
+	dimensions := fmt.Sprintf("%dx%d %s", activeRectN.Dx(), activeRectN.Dy(), activeRectN.String())
+	dimensionsScaled := fmt.Sprintf("%dx%d(%d)", activeRectN.Dx()/scaleFactor, activeRectN.Dy()/scaleFactor, scaleFactor)
 	fmt.Printf(
 		"%s %d steps; %s (%s); %d%% uniq\n",
 		fileName, steps, dimensionsScaled, dimensions, uniqPct,

@@ -12,19 +12,21 @@ bench-prep:
 	git stash pop
 	make ant
 
+#WIDTH = 16384 # default
+WIDTH = 1024
 bench:
 	make bench-prep
 	hyperfine --warmup 1 \
-		'./bin/ant-old -w 1024 LRR__0.246000__A7386-B5868__50_000_001' \
-		'./bin/ant     -w 1024 LRR__0.246000__A7386-B5868__50_000_002'
+		'./bin/ant-old -w $(WIDTH) LRR__0.246000__A7386-B5868__50_000_001' \
+		'./bin/ant     -w $(WIDTH) LRR__0.246000__A7386-B5868__50_000_002'
 
 STEPS = 50_000_001
 compare:
 	make bench-prep
-	./bin/ant-old LRR__0.246000__A7386-B5868__$(STEPS)
-	mv   results5/LRR__0.246000__A7386-B5868__$(STEPS).png results5/old.png
-	./bin/ant     LRR__0.246000__A7386-B5868__$(STEPS)
-	mv   results5/LRR__0.246000__A7386-B5868__$(STEPS).png results5/new.png
+	time ./bin/ant-old LRR__0.246000__A7386-B5868__$(STEPS)
+	mv        results5/LRR__0.246000__A7386-B5868__$(STEPS).png results5/old.png
+	time ./bin/ant     LRR__0.246000__A7386-B5868__$(STEPS)
+	mv        results5/LRR__0.246000__A7386-B5868__$(STEPS).png results5/new.png
 	open results5/old.png
 	open results5/new.png
 
