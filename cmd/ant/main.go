@@ -36,10 +36,9 @@ func flagsSetup() *Flags {
 	flags := &Flags{}
 
 	flag.BoolVar(&flags.jsonStats, "j", false, "Save stats in json file")
-	flag.IntVar(&flags.maxDimension, "w", 16*1024, "Max image size")
-	//flag.BoolVar(&flags.openResults, "oo", false, "Open partial resulting files")
 	flag.BoolVar(&flags.openResult, "o", false, "Open resulting file")
 	flag.Uint64Var(&flags.partialSteps, "p", 0, "Save partial result every N steps")
+	flag.IntVar(&flags.maxDimension, "w", 16*1024, "Max image size")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, usageText, programName, programName)

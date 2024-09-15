@@ -12,44 +12,37 @@ import (
 	"path"
 )
 
-func newBoundFromRect(r image.Rectangle, maxDimension int) image.Rectangle {
-	halfImage := image.Point{X: maxDimension / 2, Y: maxDimension / 2}
-	centerPoint := r.Min.Add(r.Max).Div(2)
-	return image.Rectangle{Min: centerPoint.Sub(halfImage), Max: centerPoint.Add(halfImage)}
-}
-
-func rectDiv(r image.Rectangle, scaleFactor int) image.Rectangle {
-	if scaleFactor == 1 {
-		return r
-	}
-	return image.Rectangle{Min: r.Min.Div(scaleFactor), Max: r.Max.Div(scaleFactor)}
-}
-
-func croppedImage(activeImage *image.RGBA, r image.Rectangle) *image.RGBA {
-	resultRect := image.Rectangle{Min: image.Point{}, Max: image.Point{X: r.Dx(), Y: r.Dy()}}
-	resultImage := image.NewRGBA(resultRect)
-	draw.Draw(resultImage, resultRect, activeImage, r.Min, draw.Over)
-	return resultImage
-}
-
-func drawImg(activeImageS, img *image.RGBA, scaleFactor int) {
-	draw.BiLinear.Scale(activeImageS, rectDiv(img.Rect, scaleFactor), img, img.Rect, draw.Over, nil)
+func mergeImage(dst, src *image.RGBA, scaleFactor int) {
+	dstRect := utils.RectDiv(src.Rect, scaleFactor)
+	draw.BiLinear.Scale(dst, dstRect, src, src.Rect, draw.Over, nil)
 }
 
 func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fileNameFmt string, flags *Flags, commonFlags *utils.CommonFlags) {
 	maxDimension := flags.maxDimension
+	dynamic := commonFlags.Rectangle.Empty()
 	steps := commonFlags.MaxSteps
 
-	imagesCount := 1
+	imagesCount := 0
 	scaleFactor := 1
 
-	mImg0 := <-modifiedImagesCh
-	img0 := mImg0.Img
+	var activeRectN image.Rectangle
+	var boundRectN image.Rectangle
+	var activeImageS *image.RGBA
 
-	activeRectN := img0.Rect
-	boundRectN := newBoundFromRect(img0.Rect, maxDimension)
-	activeImageS := image.NewRGBA(boundRectN)
-	drawImg(activeImageS, img0, scaleFactor)
+	if dynamic {
+		mImg0 := <-modifiedImagesCh
+		img0 := mImg0.Img
+		imagesCount += 1
+
+		activeRectN = img0.Rect
+		boundRectN = utils.RectGrow(img0.Rect, maxDimension)
+		activeImageS = image.NewRGBA(boundRectN)
+		mergeImage(activeImageS, img0, scaleFactor)
+	} else {
+		activeRectN = commonFlags.Rectangle
+		scaleFactor = commonFlags.ScaleFactor
+		activeImageS = image.NewRGBA(utils.RectDiv(commonFlags.Rectangle, scaleFactor))
+	}
 
 	for mImg := range modifiedImagesCh {
 		img := mImg.Img
@@ -57,29 +50,32 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 		if mImg.Save {
 			saveImage(activeImageS, activeRectN, scaleFactor, fileNameFmt, mImg.Steps)
 		}
-		activeRectN = activeRectN.Union(img.Rect)
 
-		if !activeRectN.In(boundRectN) {
-			scaleFactor *= 2
-			maxDimension *= 2
-			boundRectN = newBoundFromRect(activeRectN, maxDimension)
-			newActiveImageS := image.NewRGBA(rectDiv(boundRectN, scaleFactor))
-			drawImg(newActiveImageS, activeImageS, 2)
-			activeImageS = newActiveImageS
+		if dynamic {
+			activeRectN = activeRectN.Union(img.Rect)
+			if !activeRectN.In(boundRectN) {
+				scaleFactor *= 2
+				maxDimension *= 2
+				boundRectN = utils.RectGrow(activeRectN, maxDimension)
+				newActiveImageS := image.NewRGBA(utils.RectDiv(boundRectN, scaleFactor))
+				mergeImage(newActiveImageS, activeImageS, 2)
+				activeImageS = newActiveImageS
+			}
 		}
 
-		drawImg(activeImageS, img, scaleFactor)
+		mergeImage(activeImageS, img, scaleFactor)
 	}
 
 	saveImage(activeImageS, activeRectN, scaleFactor, fileNameFmt, steps)
 
 	fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(steps), "png")
 	uniqPct := 100 * len(commonFlags.AntName) * pgrid.Uniq() / int(steps)
-	dimensions := fmt.Sprintf("%dx%d %s", activeRectN.Dx(), activeRectN.Dy(), activeRectN.String())
-	dimensionsScaled := fmt.Sprintf("%dx%d(%d)", activeRectN.Dx()/scaleFactor, activeRectN.Dy()/scaleFactor, scaleFactor)
+	dimensionsScaled := fmt.Sprintf("%dx%d", activeRectN.Dx()/scaleFactor, activeRectN.Dy()/scaleFactor)
+	dimensions := fmt.Sprintf("%dx%d", activeRectN.Dx(), activeRectN.Dy())
+	activeRect := fmt.Sprintf("%s/%d", activeRectN.String(), scaleFactor)
 	fmt.Printf(
-		"%s %d steps; %s (%s); %d%% uniq\n",
-		fileName, steps, dimensionsScaled, dimensions, uniqPct,
+		"%s %s %s %s; %d%% uniq\n",
+		fileName, dimensionsScaled, dimensions, activeRect, uniqPct,
 	)
 
 	maxSide := activeRectN.Dx()
@@ -101,6 +97,13 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 	}
 }
 
+func cropImage(src *image.RGBA, cropRect image.Rectangle) *image.RGBA {
+	dstRect := image.Rectangle{Min: image.Point{}, Max: image.Point{X: cropRect.Dx(), Y: cropRect.Dy()}}
+	dstImage := image.NewRGBA(dstRect)
+	draw.Draw(dstImage, dstRect, src, cropRect.Min, draw.Over)
+	return dstImage
+}
+
 func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps uint64) {
 	fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(steps), "png")
 
@@ -119,8 +122,8 @@ func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFacto
 	}
 	defer file.Close()
 
-	activeRectS := rectDiv(activeRectN, scaleFactor)
-	resultImageS := croppedImage(activeImageS, activeRectS)
+	activeRectS := utils.RectDiv(activeRectN, scaleFactor)
+	resultImageS := cropImage(activeImageS, activeRectS)
 	err = png.Encode(file, resultImageS)
 	if err != nil {
 		panic(err)

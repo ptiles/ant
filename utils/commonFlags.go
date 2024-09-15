@@ -3,6 +3,7 @@ package utils
 import (
 	"flag"
 	"fmt"
+	"image"
 	"path"
 	"strconv"
 	"strings"
@@ -15,6 +16,8 @@ type CommonFlags struct {
 	AntName      string
 	Radius       float64
 	MaxSteps     uint64
+	Rectangle    image.Rectangle
+	ScaleFactor  int
 }
 
 func (cf *CommonFlags) String() string {
@@ -29,6 +32,10 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 	flag.StringVar(&cf.Dir, "d", fmt.Sprintf("results%d", gridLinesTotal), "Results directory")
 	flag.StringVar(&cf.InitialPoint, "i", "A0+B0", "Initial axes and direction")
 	flag.StringVar(&cf.AntName, "n", "RLLLL", "Ant name")
+	flag.Func("r", "Output image rectangle", func(rectangleStr string) (err error) {
+		cf.Rectangle, cf.ScaleFactor, err = ParseRectangleStr(rectangleStr)
+		return
+	})
 	flag.Uint64Var(&cf.MaxSteps, "s", 1000000, "Steps")
 	flag.Float64Var(&cf.Radius, "tr", 0.5, "Tiles config - radius")
 }

@@ -1,6 +1,7 @@
 package pgrid
 
 import (
+	"github.com/ptiles/ant/utils"
 	"image"
 	"image/color"
 )
@@ -14,7 +15,7 @@ const (
 func (f *Field) ControlledInfiniteStepper(modifiedImagesCh chan<- *image.RGBA, commandCh <-chan CommandType, palette []color.RGBA) {
 	currPoint, currLine, prevLine, prevPointSign, pointColor := f.initialState()
 	initialPoint := currPoint.getCenterPoint()
-	currentImage := image.NewRGBA(pointRect(initialPoint, 256))
+	currentImage := image.NewRGBA(utils.PointRect(initialPoint, 256))
 
 	step := 0
 	shouldReset := false
@@ -24,9 +25,9 @@ func (f *Field) ControlledInfiniteStepper(modifiedImagesCh chan<- *image.RGBA, c
 		currPoint, currLine, prevLine, prevPointSign, pointColor = f.next(currPoint, currLine, prevLine, prevPointSign)
 
 		point := currPoint.getCenterPoint()
-		if !shouldReset && isOutside(point, currentImage.Rect) {
+		if !shouldReset && utils.IsOutside(point, currentImage.Rect) {
 			modifiedImagesCh <- currentImage
-			currentImage = image.NewRGBA(pointRect(point, 256))
+			currentImage = image.NewRGBA(utils.PointRect(point, 256))
 		}
 		currentImage.Set(point.X, point.Y, palette[pointColor])
 
@@ -41,7 +42,7 @@ func (f *Field) ControlledInfiniteStepper(modifiedImagesCh chan<- *image.RGBA, c
 		if shouldReset && pointColor == 0 {
 			shouldReset = false
 
-			currentImage = image.NewRGBA(pointRect(point, 256))
+			currentImage = image.NewRGBA(utils.PointRect(point, 256))
 
 			ResetValues()
 		}
