@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/utils"
+	"image/color"
 	"os"
 	"path/filepath"
 )
@@ -66,7 +67,12 @@ func main() {
 	}
 
 	field := pgrid.New(commonFlags.Radius, rules, commonFlags.InitialPoint)
-	palette := utils.GetPalette(int(field.Limit))
+	var palette []color.RGBA
+	if commonFlags.Monochrome {
+		palette = utils.GetPaletteMonochromatic(int(field.Limit), field.InitialPoint)
+	} else {
+		palette = utils.GetPaletteRainbow(int(field.Limit))
+	}
 
 	modifiedImagesCh := make(chan pgrid.ModifiedImage, 64)
 

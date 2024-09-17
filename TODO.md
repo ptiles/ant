@@ -5,7 +5,7 @@
 - [x] Show and set output image bounds
 - [ ] Print full `ant` and `ant-batch` commands
 - [ ] Save results in intermediate `.ant` file
-- [ ] Single color palette
+- [x] Monochromatic palette
 - [ ] Grayscale image
 - [ ] Store intermediate image in segments
 - [ ] Use tree instead of map for storage

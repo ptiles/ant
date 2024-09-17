@@ -62,7 +62,7 @@ func main() {
 	defer utils.StopCPUProfile()
 
 	field := pgrid.New(commonFlags.Radius, rules, commonFlags.InitialPoint)
-	palette := utils.GetPalette(len(rules))
+	palette := utils.GetPaletteRainbow(len(rules))
 
 	const (
 		screenWidth  = 1680

@@ -2,10 +2,11 @@ package utils
 
 import (
 	"errors"
-	"github.com/crazy3lf/colorconv"
+	"github.com/lucasb-eyer/go-colorful"
 	"image/color"
 	"log"
 	"math"
+	"math/rand/v2"
 	"os"
 	"os/exec"
 	"runtime"
@@ -18,28 +19,36 @@ func FromDegrees(deg int) float64 {
 	return float64(deg) * math.Pi / 180.0
 }
 
-func GetPalette(steps int) []color.RGBA {
+func GetPaletteRainbow(steps int) []color.RGBA {
 	var palette = make([]color.RGBA, steps)
 
-	for c := range steps {
-		step := c * 360 / steps
-
-		ra := step + 0*120 + 90
-		ga := step + 1*120 + 90
-		ba := step + 2*120 + 90
-
-		rs := (1 + math.Sin(FromDegrees(ra))) / 2
-		gs := (1 + math.Sin(FromDegrees(ga))) / 2
-		bs := (1 + math.Sin(FromDegrees(ba))) / 2
-
-		r := uint8(math.Round(rs*0xd0 + 0x0f))
-		g := uint8(math.Round(gs * 0xb0))
-		b := uint8(math.Round(bs*0xb0 + 0x4f))
-
-		h, s, _ := colorconv.RGBToHSL(r, g, b)
-		r, g, b, _ = colorconv.HSLToRGB(h, s, 0.75)
-		palette[c] = color.RGBA{R: r, G: g, B: b, A: 255}
+	for si := range steps {
+		h := float64((si*360/steps + 180) % 360)
+		c := .95
+		l := .95
+		r, g, b := colorful.Hcl(h, c, l).Clamped().RGB255()
+		palette[si] = color.RGBA{R: r, G: g, B: b, A: 0xff}
 	}
+
+	return palette
+}
+
+func GetPaletteMonochromatic(steps int, initialPoint string) []color.RGBA {
+	var palette = make([]color.RGBA, steps)
+
+	seed := [32]byte{}
+	copy(seed[:], initialPoint)
+	rng := rand.New(rand.NewChaCha8(seed))
+
+	h := float64(rng.IntN(360))
+	for si := range steps {
+		sf := float64(si) / float64(steps-1)
+		c := .95 - 0.3*sf
+		l := .65 + 0.3*sf
+		r, g, b := colorful.Hcl(h, c, l).Clamped().RGB255()
+		palette[si] = color.RGBA{R: r, G: g, B: b, A: 0xff}
+	}
+
 	return palette
 }
 

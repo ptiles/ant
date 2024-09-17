@@ -1,7 +1,5 @@
 github.com/StephaneBunel/bresenham v0.0.0-20211027152503-ec76d7b8e923 h1:tiBl/Mvf7sSO5y3OVK7wznaQkLOCfHhX9KReDeN9WjE=
 github.com/StephaneBunel/bresenham v0.0.0-20211027152503-ec76d7b8e923/go.mod h1:IEPPVq1llBFm+OeVCgoAyFiTqK5aE2c2tH4QEsjnQCM=
-github.com/crazy3lf/colorconv v1.2.0 h1:UM7kSZWnwFMGiC+PpYrjxQSOd6sEyWb+dRKKTd3KslA=
-github.com/crazy3lf/colorconv v1.2.0/go.mod h1:2jTJ7QCWCj2sSLOhF4Gzi0J5/hoX8/VY8VzNvXAlD1I=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -10,6 +8,8 @@ github.com/ebitengine/purego v0.7.1/go.mod h1:ah1In8AOtksoNK6yk5z1HTJeUkC1Ez4Wk2
 github.com/gen2brain/raylib-go/raylib v0.0.0-20240807111636-8861ee437da9 h1:voUyZVwDxeiKv31gHmzHY95Oq/+0+ozj8zmKDiaag/o=
 github.com/gen2brain/raylib-go/raylib v0.0.0-20240807111636-8861ee437da9/go.mod h1:BaY76bZk7nw1/kVOSQObPY1v1iwVE1KHAGMfvI6oK1Q=
 github.com/k0kubun/go-ansi v0.0.0-20180517002512-3bf9e2903213/go.mod h1:vNUNkEQ1e29fT/6vq2aBdFsgNPmy8qMdSay1npru+Sw=
+github.com/lucasb-eyer/go-colorful v1.2.0 h1:1nnpGOrhyZZuNyfu1QjKiUICQ74+3FNCN69Aj6K7nkY=
+github.com/lucasb-eyer/go-colorful v1.2.0/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db h1:62I3jR2EmQ4l5rM/4FEfDWcRD+abF5XlKShorW5LRoQ=
 github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db/go.mod h1:l0dey0ia/Uv7NcFFVbCLtqEBQbrT4OCwCSKTEv6enCw=

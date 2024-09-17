@@ -18,6 +18,7 @@ type CommonFlags struct {
 	MaxSteps     uint64
 	Rectangle    image.Rectangle
 	ScaleFactor  int
+	Monochrome   bool
 }
 
 func (cf *CommonFlags) String() string {
@@ -31,6 +32,7 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 	flag.StringVar(&cf.Cpuprofile, "cpuprofile", "", "Write cpu profile to file")
 	flag.StringVar(&cf.Dir, "d", fmt.Sprintf("results%d", gridLinesTotal), "Results directory")
 	flag.StringVar(&cf.InitialPoint, "i", "A0+B0", "Initial axes and direction")
+	flag.BoolVar(&cf.Monochrome, "m", false, "Monochromatic palette")
 	flag.StringVar(&cf.AntName, "n", "RLLLL", "Ant name")
 	flag.Func("r", "Output image rectangle", func(rectangleStr string) (err error) {
 		cf.Rectangle, cf.ScaleFactor, err = ParseRectangleStr(rectangleStr)

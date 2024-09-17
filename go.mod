@@ -4,8 +4,8 @@ go 1.23.0
 
 require (
 	github.com/StephaneBunel/bresenham v0.0.0-20211027152503-ec76d7b8e923
-	github.com/crazy3lf/colorconv v1.2.0
 	github.com/gen2brain/raylib-go/raylib v0.0.0-20240807111636-8861ee437da9
+	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/schollz/progressbar/v3 v3.14.6
 	golang.org/x/image v0.19.0
 	golang.org/x/time v0.6.0
