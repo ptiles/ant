@@ -14,21 +14,40 @@ import (
 
 const GridLinesTotal = uint(pgrid.GridLinesTotal)
 
-func genRandomPoint(min, max int) string {
+func genRandomPoint(min, max int) (uint, int, string, uint, int) {
 	dirNames := [2]string{"-", "+"}
 
-	ax1 := rand.UintN(GridLinesTotal)
-	ax2 := rand.UintN(GridLinesTotal - 1)
-	if ax2 == ax1 {
-		ax2 = GridLinesTotal - 1
-	}
+	ax := rand.Perm(int(GridLinesTotal))
+	ax1, ax2 := uint(ax[0]), uint(ax[1])
 
 	dir := dirNames[rand.IntN(2)]
 
 	off1 := rand.IntN(max+1-min) + min
 	off2 := rand.IntN(max+1-min) + min
 
-	return fmt.Sprintf("%s%d%s%s%d", pgrid.AxisNames[ax1], off1, dir, pgrid.AxisNames[ax2], off2)
+	return ax1, off1, dir, ax2, off2
+}
+
+func genRandomPointString(min, max int) string {
+	ax1, off1, dir, ax2, off2 := genRandomPoint(min, max)
+
+	ax1s := pgrid.AxisNames[ax1]
+	ax2s := pgrid.AxisNames[ax2]
+
+	return fmt.Sprintf("%s%d%s%s%d", ax1s, off1, dir, ax2s, off2)
+}
+
+func genRandomPointKaleidoscope(min, max int) [GridLinesTotal]string {
+	ax1, off1, dir, ax2, off2 := genRandomPoint(min, max)
+
+	var result [GridLinesTotal]string
+	for i := range GridLinesTotal {
+		ax1s := pgrid.AxisNames[(ax1+i)%GridLinesTotal]
+		ax2s := pgrid.AxisNames[(ax2+i)%GridLinesTotal]
+		point := fmt.Sprintf("%s%d%s%s%d", ax1s, off1, dir, ax2s, off2)
+		result[i] = point
+	}
+	return result
 }
 
 func genRandomPointAround(ax1, min1, max1, ax2, min2, max2 int) string {
@@ -54,6 +73,7 @@ type Flags struct {
 	initialPointCount    int
 	initialPointMax      int
 	initialPointRelative bool
+	kaleidoscope         bool
 
 	radiusCount int
 }
@@ -64,6 +84,7 @@ func flagsSetup() *Flags {
 	flag.StringVar(&flags.antNameRange, "nr", "", "Ant name range MIN-MAX")
 
 	flag.IntVar(&flags.initialPointCount, "ic", 0, "Initial point count")
+	flag.BoolVar(&flags.kaleidoscope, "ik", false, "Initial point kaleidoscope style")
 	flag.IntVar(&flags.initialPointMax, "im", 8*1024, "Initial point max offset")
 	flag.BoolVar(&flags.initialPointRelative, "ir", false, "Initial point relative to -i value")
 
@@ -84,14 +105,7 @@ func parseNameRange(antNameRange string) (int, int) {
 	return minBitWidth, maxBitWidth
 }
 
-func main() {
-	commonFlags := &utils.CommonFlags{}
-	commonFlags.CommonFlagsSetup(pgrid.GridLinesTotal)
-	flags := flagsSetup()
-	flag.Parse()
-	commonFlags.ParseArgs()
-
-	var antNames []string
+func getAntNames(flags *Flags, commonFlags *utils.CommonFlags) []string {
 	if flags.antNameRange != "" {
 		minBitWidth, maxBitWidth := parseNameRange(flags.antNameRange)
 
@@ -101,8 +115,7 @@ func main() {
 			antNamesLength += 1<<bitWidth - 2
 		}
 
-		antNames = make([]string, antNamesLength)
-
+		antNames := make([]string, antNamesLength)
 		i := 0
 		for bitWidth := minBitWidth; bitWidth <= maxBitWidth; bitWidth++ {
 			maxNum := uint64(1<<bitWidth) - 1
@@ -111,14 +124,16 @@ func main() {
 				i += 1
 			}
 		}
+		return antNames
 	} else if commonFlags.AntName != "" {
-		antNames = strings.Split(commonFlags.AntName, ",")
-	} else {
-		fmt.Fprintln(os.Stderr, "Ant name or range required")
-		os.Exit(1)
+		return strings.Split(commonFlags.AntName, ",")
 	}
 
-	var initialPoints []string
+	fmt.Fprintln(os.Stderr, "Ant name or range required")
+	return []string{"LLR"}
+}
+
+func getInitialPoints(flags *Flags, commonFlags *utils.CommonFlags) []string {
 	if flags.initialPointRelative && flags.initialPointCount > 0 {
 		ax1, off1, _, ax2, off2 := utils.ParseInitialPoint(commonFlags.InitialPoint)
 
@@ -127,32 +142,59 @@ func main() {
 		min2 := off2 - flags.initialPointMax
 		max2 := off2 + flags.initialPointMax
 
-		initialPoints = make([]string, flags.initialPointCount)
+		initialPoints := make([]string, flags.initialPointCount)
 		for i := range flags.initialPointCount {
 			initialPoints[i] = genRandomPointAround(ax1, min1, max1, ax2, min2, max2)
 		}
+		return initialPoints
+	} else if flags.kaleidoscope && flags.initialPointCount > 0 {
+		minInitialPointOffset := -flags.initialPointMax
+		maxInitialPointOffset := +flags.initialPointMax
+
+		initialPoints := make([]string, flags.initialPointCount*int(GridLinesTotal))
+		for i := range flags.initialPointCount {
+			points := genRandomPointKaleidoscope(minInitialPointOffset, maxInitialPointOffset)
+			for j, point := range points {
+				initialPoints[i*int(GridLinesTotal)+j] = point
+			}
+		}
+		return initialPoints
 	} else if flags.initialPointCount > 0 {
 		minInitialPointOffset := -flags.initialPointMax
 		maxInitialPointOffset := +flags.initialPointMax
 
-		initialPoints = make([]string, flags.initialPointCount)
+		initialPoints := make([]string, flags.initialPointCount)
 		for i := range flags.initialPointCount {
-			initialPoints[i] = genRandomPoint(minInitialPointOffset, maxInitialPointOffset)
+			initialPoints[i] = genRandomPointString(minInitialPointOffset, maxInitialPointOffset)
 		}
-	} else {
-		initialPoints = strings.Split(commonFlags.InitialPoint, ",")
+		return initialPoints
 	}
+	return strings.Split(commonFlags.InitialPoint, ",")
+}
 
+func getRadii(flags *Flags, commonFlags *utils.CommonFlags) []float64 {
 	precision := uint(10_000)
-	var radii []float64
 	if flags.radiusCount > 0 {
-		radii = make([]float64, flags.radiusCount)
+		radii := make([]float64, flags.radiusCount)
 		for i := range flags.radiusCount {
 			radii[i] = float64(precision-rand.UintN(precision)) / float64(precision)
 		}
-	} else {
-		radii = []float64{0.5}
+		return radii
 	}
+
+	return []float64{commonFlags.Radius}
+}
+
+func main() {
+	commonFlags := &utils.CommonFlags{}
+	commonFlags.CommonFlagsSetup(pgrid.GridLinesTotal)
+	flags := flagsSetup()
+	flag.Parse()
+	commonFlags.ParseArgs()
+
+	antNames := getAntNames(flags, commonFlags)
+	initialPoints := getInitialPoints(flags, commonFlags)
+	radii := getRadii(flags, commonFlags)
 
 	for _, radius := range radii {
 		for _, initialPoint := range initialPoints {

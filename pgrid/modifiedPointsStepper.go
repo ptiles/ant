@@ -75,7 +75,7 @@ const OverflowOffset = 1024
 func overflowCheck(centerPoint, prevPoint image.Point) {
 	diff := image.Rectangle{Min: centerPoint, Max: prevPoint}.Canon()
 	if diff.Dx() > OverflowOffset || diff.Dy() > OverflowOffset {
-		fmt.Println("\nPoint is way too far (integer overflow)", centerPoint, prevPoint)
+		fmt.Println("\nAnt went too far (integer overflow)", centerPoint, prevPoint)
 		os.Exit(0)
 	}
 }

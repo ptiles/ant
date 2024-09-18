@@ -6,6 +6,7 @@
 - [ ] Print full `ant` and `ant-batch` commands
 - [ ] Save results in intermediate `.ant` file
 - [x] Monochromatic palette
+- [ ] Make image brighter when downscaling
 - [ ] Grayscale image
 - [ ] Store intermediate image in segments
 - [ ] Use tree instead of map for storage
