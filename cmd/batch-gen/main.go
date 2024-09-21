@@ -25,6 +25,13 @@ func genRandomPoint(min, max int) (uint, int, string, uint, int) {
 	off1 := rand.IntN(max+1-min) + min
 	off2 := rand.IntN(max+1-min) + min
 
+	if rand.IntN(2) == 0 {
+		off1 = -off1
+	}
+	if rand.IntN(2) == 0 {
+		off2 = -off2
+	}
+
 	return ax1, off1, dir, ax2, off2
 }
 
@@ -70,10 +77,10 @@ func numToName(num uint64, bitWidth int) string {
 type Flags struct {
 	antNameRange string
 
-	initialPointCount    int
-	initialPointMax      int
-	initialPointRelative bool
-	kaleidoscope         bool
+	initialPointCount int
+	initialPointRange string
+	initialPointNear  bool
+	kaleidoscope      bool
 
 	radiusCount int
 }
@@ -85,8 +92,8 @@ func flagsSetup() *Flags {
 
 	flag.IntVar(&flags.initialPointCount, "ic", 0, "Initial point count")
 	flag.BoolVar(&flags.kaleidoscope, "ik", false, "Initial point kaleidoscope style")
-	flag.IntVar(&flags.initialPointMax, "im", 8*1024, "Initial point max offset")
-	flag.BoolVar(&flags.initialPointRelative, "ir", false, "Initial point relative to -i value")
+	flag.StringVar(&flags.initialPointRange, "ir", "0-8192", "Initial point offset range")
+	flag.BoolVar(&flags.initialPointNear, "in", false, "Initial point near -i value")
 
 	flag.IntVar(&flags.radiusCount, "rc", 0, "Random radius count")
 
@@ -134,13 +141,14 @@ func getAntNames(flags *Flags, commonFlags *utils.CommonFlags) []string {
 }
 
 func getInitialPoints(flags *Flags, commonFlags *utils.CommonFlags) []string {
-	if flags.initialPointRelative && flags.initialPointCount > 0 {
+	initialPointRangeMin, initialPointRangeMax, _ := utils.ParseRangeStr(flags.initialPointRange)
+	if flags.initialPointNear && flags.initialPointCount > 0 {
 		ax1, off1, _, ax2, off2 := utils.ParseInitialPoint(commonFlags.InitialPoint)
 
-		min1 := off1 - flags.initialPointMax
-		max1 := off1 + flags.initialPointMax
-		min2 := off2 - flags.initialPointMax
-		max2 := off2 + flags.initialPointMax
+		min1 := off1 - initialPointRangeMax
+		max1 := off1 + initialPointRangeMax
+		min2 := off2 - initialPointRangeMax
+		max2 := off2 + initialPointRangeMax
 
 		initialPoints := make([]string, flags.initialPointCount)
 		for i := range flags.initialPointCount {
@@ -148,24 +156,18 @@ func getInitialPoints(flags *Flags, commonFlags *utils.CommonFlags) []string {
 		}
 		return initialPoints
 	} else if flags.kaleidoscope && flags.initialPointCount > 0 {
-		minInitialPointOffset := -flags.initialPointMax
-		maxInitialPointOffset := +flags.initialPointMax
-
 		initialPoints := make([]string, flags.initialPointCount*int(GridLinesTotal))
 		for i := range flags.initialPointCount {
-			points := genRandomPointKaleidoscope(minInitialPointOffset, maxInitialPointOffset)
+			points := genRandomPointKaleidoscope(initialPointRangeMin, initialPointRangeMax)
 			for j, point := range points {
 				initialPoints[i*int(GridLinesTotal)+j] = point
 			}
 		}
 		return initialPoints
 	} else if flags.initialPointCount > 0 {
-		minInitialPointOffset := -flags.initialPointMax
-		maxInitialPointOffset := +flags.initialPointMax
-
 		initialPoints := make([]string, flags.initialPointCount)
 		for i := range flags.initialPointCount {
-			initialPoints[i] = genRandomPointString(minInitialPointOffset, maxInitialPointOffset)
+			initialPoints[i] = genRandomPointString(initialPointRangeMin, initialPointRangeMax)
 		}
 		return initialPoints
 	}
