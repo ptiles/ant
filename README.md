@@ -1,5 +1,8 @@
 # Running Langton's ant on Penrose tiling
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/ptiles/ant.svg)](https://pkg.go.dev/github.com/ptiles/ant)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ptiles/ant)](https://goreportcard.com/report/github.com/ptiles/ant)
+
 ## Building
 
 ```shell

@@ -3,13 +3,15 @@
 set -e
 set -o xtrace
 
-ID="${ID:=kaleidoscope}"
-NAME="${NAME:=RLL}"
+NAME="${NAME:="RLL"}"
 RADIUS="${RADIUS:="0.000007"}"
-IK="${IK:=true}"
+IK="${IK:="true"}"
 IC="${IC:="32"}"
 IR="${IR:="16384"}"
 MAX_STEPS="${MAX_STEPS:="5_000_000 10_000_000 20_000_000 50_000_000"}"
+
+ID="${ID:="kaleidoscope"}"
+LIMIT="${LIMIT:="19k"}"
 
 BASE="${NAME}_${RADIUS}_${ID}"
 DIR="results5/${BASE}"
@@ -28,22 +30,20 @@ for STEPS in "${MAX_STEPS_ARRAY[@]}"; do
 
   mkdir -p "${DIR}/${STEPS}__small"
   find "${DIR}/${STEPS}"                                     \
-    -type f -size -20k                                       \
+    -type f -size -"${LIMIT}"                                \
     -exec mv {} "${DIR}/${STEPS}__small" ';'
 
   magick "${DIR}/${STEPS}/"*".png"                           \
        -evaluate-sequence Max                                \
          "${DIR}/${BASE}_Transparent_${STEPS}.png"
+
+  magick "${DIR}/${BASE}_Transparent_"*".png"                  \
+    -evaluate-sequence Max                                     \
+         "${DIR}/${BASE}_Transparent.png"
+
+  magick "${DIR}/${BASE}_Transparent.png"                      \
+    -background "#181818" -alpha remove -alpha off             \
+         "${DIR}/${BASE}_Black.png"
 done
-
-touch "${DIR}/${BASE}_Transparent_"*".png"
-
-magick "${DIR}/${BASE}_Transparent_"*".png"                  \
-  -evaluate-sequence Max                                     \
-       "${DIR}/${BASE}_Transparent.png"
-
-magick "${DIR}/${BASE}_Transparent.png"                      \
-  -background "#181818" -alpha remove -alpha off             \
-       "${DIR}/${BASE}_Black.png"
 
 #open   "${DIR}/${BASE}_Black.png"

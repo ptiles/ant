@@ -18,7 +18,7 @@ func (f *Field) initialState() (GridPoint, GridLine, GridLine, bool, uint8) {
 	//	currPoint.String(), currLine.String(), prevLine.String(), prevPointSign,
 	//)
 
-	return currPoint, currLine, prevLine, prevPointSign, 1
+	return currPoint, currLine, prevLine, prevPointSign, 0
 }
 
 func (f *Field) initialStateString(currLine GridLine, prevLine GridLine, prevPointSign bool) string {
