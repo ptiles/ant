@@ -9,6 +9,7 @@
 - [ ] Make image brighter when downscaling
 - [ ] Grayscale image
 - [ ] Store intermediate image in segments
+- [ ] Calculate box-counting dimension instead of uniq %
 - [ ] Use tree instead of map for storage
 - [ ] Separate command for rendering images from `.ant` file
 - [ ] Add `.ant` file rendering to `ant-rl` command

@@ -19,7 +19,7 @@ type gridPointColor struct {
 }
 
 func (gpc gridPointColor) String() string {
-	return fmt.Sprintf("%s %d", gpc.gridPoint.ShortString(), gpc.color)
+	return fmt.Sprintf("%s %d", gpc.gridPoint.Axes.String(), gpc.color)
 }
 
 const MaxModifiedPoints = uint64(32 * 1024)
@@ -39,7 +39,7 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, max
 	points := make([]gridPointColor, MaxModifiedPoints)
 	modifiedCount := uint64(0)
 
-	for gridPoint, color := range f.Run(maxSteps, bar) {
+	for gridPoint, color := range f.Run(maxSteps) {
 		if modifiedCount == MaxModifiedPoints {
 			bar.Add64(int64(modifiedCount))
 			modifiedPointsCh <- points

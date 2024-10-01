@@ -5,7 +5,7 @@ import (
 	"github.com/ptiles/ant/utils"
 )
 
-func (f *Field) initialState() (GridPoint, GridLine, GridLine, bool, uint8) {
+func (f *Field) initialState() (GridPoint, GridLine, GridLine, bool) {
 	currAxis, currOffset, prevPointSign, prevAxis, prevOffset := utils.ParseInitialPoint(f.InitialPoint)
 
 	currLine := GridLine{Axis: uint8(currAxis), Offset: offsetInt(currOffset)}
@@ -18,7 +18,7 @@ func (f *Field) initialState() (GridPoint, GridLine, GridLine, bool, uint8) {
 	//	currPoint.String(), currLine.String(), prevLine.String(), prevPointSign,
 	//)
 
-	return currPoint, currLine, prevLine, prevPointSign, 0
+	return currPoint, currLine, prevLine, prevPointSign
 }
 
 func (f *Field) initialStateString(currLine GridLine, prevLine GridLine, prevPointSign bool) string {

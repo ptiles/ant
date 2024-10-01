@@ -1,7 +1,6 @@
 package pgrid
 
 import (
-	"github.com/schollz/progressbar/v3"
 	"iter"
 )
 
@@ -37,25 +36,11 @@ func (f *Field) step(axes GridAxes) (bool, uint8) {
 	return f.Rules[value], newValue
 }
 
-func (f *Field) Run(maxSteps uint64, bar *progressbar.ProgressBar) iter.Seq2[GridPoint, uint8] {
+func (f *Field) Run(maxSteps uint64) iter.Seq2[GridPoint, uint8] {
 	return func(yield func(GridPoint, uint8) bool) {
-		//initialTotal := 25
-		//initialCounter := initialTotal
-		//initialPoints := make([]string, initialTotal)
+		currPoint, currLine, prevLine, pointSign := f.initialState()
 
-		currPoint, currLine, prevLine, pointSign, _ := f.initialState()
-
-		//for step := range maxSteps {
 		for range maxSteps {
-			//if initialCounter > 0 && step%10_000 == 0 {
-			//	initialPoints[initialTotal-initialCounter] = f.initialStateString(currLine, prevLine, pointSign)
-			//	initialCounter -= 1
-			//	if initialCounter == 0 {
-			//		bar.Clear()
-			//		println(strings.Join(initialPoints, ","))
-			//	}
-			//}
-
 			isRightTurn, pointColor := f.step(currPoint.Axes)
 
 			if !yield(currPoint, pointColor) {

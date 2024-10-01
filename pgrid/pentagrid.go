@@ -106,7 +106,7 @@ type GridPoint struct {
 	Point   Point
 }
 
-type offsetInt int16
+type offsetInt int32
 
 type GridAxes struct {
 	Axis0   uint8
@@ -126,16 +126,12 @@ func (gp *GridPoint) String() string {
 		AxisNames[ax0], offsets[ax0], AxisNames[ax1], offsets[ax1],
 	)
 }
-func (gp *GridPoint) ShortString() string {
-	offsets := gp.Offsets
-	ax0, ax1 := gp.Axes.Axis0, gp.Axes.Axis1
+
+func (ga *GridAxes) String() string {
 	return fmt.Sprintf(
 		"%s%d:%s%d",
-		AxisNames[ax0], offsets[ax0], AxisNames[ax1], offsets[ax1],
+		AxisNames[ga.Axis0], ga.Offset0, AxisNames[ga.Axis1], ga.Offset1,
 	)
-}
-func (gp *GridPoint) Print() {
-	fmt.Println(gp)
 }
 
 func (f *Field) gridPointToPoint(gridLine0, gridLine1 GridLine) Point {
