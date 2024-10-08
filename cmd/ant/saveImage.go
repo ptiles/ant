@@ -69,13 +69,12 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 	saveImage(activeImageS, activeRectN, scaleFactor, fileNameFmt, steps)
 
 	fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(steps), "png")
-	uniqPct := 100 * len(commonFlags.AntName) * pgrid.Uniq() / int(steps)
 	dimensionsScaled := fmt.Sprintf("%dx%d", activeRectN.Dx()/scaleFactor, activeRectN.Dy()/scaleFactor)
 	dimensions := fmt.Sprintf("%dx%d", activeRectN.Dx(), activeRectN.Dy())
 	activeRect := fmt.Sprintf("%s/%d", activeRectN.String(), scaleFactor)
 	fmt.Printf(
-		"%s %s %s %s; %d%% uniq\n",
-		fileName, dimensionsScaled, dimensions, activeRect, uniqPct,
+		"%s %s %s %s\n",
+		fileName, dimensionsScaled, dimensions, activeRect,
 	)
 
 	maxSide := activeRectN.Dx()
@@ -88,7 +87,6 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 			AntName:          commonFlags.AntName,
 			FileName:         fileName,
 			Steps:            steps,
-			UniqPct:          uniqPct,
 			ImagesCount:      imagesCount,
 			MaxSide:          maxSide,
 			Dimensions:       dimensions,
@@ -134,7 +132,6 @@ type statsType struct {
 	AntName          string `json:"antName"`
 	FileName         string `json:"fileName"`
 	Steps            uint64 `json:"steps"`
-	UniqPct          int    `json:"uniqPct"`
 	ImagesCount      int    `json:"imagesCount"`
 	MaxSide          int    `json:"maxSide"`
 	Dimensions       string `json:"dimensions"`

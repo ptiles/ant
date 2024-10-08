@@ -3,13 +3,10 @@ package pgrid
 import (
 	"fmt"
 	"github.com/StephaneBunel/bresenham"
-	"github.com/schollz/progressbar/v3"
-	"golang.org/x/time/rate"
 	"image"
 	"image/color"
 	"math"
 	"os"
-	"time"
 )
 
 type gridPointColor struct {
@@ -18,30 +15,22 @@ type gridPointColor struct {
 	color       uint8
 }
 
-func (gpc gridPointColor) String() string {
+func (gpc *gridPointColor) String() string {
 	return fmt.Sprintf("%s %d", gpc.gridPoint.Axes.String(), gpc.color)
 }
 
 const MaxModifiedPoints = uint64(32 * 1024)
 
 func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, maxSteps, partialSteps uint64, palette []color.RGBA) {
-	bar := progressbar.NewOptions64(int64(maxSteps),
-		progressbar.OptionSetWidth(75),
-		progressbar.OptionClearOnFinish(),
-		progressbar.OptionShowDescriptionAtLineEnd(),
-		progressbar.OptionShowIts(),
-	)
-
 	modifiedPointsCh := make(chan []gridPointColor, 1024)
 
-	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, palette, len(f.Rules), partialSteps, bar)
+	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, palette, partialSteps)
 
 	points := make([]gridPointColor, MaxModifiedPoints)
 	modifiedCount := uint64(0)
 
 	for gridPoint, color := range f.Run(maxSteps) {
 		if modifiedCount == MaxModifiedPoints {
-			bar.Add64(int64(modifiedCount))
 			modifiedPointsCh <- points
 			modifiedCount = 0
 			points = make([]gridPointColor, MaxModifiedPoints)
@@ -50,7 +39,6 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, max
 
 		modifiedCount += 1
 	}
-	bar.Add64(int64(modifiedCount))
 	modifiedPointsCh <- points[:modifiedCount]
 	close(modifiedPointsCh)
 }
@@ -138,13 +126,8 @@ func modifiedPointsToImages(
 	modifiedPointsCh <-chan []gridPointColor,
 	modifiedImagesCh chan<- ModifiedImage,
 	palette []color.RGBA,
-	rulesLength int, partialSteps uint64,
-	bar *progressbar.ProgressBar,
+	partialSteps uint64,
 ) {
-	s := rate.Sometimes{Interval: time.Second / 2 * 3}
-	uniqPointsCount := 0
-	uniqPoints := make(map[GridAxes]struct{})
-
 	stepsCount := uint64(0)
 	prevPoint := image.Point{}
 
@@ -155,7 +138,6 @@ func modifiedPointsToImages(
 
 		for i := range points {
 			gridPoint := points[i].gridPoint
-			uniqPoints[gridPoint.Axes] = struct{}{}
 
 			centerPoint := gridPoint.getCenterPoint()
 			if !rect.Empty() {
@@ -185,15 +167,6 @@ func modifiedPointsToImages(
 		mImage := ModifiedImage{Steps: stepsCount}
 		mImage.Img = drawPoints(rect, points[start:], palette)
 		modifiedImagesCh <- mImage
-
-		uniqPointsCount += len(points)
-		s.Do(func() {
-			bar.Describe(fmt.Sprintf(
-				"Uniq: %d%%", 100*rulesLength*len(uniqPoints)/uniqPointsCount),
-			)
-			uniqPointsCount = 0
-			uniqPoints = make(map[GridAxes]struct{})
-		})
 	}
 	close(modifiedImagesCh)
 }

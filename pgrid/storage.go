@@ -15,7 +15,3 @@ func Set(axes GridAxes, value uint8) {
 func ResetValues() {
 	values = axisValues{}
 }
-
-func Uniq() int {
-	return len(values)
-}
