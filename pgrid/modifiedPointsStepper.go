@@ -3,6 +3,7 @@ package pgrid
 import (
 	"fmt"
 	"github.com/StephaneBunel/bresenham"
+	"github.com/ptiles/ant/utils"
 	"image"
 	"image/color"
 	"math"
@@ -19,7 +20,22 @@ func (gpc *gridPointColor) String() string {
 	return fmt.Sprintf("%s %d", gpc.gridPoint.Axes.String(), gpc.color)
 }
 
-const MaxModifiedPoints = uint64(32 * 1024)
+const MaxModifiedPoints = 32 * 1024
+const noiseMin = 512
+const noiseMax = 32 * 1024
+const noiseClear = 1024 * 1024
+const maxDots = 1000
+
+//const noiseMax = 16 * 1024
+
+const noiseCharsLen = 40
+
+var noiseChars = [noiseCharsLen]string{
+	".", ".", ".", ".", "▁", "▂", "▂", "▃", "▃", "▃",
+	"▄", "▄", "▄", "▄", "▅", "▅", "▅", "▅", "▅", "▆",
+	"▆", "▆", "▆", "▆", "▆", "▇", "▇", "▇", "▇", "▇",
+	"▇", "▇", "█", "█", "█", "█", "█", "█", "█", "█",
+}
 
 func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, maxSteps, partialSteps uint64, palette []color.RGBA) {
 	modifiedPointsCh := make(chan []gridPointColor, 1024)
@@ -29,18 +45,59 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, max
 	points := make([]gridPointColor, MaxModifiedPoints)
 	modifiedCount := uint64(0)
 
+	stepFormat := fmt.Sprintf("\n%%%ds", 1+len(utils.WithUnderscores(maxSteps)))
+	dotSize := int64(maxSteps) / maxDots
+	fmt.Printf(". = %s steps", utils.WithUnderscores(uint64(dotSize)))
+
+	visited := make(map[GridAxes]int64, max(MaxModifiedPoints, noiseMax, noiseClear))
+	stepNumber := int64(0)
+	dotNumber := 0
+	noise := int64(0)
+
 	for gridPoint, color := range f.Run(maxSteps) {
+		if visitedStep, ok := visited[gridPoint.Axes]; ok {
+			stepDiff := stepNumber - visitedStep
+			if noiseMin < stepDiff && stepDiff < noiseMax {
+				noise += 1
+			}
+		}
+
+		visited[gridPoint.Axes] = stepNumber
+		if stepNumber%dotSize == 0 {
+			if dotNumber%50 == 0 {
+				fmt.Printf(stepFormat, utils.WithUnderscores(uint64(stepNumber)))
+			}
+			if dotNumber%10 == 0 {
+				fmt.Printf(" ")
+			}
+			dotNumber += 1
+
+			fmt.Printf("%s", noiseChars[noiseCharsLen*noise/dotSize])
+			noise = 0
+		}
+
 		if modifiedCount == MaxModifiedPoints {
+			if stepNumber > noiseClear {
+				clearStep := stepNumber - noiseClear
+				for k, v := range visited {
+					if v < clearStep {
+						delete(visited, k)
+					}
+				}
+			}
+
 			modifiedPointsCh <- points
 			modifiedCount = 0
 			points = make([]gridPointColor, MaxModifiedPoints)
 		}
 		points[modifiedCount] = gridPointColor{gridPoint: gridPoint, color: color}
 
+		stepNumber += 1
 		modifiedCount += 1
 	}
 	modifiedPointsCh <- points[:modifiedCount]
 	close(modifiedPointsCh)
+	fmt.Printf("\n")
 }
 
 func floorSnap(v int) int {
