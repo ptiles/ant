@@ -23,91 +23,67 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 	steps := commonFlags.MaxSteps
 
 	imagesCount := 0
-	scaleFactor := 1
+	scaleFactor := 0
 
-	var activeRectN image.Rectangle
-	var boundRectN image.Rectangle
-	var activeImageS *image.RGBA
+	var resultRectN image.Rectangle
+	var paddingRectN image.Rectangle
+	var resultImageS *image.RGBA
 
 	if dynamic {
-		mImg0 := <-modifiedImagesCh
-		img0 := mImg0.Img
-		imagesCount += 1
-
-		activeRectN = img0.Rect
-		boundRectN = utils.RectGrow(img0.Rect, maxDimension)
-		activeImageS = image.NewRGBA(boundRectN)
-		mergeImage(activeImageS, img0, scaleFactor)
+		resultImageS = image.NewRGBA(image.Rectangle{})
 	} else {
-		activeRectN = commonFlags.Rectangle
+		resultRectN = commonFlags.Rectangle
 		scaleFactor = commonFlags.ScaleFactor
-		activeImageS = image.NewRGBA(utils.RectDiv(commonFlags.Rectangle, scaleFactor))
+		resultImageS = image.NewRGBA(utils.RectDiv(commonFlags.Rectangle, scaleFactor))
 	}
 
 	for mImg := range modifiedImagesCh {
-		img := mImg.Img
-		imagesCount += 1
-		if mImg.Save {
-			saveImage(activeImageS, activeRectN, scaleFactor, fileNameFmt, mImg.Steps)
-		}
-
 		if dynamic {
-			activeRectN = activeRectN.Union(img.Rect)
-			if !activeRectN.In(boundRectN) {
-				scaleFactor *= 2
-				maxDimension *= 2
-				boundRectN = utils.RectGrow(activeRectN, maxDimension)
-				newActiveImageS := image.NewRGBA(utils.RectDiv(boundRectN, scaleFactor))
-				mergeImage(newActiveImageS, activeImageS, 2)
-				activeImageS = newActiveImageS
+			resultRectN = resultRectN.Union(mImg.Img.Rect)
+			if !resultRectN.In(paddingRectN) {
+				if scaleFactor == 0 {
+					scaleFactor = 1
+				} else {
+					scaleFactor *= 2
+					maxDimension *= 2
+				}
+				paddingRectN = utils.RectGrow(resultRectN, maxDimension)
+				newResultImageS := image.NewRGBA(utils.RectDiv(paddingRectN, scaleFactor))
+				mergeImage(newResultImageS, resultImageS, 2)
+				resultImageS = newResultImageS
 			}
 		}
 
-		mergeImage(activeImageS, img, scaleFactor)
+		mergeImage(resultImageS, mImg.Img, scaleFactor)
+		if mImg.Save {
+			saveImage(resultImageS, resultRectN, scaleFactor, fileNameFmt, mImg.Steps)
+		}
+		imagesCount += 1
 	}
 
-	saveImage(activeImageS, activeRectN, scaleFactor, fileNameFmt, steps)
-
-	fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(steps), "png")
-	dimensionsScaled := fmt.Sprintf("%dx%d", activeRectN.Dx()/scaleFactor, activeRectN.Dy()/scaleFactor)
-	dimensions := fmt.Sprintf("%dx%d", activeRectN.Dx(), activeRectN.Dy())
-	activeRect := fmt.Sprintf("%s/%d", activeRectN.String(), scaleFactor)
-	fmt.Printf(
-		"%s %s %s %s\n",
-		fileName, dimensionsScaled, dimensions, activeRect,
-	)
-
-	maxSide := activeRectN.Dx()
-	if activeRectN.Dx() < activeRectN.Dy() {
-		maxSide = activeRectN.Dy()
-	}
-
+	fileName := saveImage(resultImageS, resultRectN, scaleFactor, fileNameFmt, steps)
 	if flags.jsonStats {
 		writeStats(fileNameFmt, statsType{
 			AntName:          commonFlags.AntName,
 			FileName:         fileName,
 			Steps:            steps,
 			ImagesCount:      imagesCount,
-			MaxSide:          maxSide,
-			Dimensions:       dimensions,
-			DimensionsScaled: dimensionsScaled,
+			MaxSide:          max(resultRectN.Dx(), resultRectN.Dy()),
+			Dimensions:       resultRectN.Size().String(),
+			DimensionsScaled: resultRectN.Size().Div(scaleFactor).String(),
 		})
 	}
 }
 
 func cropImage(src *image.RGBA, cropRect image.Rectangle) *image.RGBA {
-	dstRect := image.Rectangle{Min: image.Point{}, Max: image.Point{X: cropRect.Dx(), Y: cropRect.Dy()}}
+	dstRect := image.Rectangle{Min: image.Point{}, Max: cropRect.Size()}
 	dstImage := image.NewRGBA(dstRect)
 	draw.Draw(dstImage, dstRect, src, cropRect.Min, draw.Over)
 	return dstImage
 }
 
-func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps uint64) {
+func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps uint64) string {
 	fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(steps), "png")
-
-	if steps < 0 {
-		fmt.Println(fileName)
-	}
 
 	err := os.MkdirAll(path.Dir(fileName), 0755)
 	if err != nil {
@@ -126,6 +102,16 @@ func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFacto
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Printf(
+		"%s %s %s %s/%d\n",
+		fileName,
+		activeRectS.Size().String(),
+		activeRectN.Size().String(),
+		activeRectN.String(), scaleFactor,
+	)
+
+	return fileName
 }
 
 type statsType struct {

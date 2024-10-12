@@ -28,14 +28,13 @@ const maxDots = 1000
 
 //const noiseMax = 16 * 1024
 
-const noiseCharsLen = 40
-
-var noiseChars = [noiseCharsLen]string{
+var noiseChars = []string{
 	".", ".", ".", ".", "▁", "▂", "▂", "▃", "▃", "▃",
 	"▄", "▄", "▄", "▄", "▅", "▅", "▅", "▅", "▅", "▆",
 	"▆", "▆", "▆", "▆", "▆", "▇", "▇", "▇", "▇", "▇",
 	"▇", "▇", "█", "█", "█", "█", "█", "█", "█", "█",
 }
+var noiseCharsLen = int64(len(noiseChars))
 
 func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, maxSteps, partialSteps uint64, palette []color.RGBA) {
 	modifiedPointsCh := make(chan []gridPointColor, 1024)
