@@ -24,7 +24,29 @@ const MaxModifiedPoints = 32 * 1024
 const noiseMin = 512
 const noiseMax = 32 * 1024
 const noiseClear = 1024 * 1024
-const maxDots = 1000
+
+func getDotSize(maxSteps uint64) uint64 {
+	dr := uint64(100)
+	m := []float32{2, 2.5, 2}
+
+	de := maxSteps / 1000
+	if dr > de {
+		return dr
+	}
+
+	mi := 0
+	lm := len(m)
+	for {
+		next := uint64(float32(dr) * m[mi])
+		if next >= de {
+			break
+		}
+		dr = next
+		mi = (mi + 1) % lm
+	}
+
+	return dr
+}
 
 //const noiseMax = 16 * 1024
 
@@ -34,7 +56,7 @@ var noiseChars = []string{
 	"▆", "▆", "▆", "▆", "▆", "▇", "▇", "▇", "▇", "▇",
 	"▇", "▇", "█", "█", "█", "█", "█", "█", "█", "█",
 }
-var noiseCharsLen = int64(len(noiseChars))
+var noiseCharsLen = uint64(len(noiseChars))
 
 func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, maxSteps, partialSteps uint64, palette []color.RGBA) {
 	modifiedPointsCh := make(chan []gridPointColor, 1024)
@@ -44,14 +66,18 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, max
 	points := make([]gridPointColor, MaxModifiedPoints)
 	modifiedCount := uint64(0)
 
-	stepFormat := fmt.Sprintf("\n%%%ds", 1+len(utils.WithUnderscores(maxSteps)))
-	dotSize := int64(maxSteps) / maxDots
-	fmt.Printf(". = %s steps", utils.WithUnderscores(uint64(dotSize)))
+	stepLen := 1 + len(utils.WithUnderscores(maxSteps))
+	stepFormat := fmt.Sprintf("\n%%%ds", stepLen)
 
-	visited := make(map[GridAxes]int64, max(MaxModifiedPoints, noiseMax, noiseClear))
-	stepNumber := int64(0)
+	dotSize := getDotSize(maxSteps)
+	dotFormat := fmt.Sprintf("%%%ds", stepLen)
+	dotValue := fmt.Sprintf(". = %s", utils.WithUnderscores(dotSize))
+	fmt.Printf(dotFormat, dotValue)
+
+	visited := make(map[GridAxes]uint64, max(MaxModifiedPoints, noiseMax, noiseClear))
+	stepNumber := uint64(0)
 	dotNumber := 0
-	noise := int64(0)
+	noise := uint64(0)
 
 	for gridPoint, color := range f.Run(maxSteps) {
 		if visitedStep, ok := visited[gridPoint.Axes]; ok {
@@ -64,7 +90,7 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, max
 		visited[gridPoint.Axes] = stepNumber
 		if stepNumber%dotSize == 0 {
 			if dotNumber%50 == 0 {
-				fmt.Printf(stepFormat, utils.WithUnderscores(uint64(stepNumber)))
+				fmt.Printf(stepFormat, utils.WithUnderscores(stepNumber))
 			}
 			if dotNumber%10 == 0 {
 				fmt.Printf(" ")
