@@ -6,8 +6,11 @@ import (
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/utils"
 	"image/color"
+	"log"
 	"os"
 	"path/filepath"
+	"runtime"
+	"runtime/pprof"
 )
 
 var (
@@ -93,5 +96,17 @@ func main() {
 	if flags.openResult {
 		fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(maxSteps), "png")
 		utils.Open(fileName)
+	}
+
+	if commonFlags.Memprofile != "" {
+		f, mpErr := os.Create(commonFlags.Memprofile)
+		if mpErr != nil {
+			log.Fatal("could not create memory profile: ", mpErr)
+		}
+		defer f.Close() // error handling omitted for example
+		runtime.GC()    // get up-to-date statistics
+		if mpErr := pprof.WriteHeapProfile(f); mpErr != nil {
+			log.Fatal("could not write memory profile: ", mpErr)
+		}
 	}
 }

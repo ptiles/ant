@@ -39,6 +39,11 @@ prof-ant:
 	./bin/ant -cpuprofile tmp/ant.prof LRR__0.246000__A7386-B5868__250_000_009
 	go tool pprof -http=: -no_browser tmp/ant.prof
 
+prof-ant-mem:
+	make ant
+	./bin/ant -memprofile tmp/ant-mem.prof RLL__0.000001__B-14917-A-8917__300_000_009
+	go tool pprof -http=: -no_browser tmp/ant-mem.prof
+
 ant-rl:
 	go build -o bin ./cmd/ant-rl
 
