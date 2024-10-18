@@ -76,18 +76,22 @@ func main() {
 
 	modifiedImagesCh := make(chan pgrid.ModifiedImage, 64)
 
-	go field.ModifiedPointsStepper(modifiedImagesCh, commonFlags.MaxSteps, flags.partialSteps, palette)
+	go field.ModifiedPointsStepper(
+		modifiedImagesCh, palette,
+		commonFlags.MaxSteps, flags.partialSteps,
+		commonFlags.MinCleanStreak, commonFlags.MaxNoisyDots,
+	)
 
 	fileNameFmt := fmt.Sprintf(
 		"%s/%s__%f__%s__%%s.%%s",
 		commonFlags.Dir, commonFlags.AntName, commonFlags.Radius, commonFlags.InitialPoint,
 	)
 
-	saveImageFromModifiedImages(modifiedImagesCh, fileNameFmt, flags, commonFlags)
+	maxSteps := saveImageFromModifiedImages(modifiedImagesCh, fileNameFmt, flags, commonFlags)
 
 	//if flags.openResult || flags.openResults {
 	if flags.openResult {
-		fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(commonFlags.MaxSteps), "png")
+		fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(maxSteps), "png")
 		utils.Open(fileName)
 	}
 }

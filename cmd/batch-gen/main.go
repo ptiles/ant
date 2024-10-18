@@ -204,14 +204,16 @@ func main() {
 				if commonFlags.Rectangle.Empty() {
 					fmt.Printf(
 						//"-d %s -j %s__%f__%s__%d\n",
-						"-d %s %s__%f__%s__%d\n",
-						commonFlags.Dir, antName, radius, initialPoint, commonFlags.MaxSteps,
+						"-d %s -sc %d -sn %d %s__%f__%s__%d\n",
+						commonFlags.Dir, commonFlags.MinCleanStreak, commonFlags.MaxNoisyDots,
+						antName, radius, initialPoint, commonFlags.MaxSteps,
 					)
 				} else {
 					fmt.Printf(
 						//"-d %s -j %s__%f__%s__%d\n",
-						"-d %s -r \\'%s/%d\\' %s__%f__%s__%d\n",
-						commonFlags.Dir, commonFlags.Rectangle.String(), commonFlags.ScaleFactor,
+						"-d %s -sc %d -sn %d -r \\'%s/%d\\' %s__%f__%s__%d\n",
+						commonFlags.Dir, commonFlags.MinCleanStreak, commonFlags.MaxNoisyDots,
+						commonFlags.Rectangle.String(), commonFlags.ScaleFactor,
 						antName, radius, initialPoint, commonFlags.MaxSteps,
 					)
 				}

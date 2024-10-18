@@ -17,10 +17,10 @@ func mergeImage(dst, src *image.RGBA, scaleFactor int) {
 	draw.BiLinear.Scale(dst, dstRect, src, src.Rect, draw.Over, nil)
 }
 
-func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fileNameFmt string, flags *Flags, commonFlags *utils.CommonFlags) {
+func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fileNameFmt string, flags *Flags, commonFlags *utils.CommonFlags) uint64 {
 	maxDimension := flags.maxDimension
 	dynamic := commonFlags.Rectangle.Empty()
-	steps := commonFlags.MaxSteps
+	maxSteps := uint64(0)
 
 	imagesCount := 0
 	scaleFactor := 0
@@ -59,20 +59,22 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 			saveImage(resultImageS, resultRectN, scaleFactor, fileNameFmt, mImg.Steps)
 		}
 		imagesCount += 1
+		maxSteps = mImg.Steps
 	}
 
-	fileName := saveImage(resultImageS, resultRectN, scaleFactor, fileNameFmt, steps)
+	fileName := saveImage(resultImageS, resultRectN, scaleFactor, fileNameFmt, maxSteps)
 	if flags.jsonStats {
 		writeStats(fileNameFmt, statsType{
 			AntName:          commonFlags.AntName,
 			FileName:         fileName,
-			Steps:            steps,
+			Steps:            maxSteps,
 			ImagesCount:      imagesCount,
 			MaxSide:          max(resultRectN.Dx(), resultRectN.Dy()),
 			Dimensions:       resultRectN.Size().String(),
 			DimensionsScaled: resultRectN.Size().Div(scaleFactor).String(),
 		})
 	}
+	return maxSteps
 }
 
 func cropImage(src *image.RGBA, cropRect image.Rectangle) *image.RGBA {

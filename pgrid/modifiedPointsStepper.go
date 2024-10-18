@@ -48,8 +48,6 @@ func getDotSize(maxSteps uint64) uint64 {
 	return dr
 }
 
-//const noiseMax = 16 * 1024
-
 var noiseChars = []string{
 	".", ".", ".", ".", "▁", "▂", "▂", "▃", "▃", "▃",
 	"▄", "▄", "▄", "▄", "▅", "▅", "▅", "▅", "▅", "▆",
@@ -58,7 +56,11 @@ var noiseChars = []string{
 }
 var noiseCharsLen = uint64(len(noiseChars))
 
-func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, maxSteps, partialSteps uint64, palette []color.RGBA) {
+func (f *Field) ModifiedPointsStepper(
+	modifiedImagesCh chan<- ModifiedImage,
+	palette []color.RGBA,
+	maxSteps, partialSteps, minCleanStreak, maxNoisyDots uint64,
+) {
 	modifiedPointsCh := make(chan []gridPointColor, 1024)
 
 	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, palette, partialSteps)
@@ -79,6 +81,16 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, max
 	dotNumber := 0
 	noise := uint64(0)
 
+	if minCleanStreak == 0 {
+		minCleanStreak = math.MaxUint64
+	}
+	if maxNoisyDots == 0 {
+		maxNoisyDots = math.MaxUint64
+	}
+	shouldStop := false
+	cleanStreak := uint64(0)
+	noisyCount := uint64(0)
+
 	for gridPoint, color := range f.Run(maxSteps) {
 		if visitedStep, ok := visited[gridPoint.Axes]; ok {
 			stepDiff := stepNumber - visitedStep
@@ -97,8 +109,20 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, max
 			}
 			dotNumber += 1
 
-			fmt.Printf("%s", noiseChars[noiseCharsLen*noise/dotSize])
+			dotNoise := noiseCharsLen * noise / dotSize
+			fmt.Printf("%s", noiseChars[dotNoise])
 			noise = 0
+
+			noisyDot := dotNoise > 3
+			if noisyDot && cleanStreak > minCleanStreak || noisyCount > maxNoisyDots {
+				shouldStop = true
+			}
+			if noisyDot {
+				cleanStreak = 0
+				noisyCount += 1
+			} else {
+				cleanStreak += 1
+			}
 		}
 
 		if modifiedCount == MaxModifiedPoints {
@@ -119,6 +143,10 @@ func (f *Field) ModifiedPointsStepper(modifiedImagesCh chan<- ModifiedImage, max
 
 		stepNumber += 1
 		modifiedCount += 1
+
+		if shouldStop {
+			break
+		}
 	}
 	modifiedPointsCh <- points[:modifiedCount]
 	close(modifiedPointsCh)

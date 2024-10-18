@@ -15,10 +15,14 @@ type CommonFlags struct {
 	InitialPoint string
 	AntName      string
 	Radius       float64
-	MaxSteps     uint64
-	Rectangle    image.Rectangle
-	ScaleFactor  int
-	Monochrome   bool
+
+	MaxSteps       uint64
+	MinCleanStreak uint64
+	MaxNoisyDots   uint64
+
+	Rectangle   image.Rectangle
+	ScaleFactor int
+	Monochrome  bool
 }
 
 func (cf *CommonFlags) String() string {
@@ -39,6 +43,8 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 		return
 	})
 	flag.Uint64Var(&cf.MaxSteps, "s", 1000000, "Steps")
+	flag.Uint64Var(&cf.MinCleanStreak, "sc", 0, "Min clean dots streak")
+	flag.Uint64Var(&cf.MaxNoisyDots, "sn", 0, "Max noisy dots")
 	flag.Float64Var(&cf.Radius, "tr", 0.5, "Tiles config - radius")
 }
 
