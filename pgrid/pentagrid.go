@@ -109,8 +109,12 @@ type GridPoint struct {
 type offsetInt int32
 
 type GridAxes struct {
-	Axis0   uint8
-	Axis1   uint8
+	Axis0  uint8
+	Axis1  uint8
+	Coords GridCoords
+}
+
+type GridCoords struct {
 	Offset0 offsetInt
 	Offset1 offsetInt
 }
@@ -130,7 +134,7 @@ func (gp *GridPoint) String() string {
 func (ga *GridAxes) String() string {
 	return fmt.Sprintf(
 		"%s%d:%s%d",
-		AxisNames[ga.Axis0], ga.Offset0, AxisNames[ga.Axis1], ga.Offset1,
+		AxisNames[ga.Axis0], ga.Coords.Offset0, AxisNames[ga.Axis1], ga.Coords.Offset1,
 	)
 }
 
@@ -155,7 +159,10 @@ func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine, point Point) GridPo
 
 	gridPoint := GridPoint{
 		Axes: GridAxes{
-			gridLine0.Axis, gridLine1.Axis, gridLine0.Offset, gridLine1.Offset,
+			Axis0: gridLine0.Axis, Axis1: gridLine1.Axis,
+			Coords: GridCoords{
+				Offset0: gridLine0.Offset, Offset1: gridLine1.Offset,
+			},
 		},
 		Point: point,
 	}

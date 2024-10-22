@@ -26,6 +26,12 @@ bench:
 		'./bin/ant-old -w $(WIDTH) LRR__0.246000__A7386-B5868__50_000_001' \
 		'./bin/ant     -w $(WIDTH) LRR__0.246000__A7386-B5868__50_000_002'
 
+bench-huge:
+	make bench-prep
+	hyperfine -r 2 \
+		'./bin/ant-old -w $(WIDTH) RLL__0.000007__B15160-E10890__500_000_001' \
+		'./bin/ant     -w $(WIDTH) RLL__0.000007__B15160-E10890__500_000_002'
+
 STEPS = 50_000_001
 compare:
 	make bench-prep
