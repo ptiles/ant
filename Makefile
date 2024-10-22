@@ -1,9 +1,15 @@
 .DEFAULT_GOAL := build
 
-.PHONY: ant ant-rl batch-gen build
+build: ant ant-rl batch-gen
 
 ant:
 	go build -o bin ./cmd/ant
+
+ant-rl:
+	go build -o bin ./cmd/ant-rl
+
+batch-gen:
+	go build -o bin ./cmd/batch-gen
 
 bench-prep:
 	git stash
@@ -43,11 +49,3 @@ prof-ant-mem:
 	make ant
 	./bin/ant -memprofile tmp/ant-mem.prof RLL__0.000001__B-14917-A-8917__300_000_009
 	go tool pprof -http=: -no_browser tmp/ant-mem.prof
-
-ant-rl:
-	go build -o bin ./cmd/ant-rl
-
-batch-gen:
-	go build -o bin ./cmd/batch-gen
-
-build: ant ant-rl batch-gen

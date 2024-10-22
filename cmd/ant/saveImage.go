@@ -106,7 +106,7 @@ func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFacto
 	}
 
 	fmt.Printf(
-		"%s %s %s %s/%d\n",
+		"\n%s %s %s %s/%d\n",
 		fileName,
 		activeRectS.Size().String(),
 		activeRectN.Size().String(),

@@ -29,8 +29,8 @@ type CommonFlags struct {
 
 func (cf *CommonFlags) String() string {
 	return fmt.Sprintf(
-		"%s__%f__%s__%d\n",
-		cf.AntName, cf.Radius, cf.InitialPoint, cf.MaxSteps,
+		"%s__%f__%s__%s\n",
+		cf.AntName, cf.Radius, cf.InitialPoint, WithUnderscores(cf.MaxSteps),
 	)
 }
 

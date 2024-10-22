@@ -61,7 +61,7 @@ func (f *Field) ModifiedPointsStepper(
 	palette []color.RGBA,
 	maxSteps, partialSteps, minCleanStreak, maxNoisyDots uint64,
 ) {
-	modifiedPointsCh := make(chan []gridPointColor, 1024)
+	modifiedPointsCh := make(chan []gridPointColor, 64)
 
 	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, palette, partialSteps)
 
@@ -98,8 +98,8 @@ func (f *Field) ModifiedPointsStepper(
 				noise += 1
 			}
 		}
-
 		visited[gridPoint.Axes] = stepNumber
+
 		if stepNumber%dotSize == 0 {
 			if dotNumber%50 == 0 {
 				fmt.Printf(stepFormat, utils.WithUnderscores(stepNumber))
@@ -223,7 +223,7 @@ func drawPoints(rect image.Rectangle, points []gridPointColor, palette []color.R
 
 func rectIsLarge(rect image.Rectangle) bool {
 	rectSize := rect.Size()
-	return rectSize.X > 2048 || rectSize.Y > 2048
+	return rectSize.X > 1024 || rectSize.Y > 1024
 }
 
 type ModifiedImage struct {

@@ -10,6 +10,7 @@
 - [ ] Grayscale image
 - [ ] Store intermediate image in segments
 - [x] Highway detection logic
+- [ ] Add `ant-dry` command for highway detection
 - [ ] Use tree instead of map for storage
 - [ ] Separate command for rendering images from `.ant` file
 - [ ] Add `.ant` file rendering to `ant-rl` command
