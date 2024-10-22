@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"image"
+	"math"
 	"path"
 	"strconv"
 	"strings"
@@ -21,6 +22,8 @@ type CommonFlags struct {
 	MaxSteps       uint64
 	MinCleanStreak uint64
 	MaxNoisyDots   uint64
+	MinSteps       uint64
+	MinUniq        uint64
 
 	Rectangle   image.Rectangle
 	ScaleFactor int
@@ -48,6 +51,8 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 	flag.Uint64Var(&cf.MaxSteps, "s", 1000000, "Steps")
 	flag.Uint64Var(&cf.MinCleanStreak, "sc", 0, "Min clean dots streak")
 	flag.Uint64Var(&cf.MaxNoisyDots, "sn", 0, "Max noisy dots")
+	flag.Uint64Var(&cf.MinSteps, "sm", 0, "Min steps for file")
+	flag.Uint64Var(&cf.MinUniq, "su", 0, "Min uniq points")
 	flag.Float64Var(&cf.Radius, "tr", 0.5, "Tiles config - radius")
 }
 
@@ -57,6 +62,14 @@ func (cf *CommonFlags) ParseArgs() {
 		return
 	}
 	cf.ParseShorthand(shorthand)
+
+	if cf.MinCleanStreak == 0 {
+		cf.MinCleanStreak = math.MaxUint64
+	}
+	if cf.MaxNoisyDots == 0 {
+		cf.MaxNoisyDots = math.MaxUint64
+	}
+
 	cf.Dir = path.Clean(cf.Dir)
 }
 
@@ -86,30 +99,5 @@ func (cf *CommonFlags) ParseShorthand(shorthand string) {
 	maxSteps, maxStepsErr := strconv.ParseUint(maxStepsS, 10, 0)
 	if maxStepsErr == nil {
 		cf.MaxSteps = maxSteps
-	}
-}
-
-func (cf *CommonFlags) parseShorthandOld(shorthand string) {
-	shortSplit := strings.Split(shorthand, "__")
-
-	switch len(shortSplit) {
-	case 1:
-		println(shortSplit[0])
-		cf.AntName = shortSplit[0]
-	case 2:
-		println(shortSplit[0], shortSplit[1])
-		cf.AntName = shortSplit[0]
-		maxStepsFromShort, err := strconv.ParseUint(shortSplit[1], 10, 64)
-		if err == nil {
-			cf.MaxSteps = maxStepsFromShort
-		}
-	case 3:
-		println(shortSplit[0], shortSplit[1], shortSplit[2])
-		cf.AntName = shortSplit[0]
-		cf.InitialPoint = shortSplit[1]
-		maxStepsFromShort, err := strconv.ParseUint(shortSplit[2], 10, 64)
-		if err == nil {
-			cf.MaxSteps = maxStepsFromShort
-		}
 	}
 }

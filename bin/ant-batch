@@ -1,4 +1,4 @@
 #!/bin/bash
 
-./bin/batch-gen "$@" | sort -R | xargs -L1 -P 1 -I{} sh -c "./bin/ant {} || true"
+./bin/batch-gen "$@" | sort -R | xargs -L1 -P 1 -I{} sh -c "./bin/ant-dry {} || true"
 #cat results/*.json | jq -r 'select(.maxSide > 100000) | [.maxSide, .fileName]|@csv'

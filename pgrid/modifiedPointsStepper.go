@@ -23,7 +23,7 @@ func (gpc *gridPointColor) String() string {
 const MaxModifiedPoints = 32 * 1024
 const noiseMin = 512
 const noiseMax = 32 * 1024
-const noiseClear = 1024 * 1024
+const noiseClear = max(MaxModifiedPoints, noiseMax)
 
 func getDotSize(maxSteps uint64) uint64 {
 	dr := uint64(100)
@@ -76,33 +76,33 @@ func (f *Field) ModifiedPointsStepper(
 	dotValue := fmt.Sprintf(". = %s", utils.WithUnderscores(dotSize))
 	fmt.Printf(dotFormat, dotValue)
 
-	visited := make(map[GridAxes]uint64, max(MaxModifiedPoints, noiseMax, noiseClear))
+	var visited [GridLinesTotal * GridLinesTotal]map[GridCoords]uint64
+	for a := range visited {
+		visited[a] = make(map[GridCoords]uint64, noiseClear)
+	}
+
 	stepNumber := uint64(0)
 	dotNumber := 0
 	noise := uint64(0)
 
-	if minCleanStreak == 0 {
-		minCleanStreak = math.MaxUint64
-	}
-	if maxNoisyDots == 0 {
-		maxNoisyDots = math.MaxUint64
-	}
 	shouldStop := false
 	cleanStreak := uint64(0)
 	noisyCount := uint64(0)
 
 	for gridPoint, color := range f.Run(maxSteps) {
-		if visitedStep, ok := visited[gridPoint.Axes]; ok {
+		visitedStep, ok := visited[gridPoint.Axes.Axis0*GridLinesTotal+gridPoint.Axes.Axis1][gridPoint.Axes.Coords]
+		if ok {
 			stepDiff := stepNumber - visitedStep
 			if noiseMin < stepDiff && stepDiff < noiseMax {
 				noise += 1
 			}
 		}
-		visited[gridPoint.Axes] = stepNumber
+		visited[gridPoint.Axes.Axis0*GridLinesTotal+gridPoint.Axes.Axis1][gridPoint.Axes.Coords] = stepNumber
 
 		if stepNumber%dotSize == 0 {
 			if dotNumber%50 == 0 {
 				fmt.Printf(stepFormat, utils.WithUnderscores(stepNumber))
+				ClearZeros()
 			}
 			if dotNumber%10 == 0 {
 				fmt.Printf(" ")
@@ -126,11 +126,13 @@ func (f *Field) ModifiedPointsStepper(
 		}
 
 		if modifiedCount == MaxModifiedPoints {
-			if stepNumber > noiseClear {
+			if stepNumber >= noiseClear {
 				clearStep := stepNumber - noiseClear
-				for k, v := range visited {
-					if v < clearStep {
-						delete(visited, k)
+				for a := range visited {
+					for k, v := range visited[a] {
+						if v < clearStep {
+							delete(visited[a], k)
+						}
 					}
 				}
 			}

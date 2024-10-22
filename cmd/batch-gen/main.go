@@ -201,22 +201,20 @@ func main() {
 	for _, radius := range radii {
 		for _, initialPoint := range initialPoints {
 			for _, antName := range antNames {
-				if commonFlags.Rectangle.Empty() {
-					fmt.Printf(
-						//"-d %s -j %s__%f__%s__%d\n",
-						"-d %s -sc %d -sn %d %s__%f__%s__%d\n",
-						commonFlags.Dir, commonFlags.MinCleanStreak, commonFlags.MaxNoisyDots,
-						antName, radius, initialPoint, commonFlags.MaxSteps,
-					)
-				} else {
-					fmt.Printf(
-						//"-d %s -j %s__%f__%s__%d\n",
-						"-d %s -sc %d -sn %d -r \\'%s/%d\\' %s__%f__%s__%d\n",
-						commonFlags.Dir, commonFlags.MinCleanStreak, commonFlags.MaxNoisyDots,
+				rFlag := ""
+				if !commonFlags.Rectangle.Empty() {
+					rFlag = fmt.Sprintf("-r \\'%s/%d\\'",
 						commonFlags.Rectangle.String(), commonFlags.ScaleFactor,
-						antName, radius, initialPoint, commonFlags.MaxSteps,
 					)
 				}
+				fmt.Printf(
+					"-d %s -sc %d -sn %d -sm %d -su %d %s %s__%f__%s__%d\n",
+					commonFlags.Dir,
+					commonFlags.MinCleanStreak, commonFlags.MaxNoisyDots,
+					commonFlags.MinSteps, commonFlags.MinUniq,
+					rFlag,
+					antName, radius, initialPoint, commonFlags.MaxSteps,
+				)
 			}
 		}
 	}

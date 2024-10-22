@@ -1,9 +1,12 @@
 .DEFAULT_GOAL := build
 
-build: ant ant-rl batch-gen
+build: ant ant-dry ant-rl batch-gen
 
 ant:
 	go build -o bin ./cmd/ant
+
+ant-dry:
+	go build -o bin ./cmd/ant-dry
 
 ant-rl:
 	go build -o bin ./cmd/ant-rl
@@ -23,6 +26,12 @@ WIDTH = 1024
 bench:
 	make bench-prep
 	hyperfine --warmup 1 \
+		'./bin/ant-old -w $(WIDTH) LRR__0.246000__A7386-B5868__50_000_001' \
+		'./bin/ant     -w $(WIDTH) LRR__0.246000__A7386-B5868__50_000_002'
+
+bench-fast:
+	make bench-prep
+	hyperfine -r 5 \
 		'./bin/ant-old -w $(WIDTH) LRR__0.246000__A7386-B5868__50_000_001' \
 		'./bin/ant     -w $(WIDTH) LRR__0.246000__A7386-B5868__50_000_002'
 
@@ -48,7 +57,7 @@ bench-ant:
 
 prof-ant:
 	make ant
-	./bin/ant -cpuprofile tmp/ant.prof LRR__0.246000__A7386-B5868__250_000_009
+	./bin/ant -cpuprofile tmp/ant.prof LRR__0.246000__A7386-B5868__140_000_009
 	go tool pprof -http=: -no_browser tmp/ant.prof
 
 prof-ant-mem:

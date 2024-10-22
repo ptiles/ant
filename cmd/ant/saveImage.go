@@ -56,13 +56,17 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 
 		mergeImage(resultImageS, mImg.Img, scaleFactor)
 		if mImg.Save {
-			saveImage(resultImageS, resultRectN, scaleFactor, fileNameFmt, mImg.Steps)
+			fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(mImg.Steps), "png")
+			saveImage(resultImageS, resultRectN, scaleFactor, fileName, mImg.Steps)
 		}
 		imagesCount += 1
 		maxSteps = mImg.Steps
 	}
 
-	fileName := saveImage(resultImageS, resultRectN, scaleFactor, fileNameFmt, maxSteps)
+	fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(maxSteps), "png")
+	if maxSteps > commonFlags.MinSteps && pgrid.Uniq() > commonFlags.MinUniq {
+		saveImage(resultImageS, resultRectN, scaleFactor, fileName, maxSteps)
+	}
 	if flags.jsonStats {
 		writeStats(fileNameFmt, statsType{
 			AntName:          commonFlags.AntName,
@@ -84,9 +88,7 @@ func cropImage(src *image.RGBA, cropRect image.Rectangle) *image.RGBA {
 	return dstImage
 }
 
-func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps uint64) string {
-	fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(steps), "png")
-
+func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFactor int, fileName string, steps uint64) {
 	err := os.MkdirAll(path.Dir(fileName), 0755)
 	if err != nil {
 		panic(err)
@@ -112,8 +114,6 @@ func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFacto
 		activeRectN.Size().String(),
 		activeRectN.String(), scaleFactor,
 	)
-
-	return fileName
 }
 
 type statsType struct {
