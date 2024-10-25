@@ -45,10 +45,10 @@ func main() {
 		if mpErr != nil {
 			log.Fatal("could not create memory profile: ", mpErr)
 		}
-		defer f.Close() // error handling omitted for example
-		runtime.GC()    // get up-to-date statistics
-		if mpErr := pprof.WriteHeapProfile(f); mpErr != nil {
-			log.Fatal("could not write memory profile: ", mpErr)
+		defer f.Close()
+		runtime.GC()
+		if wrErr := pprof.WriteHeapProfile(f); wrErr != nil {
+			log.Fatal("could not write memory profile: ", wrErr)
 		}
 	}
 }

@@ -100,6 +100,7 @@ func flagsSetup() *Flags {
 	flag.Usage = func() {
 		flag.PrintDefaults()
 	}
+	flag.Parse()
 
 	return flags
 }
@@ -137,7 +138,7 @@ func getAntNames(flags *Flags, commonFlags *utils.CommonFlags) []string {
 	}
 
 	fmt.Fprintln(os.Stderr, "Ant name or range required")
-	return []string{"LLR"}
+	return []string{"RLL"}
 }
 
 func getInitialPoints(flags *Flags, commonFlags *utils.CommonFlags) []string {
@@ -191,31 +192,38 @@ func main() {
 	commonFlags := &utils.CommonFlags{}
 	commonFlags.CommonFlagsSetup(pgrid.GridLinesTotal)
 	flags := flagsSetup()
-	flag.Parse()
 	commonFlags.ParseArgs()
 
 	antNames := getAntNames(flags, commonFlags)
 	initialPoints := getInitialPoints(flags, commonFlags)
 	radii := getRadii(flags, commonFlags)
 
-	for _, radius := range radii {
+	argsList := make([]string, 0, len(antNames)*len(initialPoints)*len(radii))
+
+	for _, antName := range antNames {
 		for _, initialPoint := range initialPoints {
-			for _, antName := range antNames {
+			for _, radius := range radii {
 				rFlag := ""
 				if !commonFlags.Rectangle.Empty() {
-					rFlag = fmt.Sprintf("-r \\'%s/%d\\'",
+					rFlag = fmt.Sprintf(" -r \\'%s/%d\\'",
 						commonFlags.Rectangle.String(), commonFlags.ScaleFactor,
 					)
 				}
-				fmt.Printf(
-					"-d %s -sc %d -sn %d -sm %d -su %d %s %s__%f__%s__%d\n",
-					commonFlags.Dir,
-					commonFlags.MinCleanStreak, commonFlags.MaxNoisyDots,
-					commonFlags.MinSteps, commonFlags.MinUniq,
-					rFlag,
-					antName, radius, initialPoint, commonFlags.MaxSteps,
+				argsList = append(argsList,
+					fmt.Sprintf(
+						"-d %s -sc %d -sn %d -sm %d -su %d%s %s__%f__%s__%d\n",
+						commonFlags.Dir,
+						commonFlags.MinCleanStreak, commonFlags.MaxNoisyDots,
+						commonFlags.MinSteps, commonFlags.MinUniq,
+						rFlag,
+						antName, radius, initialPoint, commonFlags.MaxSteps,
+					),
 				)
 			}
 		}
+	}
+
+	for _, args := range argsList {
+		fmt.Println(args)
 	}
 }

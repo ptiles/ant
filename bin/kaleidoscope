@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 set -o xtrace
@@ -20,7 +20,7 @@ mkdir -p "${DIR}"
 
 MAX_STEPS_ARRAY=($MAX_STEPS)
 for STEPS in "${MAX_STEPS_ARRAY[@]}"; do
-  ./bin/batch-gen -d "${DIR}/${STEPS}" -n "${NAME}"          \
+  ./bin/ant-batch -d "${DIR}/${STEPS}" -n "${NAME}"          \
     -tr "${RADIUS}"                                          \
     -ik="$IK" -ic "$IC" -ir "$IR"                            \
     -r '(-81920,-46080)-(81920,46080)/64'                    \

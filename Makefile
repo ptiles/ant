@@ -1,18 +1,18 @@
 .DEFAULT_GOAL := build
 
-build: ant ant-dry ant-rl batch-gen
+build: ant ant-batch ant-dry ant-rl
 
 ant:
 	go build -o bin ./cmd/ant
+
+ant-batch:
+	go build -o bin ./cmd/ant-batch
 
 ant-dry:
 	go build -o bin ./cmd/ant-dry
 
 ant-rl:
 	go build -o bin ./cmd/ant-rl
-
-batch-gen:
-	go build -o bin ./cmd/batch-gen
 
 bench-prep:
 	git stash

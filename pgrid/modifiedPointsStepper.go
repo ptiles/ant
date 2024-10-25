@@ -27,33 +27,26 @@ const noiseClear = max(MaxModifiedPoints, noiseMax)
 
 func getDotSize(maxSteps uint64) uint64 {
 	dr := uint64(100)
-	m := []float32{2, 2.5, 2}
-
 	de := maxSteps / 1000
 	if dr > de {
 		return dr
 	}
 
 	mi := 0
-	lm := len(m)
+	m := [...]float32{2, 2.5, 2}
 	for {
 		next := uint64(float32(dr) * m[mi])
 		if next >= de {
 			break
 		}
 		dr = next
-		mi = (mi + 1) % lm
+		mi = (mi + 1) % len(m)
 	}
 
 	return dr
 }
 
-var noiseChars = []string{
-	".", ".", ".", ".", "▁", "▂", "▂", "▃", "▃", "▃",
-	"▄", "▄", "▄", "▄", "▅", "▅", "▅", "▅", "▅", "▆",
-	"▆", "▆", "▆", "▆", "▆", "▇", "▇", "▇", "▇", "▇",
-	"▇", "▇", "█", "█", "█", "█", "█", "█", "█", "█",
-}
+var noiseChars = []rune("....▁▂▂▃▃▃▄▄▄▄▅▅▅▅▅▆▆▆▆▆▆▇▇▇▇▇▇▇████████")
 var noiseCharsLen = uint64(len(noiseChars))
 
 func (f *Field) ModifiedPointsStepper(
@@ -105,12 +98,12 @@ func (f *Field) ModifiedPointsStepper(
 				ClearZeros()
 			}
 			if dotNumber%10 == 0 {
-				fmt.Printf(" ")
+				fmt.Print(" ")
 			}
 			dotNumber += 1
 
 			dotNoise := noiseCharsLen * noise / dotSize
-			fmt.Printf("%s", noiseChars[dotNoise])
+			fmt.Print(noiseChars[dotNoise])
 			noise = 0
 
 			noisyDot := dotNoise > 3

@@ -1,14 +1,11 @@
 .DS_Store
 /.idea
 
-/ant
-/ant-rl
-/batch-gen
 /bin/ant
+/bin/ant-batch
 /bin/ant-dry
 /bin/ant-old
 /bin/ant-rl
-/bin/batch-gen
 /results*
 /tmp
 /*.prof

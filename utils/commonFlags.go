@@ -43,7 +43,7 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 	flag.StringVar(&cf.Dir, "d", fmt.Sprintf("results%d", gridLinesTotal), "Results directory")
 	flag.StringVar(&cf.InitialPoint, "i", "A0+B0", "Initial axes and direction")
 	flag.BoolVar(&cf.Monochrome, "m", false, "Monochromatic palette")
-	flag.StringVar(&cf.AntName, "n", "RLLLL", "Ant name")
+	flag.StringVar(&cf.AntName, "n", "RLL", "Ant name")
 	flag.Func("r", "Output image rectangle", func(rectangleStr string) (err error) {
 		cf.Rectangle, cf.ScaleFactor, err = ParseRectangleStr(rectangleStr)
 		return
@@ -53,7 +53,7 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 	flag.Uint64Var(&cf.MaxNoisyDots, "sn", 0, "Max noisy dots")
 	flag.Uint64Var(&cf.MinSteps, "sm", 0, "Min steps for file")
 	flag.Uint64Var(&cf.MinUniq, "su", 0, "Min uniq points")
-	flag.Float64Var(&cf.Radius, "tr", 0.5, "Tiles config - radius")
+	flag.Float64Var(&cf.Radius, "tr", 0.000007, "Tiles config - radius")
 }
 
 func (cf *CommonFlags) ParseArgs() {
