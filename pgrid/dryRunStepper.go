@@ -62,7 +62,7 @@ func (f *Field) DryRunStepper(maxSteps, minCleanStreak, maxNoisyDots uint64) {
 			dotNumber += 1
 
 			dotNoise := noiseCharsLen * noise / dotSize
-			fmt.Printf("%s", noiseChars[dotNoise])
+			fmt.Printf("%s", string(noiseChars[dotNoise]))
 			noise = 0
 
 			noisyDot := dotNoise > 3

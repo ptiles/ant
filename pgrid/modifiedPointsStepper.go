@@ -103,7 +103,7 @@ func (f *Field) ModifiedPointsStepper(
 			dotNumber += 1
 
 			dotNoise := noiseCharsLen * noise / dotSize
-			fmt.Print(noiseChars[dotNoise])
+			fmt.Printf("%s", string(noiseChars[dotNoise]))
 			noise = 0
 
 			noisyDot := dotNoise > 3
