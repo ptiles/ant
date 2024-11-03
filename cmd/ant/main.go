@@ -90,11 +90,11 @@ func main() {
 		commonFlags.Dir, commonFlags.AntName, commonFlags.Radius, commonFlags.InitialPoint,
 	)
 
-	maxSteps := saveImageFromModifiedImages(modifiedImagesCh, fileNameFmt, flags, commonFlags)
+	stepsTotal := saveImageFromModifiedImages(modifiedImagesCh, fileNameFmt, flags, commonFlags)
 
 	//if flags.openResult || flags.openResults {
 	if flags.openResult {
-		fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(maxSteps), "png")
+		fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(stepsTotal), "png")
 		utils.Open(fileName)
 	}
 
