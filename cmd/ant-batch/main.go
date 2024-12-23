@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/utils"
+	"log"
 	"math/rand/v2"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -83,6 +85,7 @@ type Flags struct {
 	kaleidoscope      bool
 
 	radiusCount int
+	execute     bool
 }
 
 func flagsSetup() *Flags {
@@ -96,6 +99,7 @@ func flagsSetup() *Flags {
 	flag.BoolVar(&flags.initialPointNear, "in", false, "Initial point near -i value")
 
 	flag.IntVar(&flags.radiusCount, "rc", 0, "Random radius count")
+	flag.BoolVar(&flags.execute, "x", false, "Execute generated commands")
 
 	flag.Usage = func() {
 		flag.PrintDefaults()
@@ -188,6 +192,22 @@ func getRadii(flags *Flags, commonFlags *utils.CommonFlags) []float64 {
 	return []float64{commonFlags.Radius}
 }
 
+func executeOne(args []string) {
+	cmd := exec.Command("./bin/ant", args...)
+
+	out, err := cmd.Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(string(out))
+}
+
+func executeAll(argsList []string) {
+	for _, args := range argsList {
+		executeOne(strings.Split(args, " "))
+	}
+}
+
 func main() {
 	commonFlags := &utils.CommonFlags{}
 	commonFlags.CommonFlagsSetup(pgrid.GridLinesTotal)
@@ -223,7 +243,11 @@ func main() {
 		}
 	}
 
-	for _, args := range argsList {
-		fmt.Println(args)
+	if flags.execute {
+		executeAll(argsList)
+	} else {
+		for _, args := range argsList {
+			fmt.Println(args)
+		}
 	}
 }
