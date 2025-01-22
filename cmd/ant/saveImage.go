@@ -64,7 +64,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 	}
 
 	fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(stepsTotal), "png")
-	if stepsTotal > commonFlags.MinSteps && pgrid.Uniq() > commonFlags.MinUniq {
+	if stepsTotal >= commonFlags.MinSteps && pgrid.Uniq() >= commonFlags.MinUniq {
 		saveImage(resultImageS, resultRectN, scaleFactor, fileName, stepsTotal)
 	}
 	if flags.jsonStats {

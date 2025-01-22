@@ -14,7 +14,12 @@ func (f *Field) DryRunStepper(maxSteps, minCleanStreak, maxNoisyDots uint64) {
 
 	dotSize := getDotSize(maxSteps)
 	dotFormat := fmt.Sprintf("%%%ds", stepLen)
-	dotValue := fmt.Sprintf(". = %s", utils.WithUnderscores(dotSize))
+	dotValue := fmt.Sprintf(
+		". = %s; block = %s; row = %s",
+		utils.WithUnderscores(dotSize),
+		utils.WithUnderscores(dotSize*10),
+		utils.WithUnderscores(dotSize*50),
+	)
 	fmt.Printf(dotFormat, dotValue)
 
 	visited := make(map[GridAxes]uint64, max(MaxModifiedPoints, noiseMax, noiseClear))

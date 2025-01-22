@@ -48,7 +48,7 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 		cf.Rectangle, cf.ScaleFactor, err = ParseRectangleStr(rectangleStr)
 		return
 	})
-	flag.Uint64Var(&cf.MaxSteps, "s", 1000000, "Steps")
+	flag.Uint64Var(&cf.MaxSteps, "s", 1_000_000, "Steps")
 	flag.Uint64Var(&cf.MinCleanStreak, "sc", 0, "Min clean dots streak")
 	flag.Uint64Var(&cf.MaxNoisyDots, "sn", 0, "Max noisy dots")
 	flag.Uint64Var(&cf.MinSteps, "sm", 0, "Min steps for file")
@@ -58,10 +58,9 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 
 func (cf *CommonFlags) ParseArgs() {
 	shorthand := flag.Arg(0)
-	if shorthand == "" {
-		return
+	if shorthand != "" {
+		cf.ParseShorthand(shorthand)
 	}
-	cf.ParseShorthand(shorthand)
 
 	if cf.MinCleanStreak == 0 {
 		cf.MinCleanStreak = math.MaxUint64

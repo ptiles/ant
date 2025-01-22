@@ -202,6 +202,7 @@ func (gp *GridPoint) getCenterPoint() image.Point {
 	y := 0.5*deBruijnY[gp.Axes.Axis0] + 0.5*deBruijnY[gp.Axes.Axis1]
 
 	for i := range GridLinesTotal {
+		// floatOffset := float64(gp.Offsets[i]) * inflation
 		floatOffset := float64(gp.Offsets[i])
 		x += floatOffset * deBruijnX[i]
 		y += floatOffset * deBruijnY[i]
@@ -215,25 +216,19 @@ func (gp *GridPoint) getCornerPoints() [4]image.Point {
 	y := float64(0)
 
 	for i := range GridLinesTotal {
+		// floatOffset := float64(gp.Offsets[i]) * inflation
 		floatOffset := float64(gp.Offsets[i])
 		x += floatOffset * deBruijnX[i]
 		y += floatOffset * deBruijnY[i]
 	}
 
 	// TODO: prepare this in init() and store in counter-clockwise order
-	_0 := 0.05
-	_1 := 0.95
 	dax0x := deBruijnX[gp.Axes.Axis0]
 	dax0y := deBruijnY[gp.Axes.Axis0]
 	dax1x := deBruijnX[gp.Axes.Axis1]
 	dax1y := deBruijnY[gp.Axes.Axis1]
 
 	return [4]image.Point{
-		//{X: int((x+_0*dax0x+_0*dax1x)*deBruijnScale) - 1, Y: int((y + _0*dax0y + _0*dax1y) * deBruijnScale)},
-		//{X: int((x + _0*dax0x + _0*dax1x) * deBruijnScale), Y: int((y+_0*dax0y+_0*dax1y)*deBruijnScale) - 1},
-		//{X: int((x+_0*dax0x+_0*dax1x)*deBruijnScale) + 1, Y: int((y + _0*dax0y + _0*dax1y) * deBruijnScale)},
-		//{X: int((x + _0*dax0x + _0*dax1x) * deBruijnScale), Y: int((y+_0*dax0y+_0*dax1y)*deBruijnScale) + 1},
-
 		{X: int((x + _0*dax0x + _0*dax1x) * deBruijnScale), Y: int((y + _0*dax0y + _0*dax1y) * deBruijnScale)},
 		{X: int((x + _0*dax0x + _1*dax1x) * deBruijnScale), Y: int((y + _0*dax0y + _1*dax1y) * deBruijnScale)},
 		{X: int((x + _1*dax0x + _1*dax1x) * deBruijnScale), Y: int((y + _1*dax0y + _1*dax1y) * deBruijnScale)},

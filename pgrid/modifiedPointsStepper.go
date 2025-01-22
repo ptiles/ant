@@ -66,7 +66,12 @@ func (f *Field) ModifiedPointsStepper(
 
 	dotSize := getDotSize(maxSteps)
 	dotFormat := fmt.Sprintf("%%%ds", stepLen)
-	dotValue := fmt.Sprintf(". = %s", utils.WithUnderscores(dotSize))
+	dotValue := fmt.Sprintf(
+		". = %s; block = %s; row = %s",
+		utils.WithUnderscores(dotSize),
+		utils.WithUnderscores(dotSize*10),
+		utils.WithUnderscores(dotSize*50),
+	)
 	fmt.Printf(dotFormat, dotValue)
 
 	var visited [GridLinesTotal * GridLinesTotal]map[GridCoords]uint64
@@ -178,32 +183,6 @@ func drawPoints(rect image.Rectangle, points []gridPointColor, palette []color.R
 
 	if drawTilesAndPoints {
 		for i := range points {
-			x, y := points[i].centerPoint.X, points[i].centerPoint.Y
-			img.Set(x, y, palette[points[i].color])
-			if i%9 > 0 {
-				img.Set(x+2, y, palette[points[i].color])
-			}
-			if i%9 > 1 {
-				img.Set(x+4, y, palette[points[i].color])
-			}
-			if i%9 > 2 {
-				img.Set(x, y+2, palette[points[i].color])
-			}
-			if i%9 > 3 {
-				img.Set(x+2, y+2, palette[points[i].color])
-			}
-			if i%9 > 4 {
-				img.Set(x+4, y+2, palette[points[i].color])
-			}
-			if i%9 > 5 {
-				img.Set(x, y+4, palette[points[i].color])
-			}
-			if i%9 > 6 {
-				img.Set(x+2, y+4, palette[points[i].color])
-			}
-			if i%9 > 7 {
-				img.Set(x+4, y+4, palette[points[i].color])
-			}
 			drawTile(img, points[i].gridPoint, palette[points[i].color])
 		}
 	} else {
@@ -214,6 +193,16 @@ func drawPoints(rect image.Rectangle, points []gridPointColor, palette []color.R
 	}
 
 	return img
+}
+
+func drawTile(currentImage *image.RGBA, gridPoint GridPoint, color color.RGBA) {
+	cornerPoints := gridPoint.getCornerPoints()
+	p0, p1, p2, p3 := cornerPoints[0], cornerPoints[1], cornerPoints[2], cornerPoints[3]
+
+	bresenham.DrawLine(currentImage, p0.X, p0.Y, p1.X, p1.Y, color)
+	bresenham.DrawLine(currentImage, p1.X, p1.Y, p2.X, p2.Y, color)
+	bresenham.DrawLine(currentImage, p2.X, p2.Y, p3.X, p3.Y, color)
+	bresenham.DrawLine(currentImage, p3.X, p3.Y, p0.X, p0.Y, color)
 }
 
 func rectIsLarge(rect image.Rectangle) bool {
@@ -274,20 +263,4 @@ func modifiedPointsToImages(
 		modifiedImagesCh <- mImage
 	}
 	close(modifiedImagesCh)
-}
-
-func drawTile(currentImage *image.RGBA, gridPoint GridPoint, color color.RGBA) {
-	cornerPoints := gridPoint.getCornerPoints()
-	p0, p1, p2, p3 := cornerPoints[0], cornerPoints[1], cornerPoints[2], cornerPoints[3]
-
-	currentImage.Set(p0.X, p0.Y, color)
-	currentImage.Set(p1.X, p1.Y, color)
-	currentImage.Set(p2.X, p2.Y, color)
-	currentImage.Set(p3.X, p3.Y, color)
-
-	bresenham.DrawLine(currentImage, p0.X, p0.Y, p1.X, p1.Y, color)
-	bresenham.DrawLine(currentImage, p1.X, p1.Y, p2.X, p2.Y, color)
-	bresenham.DrawLine(currentImage, p2.X, p2.Y, p3.X, p3.Y, color)
-	bresenham.DrawLine(currentImage, p3.X, p3.Y, p0.X, p0.Y, color)
-
 }
