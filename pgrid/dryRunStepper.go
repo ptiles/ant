@@ -10,7 +10,7 @@ func (f *Field) DryRunStepper(maxSteps, minCleanStreak, maxNoisyDots uint64) {
 	modifiedCount := uint64(0)
 
 	stepLen := 1 + len(utils.WithUnderscores(maxSteps))
-	stepFormat := fmt.Sprintf("%%%ds", stepLen)
+	stepFormat := fmt.Sprintf("\n%%%ds", stepLen)
 
 	dotSize := getDotSize(maxSteps)
 	dotFormat := fmt.Sprintf("%%%ds", stepLen)
@@ -50,15 +50,6 @@ func (f *Field) DryRunStepper(maxSteps, minCleanStreak, maxNoisyDots uint64) {
 		if stepNumber%dotSize == 0 {
 			if dotNumber%50 == 0 {
 				stepNumberPadded := fmt.Sprintf(stepFormat, utils.WithUnderscores(stepNumber))
-				if stepNumber > 0 {
-					uniq := Uniq()
-					ps := float32(stepNumber) / float32(uniq)
-					uniqPadded := fmt.Sprintf(stepFormat, utils.WithUnderscores(uniq))
-					fmt.Printf(
-						"%s /%s = %.2fst/up\n",
-						stepNumberPadded, uniqPadded, ps,
-					)
-				}
 				fmt.Printf(stepNumberPadded)
 			}
 			if dotNumber%10 == 0 {

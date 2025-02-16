@@ -31,9 +31,7 @@ func (f *Field) next(currPoint GridPoint, currLine, prevLine GridLine, prevPoint
 }
 
 func (f *Field) step(axes GridAxes) (bool, uint8) {
-	value := Get(axes)
-	newValue := (value + 1) % f.Limit
-	Set(axes, newValue)
+	value, newValue := Inc(axes, f.Limit)
 	return f.Rules[value], newValue
 }
 

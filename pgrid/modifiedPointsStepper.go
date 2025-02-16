@@ -100,7 +100,6 @@ func (f *Field) ModifiedPointsStepper(
 		if stepNumber%dotSize == 0 {
 			if dotNumber%50 == 0 {
 				fmt.Printf(stepFormat, utils.WithUnderscores(stepNumber))
-				ClearZeros()
 			}
 			if dotNumber%10 == 0 {
 				fmt.Print(" ")

@@ -2,10 +2,7 @@
 /.idea
 
 /bin/ant
-/bin/ant-batch
-/bin/ant-dry
-/bin/ant-old
-/bin/ant-rl
+/bin/ant-*
 /results*
 /tmp
 /*.prof
