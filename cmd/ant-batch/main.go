@@ -229,10 +229,14 @@ func main() {
 						commonFlags.Rectangle.String(), commonFlags.ScaleFactor,
 					)
 				}
+				alphaFlag := ""
+				if commonFlags.Alpha {
+					alphaFlag = "-alpha"
+				}
 				argsList = append(argsList,
 					fmt.Sprintf(
-						"-d %s -sc %d -sn %d -sm %d -su %d%s %s__%f__%s__%d\n",
-						commonFlags.Dir,
+						"-d %s %s -sc %d -sn %d -sm %d -su %d%s %s__%f__%s__%d\n",
+						commonFlags.Dir, alphaFlag,
 						commonFlags.MinCleanStreak, commonFlags.MaxNoisyDots,
 						commonFlags.MinSteps, commonFlags.MinUniq,
 						rFlag,

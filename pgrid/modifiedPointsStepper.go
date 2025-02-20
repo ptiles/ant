@@ -27,7 +27,7 @@ const noiseClear = max(MaxModifiedPoints, noiseMax)
 
 func getDotSize(maxSteps uint64) uint64 {
 	dr := uint64(100)
-	de := maxSteps / 1000
+	de := maxSteps / 500
 	if dr > de {
 		return dr
 	}
