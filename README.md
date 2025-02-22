@@ -21,6 +21,26 @@ For full usage, run:
 ./bin/ant -h
 ```
 
+## Example results
+
+```shell
+./bin/ant -w 2048 -alpha LRR__0.641800__C-8152+D2139__2_500_000
+```
+
+![LRR__0.641800__C-8152+D2139__2_500_000.png](example/LRR__0.641800__C-8152%2BD2139__2_500_000.png)
+
+```shell
+./bin/ant -w 2048 -alpha LRR__0.246000__B5868-A7386__3_500_000_000
+```
+
+![LRR__0.246000__B5868-A7386__3_500_000_000.png](example/LRR__0.246000__B5868-A7386__3_500_000_000.png)
+
+```shell
+./bin/ant RLL__0.000007__D59542+A-67051__25_000_000_000
+```
+
+![RLL__0.000007__D59542+A-67051__25_000_000_000.png](example/RLL__0.000007__D59542%2BA-67051__25_000_000_000.png)
+
 ## Batch run
 
 ```shell
@@ -28,20 +48,6 @@ For full usage, run:
 ```
 
 ![results_4_4_500k.png](example/results_4_4_500k.png)
-
-## Example results
-
-```shell
-./bin/ant LRR__0.641800__D2139+C-8152__2_500_000
-```
-
-![LRR__0.641800__D2139+C-8152__2500000.png](example/LRR__0.641800__D2139%2BC-8152__2500000.png)
-
-```shell
-./bin/ant LRR__0.246000__A7386-B5868__3_500_000_000
-```
-
-![LRR__0.246000__A7386-B5868__3500000000.png](example/LRR__0.246000__A7386-B5868__3500000000.png)
 
 ## References
 
