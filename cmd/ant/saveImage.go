@@ -62,7 +62,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 		stepsTotal = mImg.Steps
 	}
 
-	if stepsTotal >= commonFlags.MinSteps && pgrid.Uniq() >= commonFlags.MinUniq {
+	if stepsTotal >= commonFlags.MinSteps {
 		fmt.Printf(saveImage(resultImageS, resultRectN, scaleFactor, commonFlags.Alpha, fileNameFmt, stepsTotal))
 	}
 

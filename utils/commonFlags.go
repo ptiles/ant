@@ -23,7 +23,6 @@ type CommonFlags struct {
 	MinCleanStreak uint64
 	MaxNoisyDots   uint64
 	MinSteps       uint64
-	MinUniq        uint64
 
 	Rectangle   image.Rectangle
 	ScaleFactor int
@@ -54,7 +53,6 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 	flag.Uint64Var(&cf.MinCleanStreak, "sc", 0, "Min clean dots streak")
 	flag.Uint64Var(&cf.MaxNoisyDots, "sn", 0, "Max noisy dots")
 	flag.Uint64Var(&cf.MinSteps, "sm", 0, "Min steps for file")
-	flag.Uint64Var(&cf.MinUniq, "su", 0, "Min uniq points")
 	flag.Float64Var(&cf.Radius, "tr", 0.000007, "Tiles config - radius")
 }
 

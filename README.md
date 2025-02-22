@@ -44,10 +44,16 @@ For full usage, run:
 ## Batch run
 
 ```shell
-./bin/ant-batch -n LLR,LRR,RLL,RRL -ic 4 -rc 4 -d results_4_4_500k -s 500_000
+./bin/xargs-ant-batch -n LLR,LRR,RLL,RRL -ic 4 -rc 4 -d results_4_4_500k -s 500_000
 ```
 
 ![results_4_4_500k.png](example/results_4_4_500k.png)
+
+```shell
+./bin/xargs-ant-batch -n LLR,LRR,RLL,RRL -ic 8 -rc 8 -d results_8_8_500k -sc 200_000 -sm 500_000 -sn 200 -s 500_000
+```
+
+![results_8_8_500k.png](example/results_8_8_500k.png)
 
 ## References
 

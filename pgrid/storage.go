@@ -122,10 +122,3 @@ func ResetValues() {
 		}
 	}
 }
-
-func Uniq() (uniq uint64) {
-	//for a := range values {
-	//	uniq += uint64(len(values[a]))
-	//}
-	return
-}

@@ -235,10 +235,10 @@ func main() {
 				}
 				argsList = append(argsList,
 					fmt.Sprintf(
-						"-d %s %s -sc %d -sn %d -sm %d -su %d%s %s__%f__%s__%d\n",
+						"-d %s %s -sc %d -sn %d -sm %d %s %s__%f__%s__%d\n",
 						commonFlags.Dir, alphaFlag,
 						commonFlags.MinCleanStreak, commonFlags.MaxNoisyDots,
-						commonFlags.MinSteps, commonFlags.MinUniq,
+						commonFlags.MinSteps,
 						rFlag,
 						antName, radius, initialPoint, commonFlags.MaxSteps,
 					),
