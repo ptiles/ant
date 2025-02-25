@@ -11,7 +11,7 @@ func (f *Field) initialState() (GridPoint, GridLine, GridLine, bool) {
 	currLine := GridLine{Axis: uint8(currAxis), Offset: offsetInt(currOffset)}
 	prevLine := GridLine{Axis: uint8(prevAxis), Offset: offsetInt(prevOffset)}
 
-	currPoint := f.makeGridPoint(currLine, prevLine, f.gridPointToPoint(currLine, prevLine))
+	currPoint := f.makeGridPoint(currLine, prevLine)
 
 	//fmt.Printf(
 	//	"Initial step: %s %s %s %t\n",

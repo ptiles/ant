@@ -2,71 +2,30 @@ package pgrid
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/utils"
 	"image"
 	"math"
 )
-
-const X = 0
-const Y = 1
 
 type Field struct {
 	Rules        []bool
 	Limit        uint8
 	InitialPoint string
 
-	anchors          [GridLinesTotal]Point
-	anchorLines      [GridLinesTotal]Line
-	axisUnits        [GridLinesTotal]Point
-	normals          [GridLinesTotal]Point
-	intersectAnchors [GridLinesTotal][GridLinesTotal]Point
-	intersectVectors [GridLinesTotal][GridLinesTotal]Point
+	offsetsToLast  allOffsetDeltas
+	offsetsToFirst allOffsetDeltas
 }
 
 func New(r float64, rules []bool, initialPoint string) *Field {
-	phi := utils.FromDegrees(360 / int(GridLinesTotal))
-	axisAngle0 := utils.FromDegrees(90) + phi/2
+	gg := newGridGeometry(r)
 
-	result := &Field{
-		Rules: rules, Limit: uint8(len(rules)), InitialPoint: initialPoint,
+	return &Field{
+		Rules:        rules,
+		Limit:        uint8(len(rules)),
+		InitialPoint: initialPoint,
+
+		offsetsToLast:  gg.newOffsetsToLast(),
+		offsetsToFirst: gg.newOffsetsToFirst(),
 	}
-
-	for ax := range GridLinesTotal {
-		phiAx := phi * float64(ax)
-
-		result.anchors[ax][X] = r * math.Cos(phiAx)
-		result.anchors[ax][Y] = r * math.Sin(phiAx)
-
-		result.axisUnits[ax][X] = math.Cos(axisAngle0 + phiAx)
-		result.axisUnits[ax][Y] = math.Sin(axisAngle0 + phiAx)
-
-		result.normals[ax][X] = math.Cos(phi/2 + phiAx)
-		result.normals[ax][Y] = math.Sin(phi/2 + phiAx)
-
-		anchorEnd := Point{
-			result.anchors[ax][X] + result.axisUnits[ax][X],
-			result.anchors[ax][Y] + result.axisUnits[ax][Y],
-		}
-		result.anchorLines[ax] = Line{result.anchors[ax], anchorEnd}
-	}
-
-	for ax0 := range GridLinesTotal {
-		for ax1 := range GridLinesTotal {
-			line0 := result.getLine(GridLine{ax0, 0})
-			line1 := result.getLine(GridLine{ax1, 0})
-			intersectAnchor := intersection(line0, line1)
-			result.intersectAnchors[ax0][ax1] = intersectAnchor
-
-			line01 := result.getLine(GridLine{ax0, 1})
-			intersection01 := intersection(line01, line1)
-			result.intersectVectors[ax0][ax1] = Point{
-				intersection01[X] - intersectAnchor[X],
-				intersection01[Y] - intersectAnchor[Y],
-			}
-		}
-	}
-
-	return result
 }
 
 var AxisNames = [25]string{
@@ -89,21 +48,9 @@ func (gl *GridLine) Print() {
 	fmt.Println(gl)
 }
 
-func (f *Field) getLine(gl GridLine) Line {
-	axis := f.axisUnits[gl.Axis]
-	anchor := f.anchors[gl.Axis]
-	normal := f.normals[gl.Axis]
-	offset := float64(gl.Offset)
-
-	point1 := Point{anchor[X] + normal[X]*offset, anchor[Y] + normal[Y]*offset}
-	point2 := Point{point1[X] + axis[X], point1[Y] + axis[Y]}
-	return Line{point1, point2}
-}
-
 type GridPoint struct {
 	Axes    GridAxes
 	Offsets GridOffsets
-	Point   Point
 }
 
 type offsetInt int32
@@ -138,21 +85,7 @@ func (ga *GridAxes) String() string {
 	)
 }
 
-func (f *Field) gridPointToPoint(gridLine0, gridLine1 GridLine) Point {
-	anchor := f.intersectAnchors[gridLine0.Axis][gridLine1.Axis]
-
-	vector0 := f.intersectVectors[gridLine0.Axis][gridLine1.Axis]
-	vector1 := f.intersectVectors[gridLine1.Axis][gridLine0.Axis]
-
-	off0, off1 := float64(gridLine0.Offset), float64(gridLine1.Offset)
-
-	return Point{
-		anchor[X] + vector0[X]*off0 + vector1[X]*off1,
-		anchor[Y] + vector0[Y]*off0 + vector1[Y]*off1,
-	}
-}
-
-func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine, point Point) GridPoint {
+func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine) GridPoint {
 	if gridLine0.Axis > gridLine1.Axis {
 		gridLine0, gridLine1 = gridLine1, gridLine0
 	}
@@ -164,18 +97,15 @@ func (f *Field) makeGridPoint(gridLine0, gridLine1 GridLine, point Point) GridPo
 				Offset0: gridLine0.Offset, Offset1: gridLine1.Offset,
 			},
 		},
-		Point: point,
 	}
 
 	gridPoint.Offsets[gridLine0.Axis] = gridLine0.Offset
 	gridPoint.Offsets[gridLine1.Axis] = gridLine1.Offset
 
-	for ax := range GridLinesTotal {
-		if ax == gridLine0.Axis || ax == gridLine1.Axis {
-			continue
-		}
-		dist := distance(f.anchorLines[ax], point)
-		gridPoint.Offsets[ax] = offsetInt(math.Ceil(dist))
+	off0, off1 := float64(gridLine0.Offset), float64(gridLine1.Offset)
+	for _, otl := range f.offsetsToLast[gridLine0.Axis][gridLine1.Axis] {
+		off := otl.zeroZero + off0*otl.ax0Delta + off1*otl.ax1Delta
+		gridPoint.Offsets[otl.targetAx] = offsetInt(math.Ceil(off))
 	}
 
 	return gridPoint
@@ -236,34 +166,45 @@ func (gp *GridPoint) getCornerPoints() [4]image.Point {
 	}
 }
 
-func (f *Field) nearestNeighbor(currentPointOffsets GridOffsets, prevLine, currentLine GridLine, positiveSide bool) (GridPoint, GridLine) {
+func (f *Field) nearestNeighbor(
+	currentPointOffsets GridOffsets,
+	prevLine, currentLine GridLine,
+	positiveSide bool,
+) (GridPoint, GridLine, bool) {
 	var nextLine GridLine
-	var nextPointPoint Point
+	var nextPointSign bool
 	currentDistance := 1000000.0
-	prevLineLine := f.getLine(prevLine)
+	prevLineOffset := float64(prevLine.Offset)
+	currentLineOffset := float64(currentLine.Offset)
 
-	for axis := range GridLinesTotal {
-		if axis == prevLine.Axis || axis == currentLine.Axis {
-			continue
+	for _, otf := range f.offsetsToFirst[prevLine.Axis][currentLine.Axis] {
+		nextAxis := otf.targetAx
+
+		nextOffset := currentPointOffsets[nextAxis]
+		dist := otf.zeroZero + currentLineOffset*otf.ax0Delta + float64(nextOffset)*otf.ax1Delta - prevLineOffset
+
+		if (positiveSide && dist > 0) || (!positiveSide && dist < 0) {
+			absDist := math.Abs(dist)
+			if absDist < currentDistance {
+				currentDistance = absDist
+				nextLine = GridLine{nextAxis, nextOffset}
+				nextPointSign = true
+			}
 		}
-		axisOffset := currentPointOffsets[axis]
-		for _, offset := range [2]offsetInt{axisOffset, axisOffset - 1} {
-			line := GridLine{axis, offset}
-			pointPoint := f.gridPointToPoint(currentLine, line)
-			dist := distance(prevLineLine, pointPoint)
-			//fmt.Printf("Neighbor %s %d ; %s %d ", AxisNames[currentLine.Axis], currentLine.Offset, AxisNames[line.Axis], line.Offset)
-			//fmt.Printf("distance=%.1f\n", dist)
-			if (positiveSide && dist > 0) || (!positiveSide && dist < 0) {
-				if math.Abs(dist) < currentDistance {
-					currentDistance = math.Abs(dist)
-					nextLine = line
-					nextPointPoint = pointPoint
-				}
+
+		nextOffset -= 1
+		dist -= otf.ax1Delta
+
+		if (positiveSide && dist > 0) || (!positiveSide && dist < 0) {
+			absDist := math.Abs(dist)
+			if absDist < currentDistance {
+				currentDistance = absDist
+				nextLine = GridLine{nextAxis, nextOffset}
+				nextPointSign = false
 			}
 		}
 	}
 
-	nextPoint := f.makeGridPoint(currentLine, nextLine, nextPointPoint)
-	//fmt.Printf("currentDistance=%.1f, positiveSide=%t\n", currentDistance, positiveSide)
-	return nextPoint, nextLine
+	nextPoint := f.makeGridPoint(currentLine, nextLine)
+	return nextPoint, nextLine, nextPointSign
 }

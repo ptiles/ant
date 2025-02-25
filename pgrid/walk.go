@@ -24,10 +24,9 @@ func (f *Field) next(currPoint GridPoint, currLine, prevLine GridLine, prevPoint
 	axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
 	positiveSide := isRightTurn != axisRotation != prevPointSign
 
-	nextPoint, nextLine := f.nearestNeighbor(currPoint.Offsets, prevLine, currLine, positiveSide)
-	currPointSign := distance(f.getLine(nextLine), currPoint.Point) < 0
+	nextPoint, nextLine, nextPointSign := f.nearestNeighbor(currPoint.Offsets, prevLine, currLine, positiveSide)
 
-	return nextPoint, nextLine, currLine, currPointSign, currPointColor
+	return nextPoint, nextLine, currLine, nextPointSign, currPointColor
 }
 
 func (f *Field) step(axes GridAxes) (bool, uint8) {
@@ -55,10 +54,9 @@ func (f *Field) Run(maxSteps uint64) iter.Seq2[GridPoint, uint8] {
 			axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
 			positiveSide := isRightTurn != axisRotation != pointSign
 
-			nextPoint, nextLine := f.nearestNeighbor(currPoint.Offsets, prevLine, currLine, positiveSide)
-			pointSign = distance(f.getLine(nextLine), currPoint.Point) < 0
+			nextPoint, nextLine, nextPointSign := f.nearestNeighbor(currPoint.Offsets, prevLine, currLine, positiveSide)
 
-			currPoint, currLine, prevLine = nextPoint, nextLine, currLine
+			currPoint, currLine, prevLine, pointSign = nextPoint, nextLine, currLine, nextPointSign
 		}
 	}
 }
@@ -77,10 +75,9 @@ func (f *Field) RunAxes(maxSteps uint64) iter.Seq[GridAxes] {
 			axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
 			positiveSide := isRightTurn != axisRotation != pointSign
 
-			nextPoint, nextLine := f.nearestNeighbor(currPoint.Offsets, prevLine, currLine, positiveSide)
-			pointSign = distance(f.getLine(nextLine), currPoint.Point) < 0
+			nextPoint, nextLine, nextPointSign := f.nearestNeighbor(currPoint.Offsets, prevLine, currLine, positiveSide)
 
-			currPoint, currLine, prevLine = nextPoint, nextLine, currLine
+			currPoint, currLine, prevLine, pointSign = nextPoint, nextLine, currLine, nextPointSign
 		}
 	}
 }
@@ -99,10 +96,9 @@ func (f *Field) RunPoint(maxSteps uint64) iter.Seq2[GridAxes, image.Point] {
 			axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
 			positiveSide := isRightTurn != axisRotation != pointSign
 
-			nextPoint, nextLine := f.nearestNeighbor(currPoint.Offsets, prevLine, currLine, positiveSide)
-			pointSign = distance(f.getLine(nextLine), currPoint.Point) < 0
+			nextPoint, nextLine, nextPointSign := f.nearestNeighbor(currPoint.Offsets, prevLine, currLine, positiveSide)
 
-			currPoint, currLine, prevLine = nextPoint, nextLine, currLine
+			currPoint, currLine, prevLine, pointSign = nextPoint, nextLine, currLine, nextPointSign
 		}
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 	"image/color"
 	"log"
-	"math"
 	"math/rand/v2"
 	"os"
 	"os/exec"
@@ -14,10 +13,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-func FromDegrees(deg int) float64 {
-	return float64(deg) * math.Pi / 180.0
-}
 
 func GetPaletteRainbow(steps int) []color.RGBA {
 	var palette = make([]color.RGBA, steps)
