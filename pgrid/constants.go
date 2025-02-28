@@ -1,17 +1,11 @@
 package pgrid
 
+import "fmt"
+
 const GridLinesTotal = uint8(5)
 
-const _0 = 0.05
-const _1 = 0.95
-
-//const drawTilesAndPoints = true
-//const deBruijnScale = 48
-//const padding = deBruijnScale
-//const inflation = 2
-
-const drawTilesAndPoints = false
-const deBruijnScale = 2
-const padding = deBruijnScale * 4
-
-//const inflation = 1
+func init() {
+	if GridLinesTotal%2 == 0 || GridLinesTotal < 5 || GridLinesTotal > 25 {
+		fmt.Println("GridLinesTotal should be odd number between 5 and 25")
+	}
+}
