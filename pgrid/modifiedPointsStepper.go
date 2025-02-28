@@ -74,9 +74,11 @@ func (f *Field) ModifiedPointsStepper(
 	)
 	fmt.Printf(dotFormat, dotValue)
 
-	var visited [GridLinesTotal * GridLinesTotal]map[GridCoords]uint64
-	for a := range visited {
-		visited[a] = make(map[GridCoords]uint64, noiseClear)
+	var visited [GridLinesTotal][GridLinesTotal]map[GridCoords]uint64
+	for ax0 := range GridLinesTotal {
+		for ax1 := range GridLinesTotal {
+			visited[ax0][ax1] = make(map[GridCoords]uint64, noiseClear)
+		}
 	}
 
 	stepNumber := uint64(0)
@@ -88,14 +90,14 @@ func (f *Field) ModifiedPointsStepper(
 	noisyCount := uint64(0)
 
 	for gridPoint, color := range f.Run(maxSteps) {
-		visitedStep, ok := visited[gridPoint.Axes.Axis0*GridLinesTotal+gridPoint.Axes.Axis1][gridPoint.Axes.Coords]
+		visitedStep, ok := visited[gridPoint.Axes.Axis0][gridPoint.Axes.Axis1][gridPoint.Axes.Coords]
 		if ok {
 			stepDiff := stepNumber - visitedStep
 			if noiseMin < stepDiff && stepDiff < noiseMax {
 				noise += 1
 			}
 		}
-		visited[gridPoint.Axes.Axis0*GridLinesTotal+gridPoint.Axes.Axis1][gridPoint.Axes.Coords] = stepNumber
+		visited[gridPoint.Axes.Axis0][gridPoint.Axes.Axis1][gridPoint.Axes.Coords] = stepNumber
 
 		if stepNumber%dotSize == 0 {
 			if dotNumber%50 == 0 {
@@ -125,10 +127,12 @@ func (f *Field) ModifiedPointsStepper(
 		if modifiedCount == MaxModifiedPoints {
 			if stepNumber >= noiseClear {
 				clearStep := stepNumber - noiseClear
-				for a := range visited {
-					for k, v := range visited[a] {
-						if v < clearStep {
-							delete(visited[a], k)
+				for ax0 := range GridLinesTotal {
+					for ax1 := range GridLinesTotal {
+						for k, v := range visited[ax0][ax1] {
+							if v < clearStep {
+								delete(visited[ax0][ax1], k)
+							}
 						}
 					}
 				}

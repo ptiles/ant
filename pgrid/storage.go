@@ -8,7 +8,7 @@ import (
 
 type tAxisValues map[gridCoordsDown]uint8
 
-var tValues = [GridLinesTotal * GridLinesTotal]*btree.Tree[gridCoordsUp, tAxisValues]{}
+var tValues = [GridLinesTotal][GridLinesTotal]*btree.Tree[gridCoordsUp, tAxisValues]{}
 
 type upInt uint32
 type gridCoordsUp struct {
@@ -57,27 +57,25 @@ func DivCoords(c GridCoords) (up gridCoordsUp, down gridCoordsDown) {
 
 func Get(axes GridAxes) uint8 {
 	up, down := DivCoords(axes.Coords)
-	val, _ := tValues[axes.Axis0*GridLinesTotal+axes.Axis1].Get(up)
+	val, _ := tValues[axes.Axis0][axes.Axis1].Get(up)
 	return val[down]
 }
 
 func Set(axes GridAxes, value uint8) {
-	ax := axes.Axis0*GridLinesTotal + axes.Axis1
 	up, down := DivCoords(axes.Coords)
-	val, found := tValues[ax].Get(up)
+	val, found := tValues[axes.Axis0][axes.Axis1].Get(up)
 	if !found {
 		val = tAxisValues{}
-		tValues[ax].Put(up, val)
+		tValues[axes.Axis0][axes.Axis1].Put(up, val)
 	}
 	val[down] = value
 }
 
 func Inc(axes GridAxes, limit uint8) (uint8, uint8) {
-	ax := axes.Axis0*GridLinesTotal + axes.Axis1
 	up, down := DivCoords(axes.Coords)
-	val, found := tValues[ax].Get(up)
+	val, found := tValues[axes.Axis0][axes.Axis1].Get(up)
 	if !found {
-		tValues[ax].Put(up, tAxisValues{down: 1})
+		tValues[axes.Axis0][axes.Axis1].Put(up, tAxisValues{down: 1})
 		return 0, 1
 	}
 	value := val[down]
@@ -87,11 +85,10 @@ func Inc(axes GridAxes, limit uint8) (uint8, uint8) {
 }
 
 func Set0(axes GridAxes, value uint8) {
-	ax := axes.Axis0*GridLinesTotal + axes.Axis1
 	up, down := DivCoords(axes.Coords)
-	val, found := tValues[ax].Get(up)
+	val, found := tValues[axes.Axis0][axes.Axis1].Get(up)
 	if !found {
-		tValues[ax].Put(up, tAxisValues{down: 1})
+		tValues[axes.Axis0][axes.Axis1].Put(up, tAxisValues{down: 1})
 		return
 	}
 	if value == 0 {
@@ -115,10 +112,11 @@ func gridCoordsUpCmp(a, b gridCoordsUp) int {
 		return 0
 	}
 }
+
 func ResetValues() {
 	for ax0 := range GridLinesTotal {
 		for ax1 := range GridLinesTotal {
-			tValues[ax0*GridLinesTotal+ax1] = btree.NewWith[gridCoordsUp, tAxisValues](order, gridCoordsUpCmp)
+			tValues[ax0][ax1] = btree.NewWith[gridCoordsUp, tAxisValues](order, gridCoordsUpCmp)
 		}
 	}
 }
