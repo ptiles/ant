@@ -99,3 +99,18 @@ func ResetValues() {
 		}
 	}
 }
+
+func Uniq() uint64 {
+	result := uint64(0)
+
+	for ax0 := range GridLinesTotal {
+		for ax1 := range GridLinesTotal {
+			uMap := tValues[ax0][ax1]
+			for _, uValue := range uMap {
+				result += uint64(len(uValue))
+			}
+		}
+	}
+
+	return result
+}

@@ -24,6 +24,7 @@ const MaxModifiedPoints = 32 * 1024
 const noiseMin = 512
 const noiseMax = 32 * 1024
 const noiseClear = max(MaxModifiedPoints, noiseMax)
+const visitedMapSize = noiseClear * 1.25 // 8/6.5 ~= 1.23
 
 func getDotSize(maxSteps uint64) uint64 {
 	dr := uint64(100)
@@ -77,7 +78,7 @@ func (f *Field) ModifiedPointsStepper(
 	var visited [GridLinesTotal][GridLinesTotal]map[GridCoords]uint64
 	for ax0 := range GridLinesTotal {
 		for ax1 := range GridLinesTotal {
-			visited[ax0][ax1] = make(map[GridCoords]uint64, noiseClear)
+			visited[ax0][ax1] = make(map[GridCoords]uint64, visitedMapSize)
 		}
 	}
 
@@ -108,7 +109,7 @@ func (f *Field) ModifiedPointsStepper(
 			}
 			dotNumber += 1
 
-			dotNoise := (noise / dotSize) * noiseCharsLen
+			dotNoise := noiseCharsLen * noise / dotSize
 			fmt.Printf("%c", noiseChars[dotNoise])
 			noise = 0
 

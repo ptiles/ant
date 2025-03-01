@@ -62,7 +62,11 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 		stepsTotal = mImg.Steps
 	}
 
-	if stepsTotal >= commonFlags.MinSteps {
+	uniq := pgrid.Uniq()
+	uniqPct := uint64(len(commonFlags.AntName)) * uniq * 100 / stepsTotal
+	fmt.Printf("%s (%d%%) unique points\n", utils.WithUnderscores(uniq), uniqPct)
+
+	if stepsTotal >= commonFlags.MinSteps && uniqPct >= commonFlags.MinUniqPct {
 		fmt.Printf(saveImage(resultImageS, resultRectN, scaleFactor, commonFlags.Alpha, fileNameFmt, stepsTotal))
 	}
 
@@ -72,6 +76,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 			AntName:          commonFlags.AntName,
 			FileName:         fileName,
 			Steps:            stepsTotal,
+			UniqPct:          uniqPct,
 			ImagesCount:      imagesCount,
 			MaxSide:          max(resultRectN.Dx(), resultRectN.Dy()),
 			Dimensions:       resultRectN.Size().String(),
@@ -131,6 +136,7 @@ type statsType struct {
 	AntName          string `json:"antName"`
 	FileName         string `json:"fileName"`
 	Steps            uint64 `json:"steps"`
+	UniqPct          uint64 `json:"uniqPct"`
 	ImagesCount      int    `json:"imagesCount"`
 	MaxSide          int    `json:"maxSide"`
 	Dimensions       string `json:"dimensions"`
