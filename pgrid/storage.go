@@ -1,14 +1,14 @@
 package pgrid
 
 import (
-	"github.com/emirpasic/gods/v2/trees/btree"
 	"os"
 	"strconv"
 )
 
-type tAxisValues map[gridCoordsDown]uint8
+type downMap map[gridCoordsDown]uint8
+type upMap map[gridCoordsUp]downMap
 
-var tValues = [GridLinesTotal][GridLinesTotal]*btree.Tree[gridCoordsUp, tAxisValues]{}
+var tValues [GridLinesTotal][GridLinesTotal]upMap
 
 type upInt uint32
 type gridCoordsUp struct {
@@ -25,7 +25,6 @@ type gridCoordsDown struct {
 var bits = 8
 var upMask = upInt(0b11111111_11111111_11111111_00000000)
 var downMask = downInt(0b00000000_11111111)
-var order = 4
 
 func init() {
 	ResetValues()
@@ -35,11 +34,6 @@ func init() {
 		bits, _ = strconv.Atoi(bitsStr)
 		upMask = 0b11111111_11111111_11111111_11111111 << bits
 		downMask = 0b11111111_11111111 >> (16 - bits)
-	}
-
-	orderStr, orderPresent := os.LookupEnv("ORDER")
-	if orderPresent {
-		order, _ = strconv.Atoi(orderStr)
 	}
 }
 
@@ -57,25 +51,25 @@ func DivCoords(c GridCoords) (up gridCoordsUp, down gridCoordsDown) {
 
 func Get(axes GridAxes) uint8 {
 	up, down := DivCoords(axes.Coords)
-	val, _ := tValues[axes.Axis0][axes.Axis1].Get(up)
+	val, _ := tValues[axes.Axis0][axes.Axis1][up]
 	return val[down]
 }
 
 func Set(axes GridAxes, value uint8) {
 	up, down := DivCoords(axes.Coords)
-	val, found := tValues[axes.Axis0][axes.Axis1].Get(up)
+	val, found := tValues[axes.Axis0][axes.Axis1][up]
 	if !found {
-		val = tAxisValues{}
-		tValues[axes.Axis0][axes.Axis1].Put(up, val)
+		val = downMap{}
+		tValues[axes.Axis0][axes.Axis1][up] = val
 	}
 	val[down] = value
 }
 
 func Inc(axes GridAxes, limit uint8) (uint8, uint8) {
 	up, down := DivCoords(axes.Coords)
-	val, found := tValues[axes.Axis0][axes.Axis1].Get(up)
+	val, found := tValues[axes.Axis0][axes.Axis1][up]
 	if !found {
-		tValues[axes.Axis0][axes.Axis1].Put(up, tAxisValues{down: 1})
+		tValues[axes.Axis0][axes.Axis1][up] = downMap{down: 1}
 		return 0, 1
 	}
 	value := val[down]
@@ -86,9 +80,9 @@ func Inc(axes GridAxes, limit uint8) (uint8, uint8) {
 
 func Set0(axes GridAxes, value uint8) {
 	up, down := DivCoords(axes.Coords)
-	val, found := tValues[axes.Axis0][axes.Axis1].Get(up)
+	val, found := tValues[axes.Axis0][axes.Axis1][up]
 	if !found {
-		tValues[axes.Axis0][axes.Axis1].Put(up, tAxisValues{down: 1})
+		tValues[axes.Axis0][axes.Axis1][up] = downMap{down: 1}
 		return
 	}
 	if value == 0 {
@@ -98,25 +92,10 @@ func Set0(axes GridAxes, value uint8) {
 	}
 }
 
-func gridCoordsUpCmp(a, b gridCoordsUp) int {
-	switch {
-	case a.Offset0 > b.Offset0:
-		return 1
-	case a.Offset0 < b.Offset0:
-		return -1
-	case a.Offset1 > b.Offset1:
-		return 1
-	case a.Offset1 < b.Offset1:
-		return -1
-	default:
-		return 0
-	}
-}
-
 func ResetValues() {
 	for ax0 := range GridLinesTotal {
 		for ax1 := range GridLinesTotal {
-			tValues[ax0][ax1] = btree.NewWith[gridCoordsUp, tAxisValues](order, gridCoordsUpCmp)
+			tValues[ax0][ax1] = upMap{}
 		}
 	}
 }
