@@ -2,6 +2,7 @@ package pgrid
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"regexp"
 	"slices"
 	"strconv"
@@ -47,4 +48,29 @@ func ParseInitialPoint(initialPoint string) (int, int, bool, int, int) {
 	prevOffset, _ := strconv.Atoi(prevOff)
 
 	return currAxis, currOffset, currAxIncreasing, prevAxis, prevOffset
+}
+
+const seedDropBits = 8
+
+func InitialPointSeed(initialPoint string) *rand.Rand {
+	currAxis, currOffset, prevPointSign, prevAxis, prevOffset := ParseInitialPoint(initialPoint)
+
+	// Same seed for five symmetric points
+	//seedString := fmt.Sprintf(
+	//	"%d%t%d%d",
+	//	(int(GridLinesTotal)+currAxis-prevAxis)%int(GridLinesTotal),
+	//	prevPointSign, currOffset>>seedDropBits, prevOffset>>seedDropBits,
+	//)
+
+	// Different seeds
+	seedString := fmt.Sprintf(
+		"%s%s%t%d%d",
+		AxisNames[currAxis], AxisNames[prevAxis],
+		prevPointSign, currOffset>>seedDropBits, prevOffset>>seedDropBits,
+	)
+
+	var seed [32]byte
+	copy(seed[:], seedString)
+
+	return rand.New(rand.NewChaCha8(seed))
 }

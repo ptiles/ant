@@ -21,6 +21,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 	maxDimension := flags.maxDimension
 	dynamic := commonFlags.Rectangle.Empty()
 	stepsTotal := uint64(0)
+	minSteps := commonFlags.MaxSteps * commonFlags.MinStepsPct / 100
 
 	imagesCount := 0
 	scaleFactor := 0
@@ -64,9 +65,12 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 
 	uniq := pgrid.Uniq()
 	uniqPct := uint64(len(commonFlags.AntName)) * uniq * 100 / stepsTotal
-	fmt.Printf("%s (%d%%) unique points\n", utils.WithUnderscores(uniq), uniqPct)
+	fmt.Printf("%s steps;  %s unique points  (%d%%)\n",
+		utils.WithUnderscoresPadded(stepsTotal, commonFlags.MaxSteps),
+		utils.WithUnderscores(uniq), uniqPct,
+	)
 
-	if stepsTotal >= commonFlags.MinSteps && uniqPct >= commonFlags.MinUniqPct {
+	if stepsTotal >= minSteps && uniqPct >= commonFlags.MinUniqPct {
 		fmt.Printf(saveImage(resultImageS, resultRectN, scaleFactor, commonFlags.Alpha, fileNameFmt, stepsTotal))
 	}
 
@@ -124,7 +128,7 @@ func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFacto
 	}
 
 	return fmt.Sprintf(
-		"\n%s %s %s %s/%d\n",
+		"%s %s %s %s/%d\n",
 		fileName,
 		activeRectS.Size().String(),
 		activeRectN.Size().String(),

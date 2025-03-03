@@ -1,37 +1,44 @@
 #!/usr/bin/env bash
 
-set -e
+#set -e
 set -o xtrace
+
+PARALLEL="${PARALLEL:="4"}"
 
 NAME="${NAME:="RLL"}"
 RADIUS="${RADIUS:="0.000007"}"
-IK="${IK:="true"}"
-IC="${IC:="64"}"
-IR="${IR:="8192"}"
-MAX_STEPS="${MAX_STEPS:="5_000_000 10_000_000 20_000_000 50_000_000 100_000_000"}"
+IK="${IK:="false"}"
+IC="${IC:="384"}"
+IO="${IO:="12800"}"
+MAX_STEPS="${MAX_STEPS:="200_000 250_000 500_000 1_000_000 2_000_000 5_000_000 10_000_000"}"
 
 ID="${ID:="kaleidoscope"}"
 
 BASE="${NAME}_${RADIUS}_${ID}"
 DIR="results5/${BASE}"
+DATE=$(date "+%Y-%m-%d_%H-%M")
 
 mkdir -p "${DIR}"
-#open "${DIR}"
+mkdir -p "${DIR}/done"
+open "${DIR}"
 
 MAX_STEPS_ARRAY=($MAX_STEPS)
 for STEPS in "${MAX_STEPS_ARRAY[@]}"; do
-  ./bin/ant-batch -alpha -d "${DIR}/${STEPS}" -n "${NAME}"   \
+  ./bin/ant-batch -alpha -n "${NAME}"                        \
+    -d "${DIR}/${STEPS}_${DATE}"                             \
     -tr "${RADIUS}"                                          \
-    -ik="$IK" -ic "$IC" -ir "$IR"                            \
-    -r '(-81920,-46080)-(81920,46080)/64'                    \
-    -s "${STEPS}" -sc 100 -sn 50                             \
-  | xargs -L1 -P 1 -I{} sh -c "./bin/ant -m {} || true"
+    -ik="$IK" -ic "$IC" -io "$IO"                            \
+    -r '(-114816,-114816)-(114816,114816)/64'                \
+    -s "${STEPS}" -sm 50 -sn 35 -su 10                       \
+  | xargs -t -L1 -P "${PARALLEL}" -I{}                       \
+       sh -c "./bin/ant -m {} || true"
 
-  magick "${DIR}/${STEPS}/"*".png"                           \
-       -evaluate-sequence Max                                \
-         "${DIR}/${BASE}_Transparent_${STEPS}.png"
+  magick "${DIR}/${STEPS}_${DATE}/"*".png"                   \
+    -evaluate-sequence Max                                   \
+         "${DIR}/Transparent_${STEPS}_${DATE}.png"
+  mv "${DIR}/${STEPS}_${DATE}" "${DIR}/done"
 
-  magick "${DIR}/${BASE}_Transparent_"*".png"                \
+  magick "${DIR}/Transparent_"*".png"                        \
     -evaluate-sequence Max                                   \
          "${DIR}/${BASE}_Transparent.png"
 
@@ -39,5 +46,10 @@ for STEPS in "${MAX_STEPS_ARRAY[@]}"; do
     -background "#202020" -alpha remove -alpha off           \
          "${DIR}/${BASE}_Black.png"
 done
+
+magick "${DIR}/${BASE}_Black.png" -rotate 90  -gravity west -crop 2560x1600+0+0 "${DIR}/${BASE}_Black_West_90.png"
+magick "${DIR}/${BASE}_Black.png" -rotate 270 -gravity west -crop 2560x1600+0+0 "${DIR}/${BASE}_Black_West_270.png"
+magick "${DIR}/${BASE}_Black.png" -rotate 90  -gravity east -crop 2560x1600+0+0 "${DIR}/${BASE}_Black_East_90.png"
+magick "${DIR}/${BASE}_Black.png" -rotate 270 -gravity east -crop 2560x1600+0+0 "${DIR}/${BASE}_Black_East_270.png"
 
 #open   "${DIR}/${BASE}_Black.png"

@@ -62,18 +62,14 @@ func (f *Field) ModifiedPointsStepper(
 	points := make([]gridPointColor, MaxModifiedPoints)
 	modifiedCount := uint64(0)
 
-	stepLen := 1 + len(utils.WithUnderscores(maxSteps))
-	stepFormat := fmt.Sprintf("\n%%%ds", stepLen)
-
 	dotSize := getDotSize(maxSteps)
-	dotFormat := fmt.Sprintf("%%%ds", stepLen)
-	dotValue := fmt.Sprintf(
-		". = %s; block = %s; row = %s",
+	fmt.Printf(
+		"%*s dot %s;   block %s;   row %s;",
+		1+len(utils.WithUnderscores(maxSteps)), "",
 		utils.WithUnderscores(dotSize),
 		utils.WithUnderscores(dotSize*10),
 		utils.WithUnderscores(dotSize*50),
 	)
-	fmt.Printf(dotFormat, dotValue)
 
 	var visited [GridLinesTotal][GridLinesTotal]map[GridCoords]uint64
 	for ax0 := range GridLinesTotal {
@@ -102,7 +98,7 @@ func (f *Field) ModifiedPointsStepper(
 
 		if stepNumber%dotSize == 0 {
 			if dotNumber%50 == 0 {
-				fmt.Printf(stepFormat, utils.WithUnderscores(stepNumber))
+				fmt.Printf("\n%s", utils.WithUnderscoresPadded(stepNumber, maxSteps))
 			}
 			if dotNumber%10 == 0 {
 				fmt.Print(" ")

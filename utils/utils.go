@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"github.com/lucasb-eyer/go-colorful"
 	"image/color"
 	"log"
@@ -28,12 +29,8 @@ func GetPaletteRainbow(steps int) []color.RGBA {
 	return palette
 }
 
-func GetPaletteMonochromatic(steps int, initialPoint string) []color.RGBA {
+func GetPaletteMonochromatic(steps int, rng *rand.Rand) []color.RGBA {
 	var palette = make([]color.RGBA, steps)
-
-	seed := [32]byte{}
-	copy(seed[:], initialPoint)
-	rng := rand.New(rand.NewChaCha8(seed))
 
 	h := float64(rng.IntN(360))
 	for si := range steps {
@@ -87,6 +84,15 @@ func GetRules(antName string) ([]bool, error) {
 		return rules, errors.New("invalid name")
 	}
 	return rules, nil
+}
+
+func WithUnderscoresPadded(num, max uint64) string {
+	if max == 0 {
+		return WithUnderscores(num)
+	}
+
+	pad := 1 + len(WithUnderscores(max))
+	return fmt.Sprintf("%*s", pad, WithUnderscores(num))
 }
 
 func WithUnderscores(num uint64) string {

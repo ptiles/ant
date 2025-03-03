@@ -79,10 +79,10 @@ func numToName(num uint64, bitWidth int) string {
 type Flags struct {
 	antNameRange string
 
-	initialPointCount int
-	initialPointRange string
-	initialPointNear  bool
-	kaleidoscope      bool
+	initialPointCount  int
+	initialPointOffset string
+	initialPointNear   bool
+	kaleidoscope       bool
 
 	radiusCount int
 	execute     bool
@@ -95,7 +95,7 @@ func flagsSetup() *Flags {
 
 	flag.IntVar(&flags.initialPointCount, "ic", 0, "Initial point count")
 	flag.BoolVar(&flags.kaleidoscope, "ik", false, "Initial point kaleidoscope style")
-	flag.StringVar(&flags.initialPointRange, "ir", "0-8192", "Initial point offset range")
+	flag.StringVar(&flags.initialPointOffset, "io", "0-8192", "Initial point offset range")
 	flag.BoolVar(&flags.initialPointNear, "in", false, "Initial point near -i value")
 
 	flag.IntVar(&flags.radiusCount, "rc", 0, "Random radius count")
@@ -146,7 +146,7 @@ func getAntNames(flags *Flags, commonFlags *utils.CommonFlags) []string {
 }
 
 func getInitialPoints(flags *Flags, commonFlags *utils.CommonFlags) []string {
-	initialPointRangeMin, initialPointRangeMax, _ := utils.ParseRangeStr(flags.initialPointRange)
+	initialPointRangeMin, initialPointRangeMax, _ := utils.ParseRangeStr(flags.initialPointOffset)
 	if flags.initialPointNear && flags.initialPointCount > 0 {
 		ax1, off1, _, ax2, off2 := pgrid.ParseInitialPoint(commonFlags.InitialPoint)
 
@@ -238,7 +238,7 @@ func main() {
 						"-d %s %s -sc %d -sn %d -sm %d -su %d %s %s__%f__%s__%d\n",
 						commonFlags.Dir, alphaFlag,
 						commonFlags.MinCleanStreak, commonFlags.MaxNoisyDots,
-						commonFlags.MinSteps, commonFlags.MinUniqPct,
+						commonFlags.MinStepsPct, commonFlags.MinUniqPct,
 						rFlag,
 						antName, radius, initialPoint, commonFlags.MaxSteps,
 					),

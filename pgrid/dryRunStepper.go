@@ -9,18 +9,14 @@ import (
 func (f *Field) DryRunStepper(maxSteps, minCleanStreak, maxNoisyDots uint64) {
 	modifiedCount := uint64(0)
 
-	stepLen := 1 + len(utils.WithUnderscores(maxSteps))
-	stepFormat := fmt.Sprintf("\n%%%ds", stepLen)
-
 	dotSize := getDotSize(maxSteps)
-	dotFormat := fmt.Sprintf("%%%ds", stepLen)
-	dotValue := fmt.Sprintf(
-		". = %s; block = %s; row = %s",
+	fmt.Printf(
+		"%*s dot %s   block %s   row %s",
+		1+len(utils.WithUnderscores(maxSteps)), "",
 		utils.WithUnderscores(dotSize),
 		utils.WithUnderscores(dotSize*10),
 		utils.WithUnderscores(dotSize*50),
 	)
-	fmt.Printf(dotFormat, dotValue)
 
 	visited := make(map[GridAxes]uint64, max(MaxModifiedPoints, noiseMax, noiseClear))
 	stepNumber := uint64(0)
@@ -49,8 +45,7 @@ func (f *Field) DryRunStepper(maxSteps, minCleanStreak, maxNoisyDots uint64) {
 		visited[gridPointAxes] = stepNumber
 		if stepNumber%dotSize == 0 {
 			if dotNumber%50 == 0 {
-				stepNumberPadded := fmt.Sprintf(stepFormat, utils.WithUnderscores(stepNumber))
-				fmt.Printf(stepNumberPadded)
+				fmt.Printf("\n%s", utils.WithUnderscoresPadded(stepNumber, maxSteps))
 			}
 			if dotNumber%10 == 0 {
 				fmt.Printf(" ")
