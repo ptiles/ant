@@ -1,6 +1,6 @@
 module github.com/ptiles/ant
 
-go 1.23.4
+go 1.24.1
 
 require (
 	github.com/StephaneBunel/bresenham v0.0.0-20211027152503-ec76d7b8e923

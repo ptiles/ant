@@ -28,6 +28,10 @@ func (gp *GridPoint) String() string {
 	)
 }
 
+func (gc *GridCoords) String() string {
+	return fmt.Sprintf("(%d,%d)", gc.Offset0, gc.Offset1)
+}
+
 func (ga *GridAxes) String() string {
 	return fmt.Sprintf(
 		"%s%d:%s%d",

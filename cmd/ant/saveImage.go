@@ -63,11 +63,11 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 		stepsTotal = mImg.Steps
 	}
 
-	uniq := pgrid.Uniq()
+	uniq, uMaps := pgrid.Uniq()
 	uniqPct := uint64(len(commonFlags.AntName)) * uniq * 100 / stepsTotal
-	fmt.Printf("%s steps;  %s unique points  (%d%%)\n",
+	fmt.Printf("%s steps;  %s unique points  (%d%%) in %s maps\n",
 		utils.WithUnderscoresPadded(stepsTotal, commonFlags.MaxSteps),
-		utils.WithUnderscores(uniq), uniqPct,
+		utils.WithUnderscores(uniq), uniqPct, utils.WithUnderscores(uint64(uMaps)),
 	)
 
 	if stepsTotal >= minSteps && uniqPct >= commonFlags.MinUniqPct {

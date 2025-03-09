@@ -15,31 +15,31 @@ ant-rl:
 	go build -o bin ./cmd/ant-rl
 
 bench-prep-swiss:
-	go1.23.6 build -o bin/ant-1.23.6 ./cmd/ant
-	GOEXPERIMENT=noswissmap go1.24.0 build -o bin/ant-1.24.0-map ./cmd/ant
-	GOEXPERIMENT=swissmap   go1.24.0 build -o bin/ant-1.24.0-swi ./cmd/ant
+	go1.23.7 build -o bin/ant-1.23.7 ./cmd/ant
+	GOEXPERIMENT=noswissmap go1.24.1 build -o bin/ant-1.24.1-old ./cmd/ant
+	GOEXPERIMENT=swissmap   go1.24.1 build -o bin/ant-1.24.1-swi ./cmd/ant
 
 bench-swiss:
 	make bench-prep-swiss
 
 	hyperfine -i --warmup 1 -r 5 \
-		'./bin/ant-1.23.6     -w $(WIDTH) RLL__0.000007__B15160-E10890__500_000_001' \
-		'./bin/ant-1.24.0-map -w $(WIDTH) RLL__0.000007__B15160-E10890__500_000_002' \
-		'./bin/ant-1.24.0-swi -w $(WIDTH) RLL__0.000007__B15160-E10890__500_000_003' \
+		'./bin/ant-1.23.7     -w $(WIDTH) RLL__0.000007__B15160-E10890__500_000_001' \
+		'./bin/ant-1.24.1-old -w $(WIDTH) RLL__0.000007__B15160-E10890__500_000_002' \
+		'./bin/ant-1.24.1-swi -w $(WIDTH) RLL__0.000007__B15160-E10890__500_000_003' \
 		# end
 
 bench-swiss-mem:
 	make bench-prep-swiss
 
-	time -lh ./bin/ant-1.23.6     -w $(WIDTH) RLL__0.000007__B15160-E10890__2_000_000_001
-	time -lh ./bin/ant-1.24.0-map -w $(WIDTH) RLL__0.000007__B15160-E10890__2_000_000_002
-	time -lh ./bin/ant-1.24.0-swi -w $(WIDTH) RLL__0.000007__B15160-E10890__2_000_000_003
+	time -lh ./bin/ant-1.23.7     -w $(WIDTH) RLL__0.000007__B15160-E10890__2_000_000_001
+	time -lh ./bin/ant-1.24.1-old -w $(WIDTH) RLL__0.000007__B15160-E10890__2_000_000_002
+	time -lh ./bin/ant-1.24.1-swi -w $(WIDTH) RLL__0.000007__B15160-E10890__2_000_000_003
 
 prof-ant-swiss:
 	make bench-prep-swiss
 
-	./bin/ant-1.24.0-map -cpuprofile tmp/ant.prof RLL__0.000007__B15160-E10890__140_000_009
-	go tool pprof -http=: -no_browser tmp/ant.prof
+	./bin/ant-1.24.1-swi -cpuprofile tmp/ant-swi.prof RLL__0.000007__B15160-E10890__140_000_009
+	go tool pprof -http=: -no_browser tmp/ant-swi.prof
 
 bench-prep:
 	git stash
@@ -100,3 +100,6 @@ prof-ant-mem:
 	make ant
 	./bin/ant -memprofile tmp/ant-mem.prof RLL__0.000007__B15160-E10890__300_000_009
 	go tool pprof -http=: -no_browser tmp/ant-mem.prof
+
+test:
+	go test ./pgrid

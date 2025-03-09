@@ -2,6 +2,21 @@ package utils
 
 import "image"
 
+func floorSnap(v int) int {
+	return (v >> 8) << 8
+}
+
+func ceilSnap(v int) int {
+	return (v>>8 + 1) << 8
+}
+
+func SnapRect(rect image.Rectangle, padding int) image.Rectangle {
+	return image.Rectangle{
+		Min: image.Point{X: floorSnap(rect.Min.X - padding), Y: floorSnap(rect.Min.Y - padding)},
+		Max: image.Point{X: ceilSnap(rect.Max.X + padding), Y: ceilSnap(rect.Max.Y + padding)},
+	}
+}
+
 func PointSnap(p image.Point, gridSize int) image.Point {
 	return image.Point{X: p.X / gridSize * gridSize, Y: p.Y / gridSize * gridSize}
 }

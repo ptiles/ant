@@ -6,7 +6,6 @@ import (
 	"github.com/ptiles/ant/utils"
 	"image"
 	"image/color"
-	"math"
 	"os"
 )
 
@@ -153,21 +152,6 @@ func (f *Field) ModifiedPointsStepper(
 	fmt.Printf("\n")
 }
 
-func floorSnap(v int) int {
-	return int(math.Floor(float64(v)/256.0)) * 256
-}
-
-func ceilSnap(v int) int {
-	return int(math.Ceil(float64(v)/256.0)) * 256
-}
-
-func snapRect(rect image.Rectangle) image.Rectangle {
-	return image.Rectangle{
-		Min: image.Point{X: floorSnap(rect.Min.X - padding), Y: floorSnap(rect.Min.Y - padding)},
-		Max: image.Point{X: ceilSnap(rect.Max.X + padding), Y: ceilSnap(rect.Max.Y + padding)},
-	}
-}
-
 const OverflowOffset = 1024
 
 func overflowCheck(centerPoint, prevPoint image.Point) {
@@ -179,7 +163,7 @@ func overflowCheck(centerPoint, prevPoint image.Point) {
 }
 
 func drawPoints(rect image.Rectangle, points []gridPointColor, palette []color.RGBA) *image.RGBA {
-	img := image.NewRGBA(snapRect(rect))
+	img := image.NewRGBA(utils.SnapRect(rect, padding))
 
 	if drawTilesAndPoints {
 		for i := range points {
