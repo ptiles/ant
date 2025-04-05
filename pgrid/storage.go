@@ -54,12 +54,10 @@ func (ua *upArray) ResizeIfNeeded(p GridCoords) {
 	newMin := GridCoords{Offset0: floorSnap(min(ua.Min.Offset0, p.Offset0-pad)), Offset1: floorSnap(min(ua.Min.Offset1, p.Offset1-pad))}
 	newMax := GridCoords{Offset0: ceilSnap(max(ua.Max.Offset0-1, p.Offset0+pad)), Offset1: ceilSnap(max(ua.Max.Offset1-1, p.Offset1+pad))}
 
-	ua.Maps, ua.Stride = ua.Copy(newMin, newMax)
-	ua.Min = newMin
-	ua.Max = newMax
+	ua.Grow(newMin, newMax)
 }
 
-func (ua *upArray) Copy(newMin, newMax GridCoords) ([]downMap, offsetInt) {
+func (ua *upArray) Grow(newMin, newMax GridCoords) {
 	newSize0 := newMax.Offset0 - newMin.Offset0
 	newSize1 := newMax.Offset1 - newMin.Offset1
 	newMaps := make([]downMap, newSize0*newSize1)
@@ -79,7 +77,7 @@ func (ua *upArray) Copy(newMin, newMax GridCoords) ([]downMap, offsetInt) {
 		newIndex += newStride
 	}
 
-	return newMaps, newStride
+	ua.Maps, ua.Stride, ua.Min, ua.Max = newMaps, newStride, newMin, newMax
 }
 
 func (ua *upArray) Get(p GridCoords) downMap {
@@ -93,7 +91,7 @@ func (ua *upArray) Get(p GridCoords) downMap {
 	i := off1*ua.Stride + off0
 
 	if ua.Maps[i] == nil {
-		ua.Maps[i] = make(downMap, 3*1024)
+		ua.Maps[i] = make(downMap, initialMapSize)
 	}
 	return ua.Maps[i]
 }
@@ -102,14 +100,15 @@ type downMap map[gridCoordsDown]uint8
 
 var aValues [GridLinesTotal][GridLinesTotal]upArray
 
-type downInt uint16
+type downInt uint8
 type gridCoordsDown struct {
 	Offset0 downInt
 	Offset1 downInt
 }
 
 var bits = 8
-var downMask = downInt(0b00000000_11111111)
+var downMask = downInt(0b11111111)
+var initialMapSize = 3 * 1024
 
 func init() {
 	ResetValues()
@@ -117,7 +116,12 @@ func init() {
 	bitsStr, bitsPresent := os.LookupEnv("BITS")
 	if bitsPresent {
 		bits, _ = strconv.Atoi(bitsStr)
-		downMask = 0b11111111_11111111 >> (16 - bits)
+		downMask = 0b11111111 >> (8 - bits)
+	}
+
+	initialMapSizeStr, initialMapSizePresent := os.LookupEnv("INITIAL_MAP_SIZE")
+	if initialMapSizePresent {
+		initialMapSize, _ = strconv.Atoi(initialMapSizeStr)
 	}
 }
 
@@ -151,7 +155,11 @@ func Inc(axes GridAxes, limit uint8) (uint8, uint8) {
 	up, down := DivCoords(axes.Coords)
 	val := aValues[axes.Axis0][axes.Axis1].Get(up)
 	value := val[down]
-	newValue := (value + 1) % limit
+	newValue := value + 1
+	if newValue == limit {
+		delete(val, down) // no need to store 0 in map
+		return value, 0
+	}
 	val[down] = newValue
 	return value, newValue
 }

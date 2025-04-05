@@ -61,8 +61,6 @@ func left(gc GridCoords) GridCoords {
 }
 
 func TestResize(t *testing.T) {
-	t.SkipNow()
-
 	initialPoint := GridCoords{Offset0: -128, Offset1: 127}
 
 	expectedMin := GridCoords{Offset0: -256, Offset1: 0}
@@ -251,9 +249,7 @@ func TestCopy(t *testing.T) {
 			newMin := tt.newMin
 			newMax := tt.newMax
 
-			subj.Maps, subj.Stride = subj.Copy(newMin, newMax)
-			subj.Min = newMin
-			subj.Max = newMax
+			subj.Grow(newMin, newMax)
 
 			newValue := subj.Get(p)[coordsDown]
 			if newValue != 42 {

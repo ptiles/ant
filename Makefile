@@ -69,13 +69,13 @@ bench-huge:
 	hyperfine -i -r 2 \
 		'./bin/ant     -w $(WIDTH) RLL__0.000007__B15160-E10890__1_500_000_002' \
 		'./bin/ant-old -w $(WIDTH) RLL__0.000007__B15160-E10890__1_500_000_001' \
-        # end
+	# end
 
 bench-mem:
 	make bench-prep
 
-	time -lh ./bin/ant     -w $(WIDTH) RLL__0.000007__B15160-E10890__200_000_002
-	time -lh ./bin/ant-old -w $(WIDTH) RLL__0.000007__B15160-E10890__200_000_001
+	time -lh ./bin/ant     -w $(WIDTH) RLL__0.000007__B15160-E10890__2_000_000_002
+	time -lh ./bin/ant-old -w $(WIDTH) RLL__0.000007__B15160-E10890__2_000_000_001
 
 STEPS = 50_000_001
 compare:
@@ -93,7 +93,7 @@ bench-ant:
 
 prof-ant:
 	make ant
-	./bin/ant -cpuprofile tmp/ant.prof RLL__0.000007__B15160-E10890__140_000_009
+	./bin/ant -cpuprofile tmp/ant.prof -w $(WIDTH) RLL__0.000007__B15160-E10890__140_000_009
 	go tool pprof -http=: -no_browser tmp/ant.prof
 
 prof-ant-mem:

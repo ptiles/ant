@@ -1,8 +1,8 @@
 .DS_Store
 /.idea
 
-/bin/ant
-/bin/ant-*
+/bin/ant*
+/bin/kaleidoscope*
 /results*
 /tmp
 /*.prof

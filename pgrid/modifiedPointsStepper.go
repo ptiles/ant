@@ -7,6 +7,7 @@ import (
 	"image"
 	"image/color"
 	"os"
+	"runtime"
 )
 
 type gridPointColor struct {
@@ -61,9 +62,10 @@ func (f *Field) ModifiedPointsStepper(
 	points := make([]gridPointColor, MaxModifiedPoints)
 	modifiedCount := uint64(0)
 
+	var m runtime.MemStats
 	dotSize := getDotSize(maxSteps)
 	fmt.Printf(
-		"%*s dot %s;   block %s;   row %s;",
+		"%*s dot %s;   block %s;   row %s;  ",
 		1+len(utils.WithUnderscores(maxSteps)), "",
 		utils.WithUnderscores(dotSize),
 		utils.WithUnderscores(dotSize*10),
@@ -96,14 +98,22 @@ func (f *Field) ModifiedPointsStepper(
 		visited[gridPoint.Axes.Axis0][gridPoint.Axes.Axis1][gridPoint.Axes.Coords] = stepNumber
 
 		if stepNumber%dotSize == 0 {
+			// new row
 			if dotNumber%50 == 0 {
+				fmt.Print(" ")
+				runtime.GC()
+				runtime.ReadMemStats(&m)
+				fmt.Printf("%s MiB", utils.WithUnderscores((m.Sys-m.HeapReleased)/1024/1024))
 				fmt.Printf("\n%s", utils.WithUnderscoresPadded(stepNumber, maxSteps))
 			}
+
+			// new block
 			if dotNumber%10 == 0 {
 				fmt.Print(" ")
 			}
 			dotNumber += 1
 
+			// new dot
 			dotNoise := noiseCharsLen * noise / dotSize
 			fmt.Printf("%c", noiseChars[dotNoise])
 			noise = 0
@@ -149,7 +159,10 @@ func (f *Field) ModifiedPointsStepper(
 	}
 	modifiedPointsCh <- points[:modifiedCount]
 	close(modifiedPointsCh)
-	fmt.Printf("\n")
+	fmt.Print(" ")
+	runtime.GC()
+	runtime.ReadMemStats(&m)
+	fmt.Printf("%s MiB\n", utils.WithUnderscores((m.Sys-m.HeapReleased)/1024/1024))
 }
 
 const OverflowOffset = 1024
