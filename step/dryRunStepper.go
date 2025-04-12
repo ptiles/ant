@@ -13,10 +13,10 @@ func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {
 	dotSize := getDotSize(maxSteps)
 	fmt.Printf(
 		"%*s dot %s   block %s   row %s",
-		1+len(utils.WithUnderscores(maxSteps)), "",
-		utils.WithUnderscores(dotSize),
-		utils.WithUnderscores(dotSize*10),
-		utils.WithUnderscores(dotSize*50),
+		1+len(utils.WithSeparators(maxSteps)), "",
+		utils.WithSeparators(dotSize),
+		utils.WithSeparators(dotSize*10),
+		utils.WithSeparators(dotSize*50),
 	)
 
 	visited := make(map[pgrid.GridAxes]uint64, max(MaxModifiedPoints, noiseMax, noiseClear))
@@ -28,12 +28,12 @@ func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {
 	noisyCount := uint64(0)
 
 	fmt.Printf("\n")
-	r := image.Rectangle{}
+	rect := image.Rectangle{}
 	one := image.Rectangle{Min: image.Point{X: 0, Y: 0}, Max: image.Point{X: 1, Y: 1}}
 
 	//for gridPointAxes := range f.RunAxes(maxSteps) {
 	for gridPointAxes, centerPoint := range f.RunPoint(maxSteps) {
-		r = r.Union(one.Add(centerPoint))
+		rect = rect.Union(one.Add(centerPoint))
 
 		if visitedStep, ok := visited[gridPointAxes]; ok {
 			stepDiff := stepNumber - visitedStep
@@ -45,7 +45,7 @@ func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {
 		visited[gridPointAxes] = stepNumber
 		if stepNumber%dotSize == 0 {
 			if dotNumber%50 == 0 {
-				fmt.Printf("\n%s", utils.WithUnderscoresPadded(stepNumber, maxSteps))
+				fmt.Printf("\n%s", utils.WithSeparatorsSpacePadded(stepNumber, maxSteps))
 			}
 			if dotNumber%10 == 0 {
 				fmt.Printf(" ")
@@ -85,6 +85,6 @@ func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {
 			break
 		}
 	}
-	fmt.Printf("\n%s", r.String())
+	fmt.Printf("\n%s", rect.String())
 	//fmt.Printf("\n")
 }

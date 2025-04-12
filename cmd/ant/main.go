@@ -89,7 +89,7 @@ func main() {
 	)
 
 	fileNameFmt := fmt.Sprintf(
-		"%s/%s__%f__%s__%%s.%%s",
+		"%s/%s__%v__%s__%%s.%%s",
 		commonFlags.Dir, commonFlags.AntName, commonFlags.Radius, commonFlags.InitialPoint,
 	)
 
@@ -97,7 +97,7 @@ func main() {
 
 	//if flags.openResult || flags.openResults {
 	if flags.openResult {
-		fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(stepsTotal), "png")
+		fileName := fmt.Sprintf(fileNameFmt, utils.WithSeparators(stepsTotal), "png")
 		utils.Open(fileName)
 	}
 

@@ -18,7 +18,7 @@ type gridGeometry struct {
 const X = 0
 const Y = 1
 
-func newGridGeometry(r float64) gridGeometry {
+func newGridGeometry(radius float64) gridGeometry {
 	result := gridGeometry{}
 
 	phi := 2 * math.Pi / float64(GridLinesTotal)
@@ -27,8 +27,8 @@ func newGridGeometry(r float64) gridGeometry {
 	for ax := range GridLinesTotal {
 		phiAx := phi * float64(ax)
 
-		result.anchors[ax][X] = r * math.Cos(phiAx)
-		result.anchors[ax][Y] = r * math.Sin(phiAx)
+		result.anchors[ax][X] = radius * math.Cos(phiAx)
+		result.anchors[ax][Y] = radius * math.Sin(phiAx)
 
 		result.normals[ax][X] = math.Cos(phiAx + phi/2)
 		result.normals[ax][Y] = math.Sin(phiAx + phi/2)

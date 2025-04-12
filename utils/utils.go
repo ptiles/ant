@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"runtime"
 	"runtime/pprof"
-	"strconv"
 	"strings"
 )
 
@@ -86,17 +85,28 @@ func GetRules(antName string) ([]bool, error) {
 	return rules, nil
 }
 
-func WithUnderscoresPadded(num, max uint64) string {
+func WithSeparatorsSpacePadded(num, max uint64) string {
 	if max == 0 {
-		return WithUnderscores(num)
+		return WithSeparators(num)
 	}
 
-	pad := 1 + len(WithUnderscores(max))
-	return fmt.Sprintf("%*s", pad, WithUnderscores(num))
+	pad := 1 + len(WithSeparators(max))
+	return fmt.Sprintf("%*s", pad, WithSeparators(num))
 }
 
-func WithUnderscores(num uint64) string {
-	sl := strings.Split(strconv.FormatUint(num, 10), "")
+func WithSeparatorsZeroPadded(num, max uint64) string {
+	pad := len(fmt.Sprintf("%d", max))
+	numStr := fmt.Sprintf("%0*d", pad, num)
+	return addSeparators(numStr)
+}
+
+func WithSeparators(num uint64) string {
+	numStr := fmt.Sprintf("%d", num)
+	return addSeparators(numStr)
+}
+
+func addSeparators(numStr string) string {
+	sl := strings.Split(numStr, "")
 
 	n := 3
 	j := (len(sl) + n - 1) / n

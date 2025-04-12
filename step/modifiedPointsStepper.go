@@ -8,7 +8,7 @@ import (
 	"image"
 	"image/color"
 	"os"
-	"runtime"
+	"time"
 )
 
 type gridPointColor struct {
@@ -64,14 +64,13 @@ func ModifiedPointsStepper(
 	points := make([]gridPointColor, MaxModifiedPoints)
 	modifiedCount := uint64(0)
 
-	var m runtime.MemStats
 	dotSize := getDotSize(maxSteps)
 	fmt.Printf(
 		"%*s dot %s;   block %s;   row %s;  ",
-		1+len(utils.WithUnderscores(maxSteps)), "",
-		utils.WithUnderscores(dotSize),
-		utils.WithUnderscores(dotSize*10),
-		utils.WithUnderscores(dotSize*50),
+		1+len(utils.WithSeparators(maxSteps)), "",
+		utils.WithSeparators(dotSize),
+		utils.WithSeparators(dotSize*10),
+		utils.WithSeparators(dotSize*50),
 	)
 
 	var visited [pgrid.GridLinesTotal][pgrid.GridLinesTotal]map[pgrid.GridCoords]uint64
@@ -88,6 +87,9 @@ func ModifiedPointsStepper(
 	shouldStop := false
 	noisyCount := uint64(0)
 
+	start := time.Now()
+	lineSize := float64(dotSize * 50)
+
 	for gridPoint, color := range f.Run(maxSteps) {
 		visitedStep, ok := visited[gridPoint.Axes.Axis0][gridPoint.Axes.Axis1][gridPoint.Axes.Coords]
 		if ok {
@@ -102,10 +104,16 @@ func ModifiedPointsStepper(
 			// new row
 			if dotNumber%50 == 0 {
 				fmt.Print(" ")
-				runtime.GC()
-				runtime.ReadMemStats(&m)
-				fmt.Printf("%s MiB", utils.WithUnderscores((m.Sys-m.HeapReleased)/1024/1024))
-				fmt.Printf("\n%s", utils.WithUnderscoresPadded(stepNumber, maxSteps))
+
+				fmt.Printf("%s MiB", utils.WithSeparators(utils.MemStatsMB()))
+
+				if stepNumber != 0 {
+					seconds := time.Since(start).Seconds()
+					fmt.Printf("; %s st/s", utils.WithSeparators(uint64(lineSize/seconds)))
+					start = time.Now()
+				}
+
+				fmt.Printf("\n%s", utils.WithSeparatorsSpacePadded(stepNumber, maxSteps))
 			}
 
 			// new block
@@ -155,12 +163,17 @@ func ModifiedPointsStepper(
 			break
 		}
 	}
+	fmt.Print(" ")
+	fmt.Printf("%s MiB", utils.WithSeparators(utils.MemStatsMB()))
+	seconds := time.Since(start).Seconds()
+	lineSizeLeft := stepNumber % (dotSize * 50)
+	if lineSizeLeft > 0 {
+		lineSize = float64(lineSizeLeft)
+	}
+	fmt.Printf("; %s st/s\n", utils.WithSeparators(uint64(lineSize/seconds)))
+
 	modifiedPointsCh <- points[:modifiedCount]
 	close(modifiedPointsCh)
-	fmt.Print(" ")
-	runtime.GC()
-	runtime.ReadMemStats(&m)
-	fmt.Printf("%s MiB\n", utils.WithUnderscores((m.Sys-m.HeapReleased)/1024/1024))
 }
 
 const OverflowOffset = 1024
@@ -226,9 +239,7 @@ func modifiedPointsToImages(
 		pixelRect := image.Point{X: 1, Y: 1}
 
 		for i := range points {
-			gridPoint := points[i].gridPoint
-
-			centerPoint := gridPoint.GetCenterPoint()
+			centerPoint := points[i].gridPoint.GetCenterPoint()
 			if !rect.Empty() {
 				overflowCheck(centerPoint, prevPoint)
 			}

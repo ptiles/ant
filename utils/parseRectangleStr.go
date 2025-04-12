@@ -7,6 +7,10 @@ import (
 )
 
 func ParseRectangleStr(rectangleStr string) (rect image.Rectangle, scaleFactor int, err error) {
+	if rectangleStr == "" {
+		return
+	}
+
 	re := regexp.MustCompile(`\((-?\d+),(-?\d+)\)-\((-?\d+),(-?\d+)\)/(\d+)`)
 	result := re.FindStringSubmatch(rectangleStr)
 

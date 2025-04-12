@@ -13,8 +13,8 @@ type Field struct {
 	offsetsToLast  allOffsetDeltas
 }
 
-func New(r float64, rules []bool, initialPoint string) *Field {
-	gg := newGridGeometry(r)
+func New(radius float64, rules []bool, initialPoint string) *Field {
+	gg := newGridGeometry(radius)
 
 	return &Field{
 		Rules:        rules,

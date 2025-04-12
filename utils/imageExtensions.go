@@ -23,22 +23,22 @@ func PointSnap(p image.Point, gridSize int) image.Point {
 	return image.Point{X: p.X / gridSize * gridSize, Y: p.Y / gridSize * gridSize}
 }
 
-func RectGrow(r image.Rectangle, maxDimension int) image.Rectangle {
+func RectGrow(rect image.Rectangle, maxDimension int) image.Rectangle {
 	halfImage := image.Point{X: maxDimension / 2, Y: maxDimension / 2}
-	centerPoint := r.Min.Add(r.Max).Div(2)
+	centerPoint := rect.Min.Add(rect.Max).Div(2)
 	return image.Rectangle{Min: centerPoint.Sub(halfImage), Max: centerPoint.Add(halfImage)}
 }
 
-func RectDiv(r image.Rectangle, scaleFactor int) image.Rectangle {
+func RectDiv(rect image.Rectangle, scaleFactor int) image.Rectangle {
 	if scaleFactor == 1 {
-		return r
+		return rect
 	}
-	return image.Rectangle{Min: r.Min.Div(scaleFactor), Max: r.Max.Div(scaleFactor)}
+	return image.Rectangle{Min: rect.Min.Div(scaleFactor), Max: rect.Max.Div(scaleFactor)}
 }
 
-func PointRect(p image.Point, maxDimension int) image.Rectangle {
+func PointRect(point image.Point, maxDimension int) image.Rectangle {
 	gridSize := 16
-	snapped := PointSnap(p, gridSize)
+	snapped := PointSnap(point, gridSize)
 	return RectGrow(image.Rectangle{Min: snapped, Max: snapped.Add(image.Point{X: gridSize, Y: gridSize})}, maxDimension)
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"math"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -32,8 +33,8 @@ type CommonFlags struct {
 
 func (cf *CommonFlags) String() string {
 	return fmt.Sprintf(
-		"%s__%f__%s__%s\n",
-		cf.AntName, cf.Radius, cf.InitialPoint, WithUnderscores(cf.MaxSteps),
+		"%s__%v__%s__%s\n",
+		cf.AntName, cf.Radius, cf.InitialPoint, WithSeparators(cf.MaxSteps),
 	)
 }
 
@@ -71,7 +72,7 @@ func (cf *CommonFlags) ParseArgs() {
 
 func (cf *CommonFlags) ParseShorthand(shorthand string) {
 	antNameR := `[RL]+`
-	radiusR := `[01]\.\d+`
+	radiusR := `([01]\.\d+)|(\d+e-\d+)`
 	initialPointR := `[A-X]-?\d+[+-]?[A-X]-?\d+`
 	maxStepsR := `[0-9_]+`
 
@@ -87,6 +88,13 @@ func (cf *CommonFlags) ParseShorthand(shorthand string) {
 	radius, radiusErr := strconv.ParseFloat(matches["radius"], 64)
 	if radiusErr == nil {
 		cf.Radius = radius
+	}
+	if radius == 0 {
+		fmt.Println("Radius cannot be zero")
+		os.Exit(1)
+	}
+	if radius < 1e-10 {
+		fmt.Println("Radius too small, can be inaccurate")
 	}
 
 	cf.InitialPoint = matches["initialPoint"]

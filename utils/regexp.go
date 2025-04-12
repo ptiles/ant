@@ -4,9 +4,9 @@ import (
 	"regexp"
 )
 
-func NamedMatches(r, s string) map[string]string {
-	expr := regexp.MustCompile(r)
-	match := expr.FindStringSubmatch(s)
+func NamedMatches(rx, str string) map[string]string {
+	expr := regexp.MustCompile(rx)
+	match := expr.FindStringSubmatch(str)
 	result := make(map[string]string)
 	matchLen := len(match)
 

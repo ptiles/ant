@@ -25,7 +25,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 		out.Merge(mImg.Img)
 		if mImg.Save {
 			img, resultRectS := out.Draw(commonFlags.Alpha)
-			saveImage(img, resultRectS, out.ResultRectN, out.ScaleFactor, fileNameFmt, mImg.Steps)
+			saveImage(img, resultRectS, out.ResultRectN, out.ScaleFactor, fileNameFmt, mImg.Steps, commonFlags.MaxSteps)
 		}
 		imagesCount += 1
 		stepsTotal = mImg.Steps
@@ -34,17 +34,17 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 	uniq, uMaps := pgrid.Uniq()
 	uniqPct := uint64(len(commonFlags.AntName)) * uniq * 100 / stepsTotal
 	fmt.Printf("%s steps;  %s unique points  (%d%%) in %s maps\n",
-		utils.WithUnderscoresPadded(stepsTotal, commonFlags.MaxSteps),
-		utils.WithUnderscores(uniq), uniqPct, utils.WithUnderscores(uint64(uMaps)),
+		utils.WithSeparatorsSpacePadded(stepsTotal, commonFlags.MaxSteps),
+		utils.WithSeparators(uniq), uniqPct, utils.WithSeparators(uint64(uMaps)),
 	)
 
 	img, resultRectS := out.Draw(commonFlags.Alpha)
 	if stepsTotal >= minSteps && uniqPct >= commonFlags.MinUniqPct {
-		fmt.Printf(saveImage(img, resultRectS, out.ResultRectN, out.ScaleFactor, fileNameFmt, stepsTotal))
+		fmt.Print(saveImage(img, resultRectS, out.ResultRectN, out.ScaleFactor, fileNameFmt, stepsTotal, commonFlags.MaxSteps))
 	}
 
 	if flags.jsonStats {
-		fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(stepsTotal), "png")
+		fileName := fmt.Sprintf(fileNameFmt, utils.WithSeparators(stepsTotal), "png")
 		writeStats(fileNameFmt, statsType{
 			AntName:          commonFlags.AntName,
 			FileName:         fileName,
@@ -59,8 +59,8 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 	return stepsTotal
 }
 
-func saveImage(resultImageS *image.NRGBA, resultRectS, resultRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps uint64) string {
-	fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(steps), "png")
+func saveImage(resultImageS *image.NRGBA, resultRectS, resultRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps, max uint64) string {
+	fileName := fmt.Sprintf(fileNameFmt, utils.WithSeparatorsZeroPadded(steps, max), "png")
 	err := os.MkdirAll(path.Dir(fileName), 0755)
 	if err != nil {
 		panic(err)
@@ -98,7 +98,7 @@ type statsType struct {
 }
 
 func writeStats(fileNameFmt string, stats statsType) {
-	fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(stats.Steps), "json")
+	fileName := fmt.Sprintf(fileNameFmt, utils.WithSeparators(stats.Steps), "json")
 
 	err := os.MkdirAll(path.Dir(fileName), 0755)
 	if err != nil {
