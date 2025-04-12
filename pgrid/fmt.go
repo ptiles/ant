@@ -1,6 +1,8 @@
 package pgrid
 
-import "fmt"
+import (
+	"fmt"
+)
 
 var AxisNames = []string{
 	"A", "B", "C", "D", "E",

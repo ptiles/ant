@@ -19,11 +19,10 @@ type CommonFlags struct {
 	AntName      string
 	Radius       float64
 
-	MaxSteps       uint64
-	MinCleanStreak uint64
-	MaxNoisyDots   uint64
-	MinStepsPct    uint64
-	MinUniqPct     uint64
+	MaxSteps     uint64
+	MaxNoisyDots uint64
+	MinStepsPct  uint64
+	MinUniqPct   uint64
 
 	Rectangle   image.Rectangle
 	ScaleFactor int
@@ -51,7 +50,6 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 		return
 	})
 	flag.Uint64Var(&cf.MaxSteps, "s", 1_000_000, "Steps")
-	flag.Uint64Var(&cf.MinCleanStreak, "sc", 0, "Min clean dots streak")
 	flag.Uint64Var(&cf.MaxNoisyDots, "sn", 0, "Max noisy dots")
 	flag.Uint64Var(&cf.MinStepsPct, "sm", 0, "Min steps percent")
 	flag.Uint64Var(&cf.MinUniqPct, "su", 0, "Min uniq points percent")
@@ -64,9 +62,6 @@ func (cf *CommonFlags) ParseArgs() {
 		cf.ParseShorthand(shorthand)
 	}
 
-	if cf.MinCleanStreak == 0 {
-		cf.MinCleanStreak = math.MaxUint64
-	}
 	if cf.MaxNoisyDots == 0 {
 		cf.MaxNoisyDots = math.MaxUint64
 	}

@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func (f *Field) initialState() (GridPoint, GridLine, GridLine, bool) {
+func (f *Field) InitialState() (GridPoint, GridLine, GridLine, bool) {
 	currAxis, currOffset, prevPointSign, prevAxis, prevOffset := ParseInitialPoint(f.InitialPoint)
 
 	currLine := GridLine{Axis: uint8(currAxis), Offset: offsetInt(currOffset)}

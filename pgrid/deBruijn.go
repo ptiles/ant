@@ -5,13 +5,13 @@ import (
 	"math"
 )
 
-//const drawTilesAndPoints = true
+//const DrawTilesAndPoints = true
 //const deBruijnScale = 48
 //const padding = deBruijnScale
 
-const drawTilesAndPoints = false
+const DrawTilesAndPoints = false
 const deBruijnScale = 2
-const padding = deBruijnScale * 4
+const Padding = deBruijnScale * 4
 
 //const inflation = 1
 //const inflation = 2
@@ -28,7 +28,7 @@ func init() {
 	}
 }
 
-func (gp *GridPoint) getCenterPoint() image.Point {
+func (gp *GridPoint) GetCenterPoint() image.Point {
 	x := 0.5*deBruijnX[gp.Axes.Axis0] + 0.5*deBruijnX[gp.Axes.Axis1]
 	y := 0.5*deBruijnY[gp.Axes.Axis0] + 0.5*deBruijnY[gp.Axes.Axis1]
 
@@ -45,7 +45,7 @@ func (gp *GridPoint) getCenterPoint() image.Point {
 const _0 = 0.05
 const _1 = 0.95
 
-func (gp *GridPoint) getCornerPoints() [4]image.Point {
+func (gp *GridPoint) GetCornerPoints() [4]image.Point {
 	x := float64(0)
 	y := float64(0)
 

@@ -1,6 +1,8 @@
 package utils
 
-import "image"
+import (
+	"image"
+)
 
 func floorSnap(v int) int {
 	return (v >> 8) << 8

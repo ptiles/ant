@@ -1,14 +1,16 @@
 package pgrid
 
-import "math"
+import (
+	"math"
+)
 
 type Field struct {
 	Rules        []bool
 	Limit        uint8
 	InitialPoint string
 
-	offsetsToLast  allOffsetDeltas
 	offsetsToFirst allOffsetDeltas
+	offsetsToLast  allOffsetDeltas
 }
 
 func New(r float64, rules []bool, initialPoint string) *Field {
@@ -19,8 +21,8 @@ func New(r float64, rules []bool, initialPoint string) *Field {
 		Limit:        uint8(len(rules)),
 		InitialPoint: initialPoint,
 
-		offsetsToLast:  gg.newOffsetsToLast(),
 		offsetsToFirst: gg.newOffsetsToFirst(),
+		offsetsToLast:  gg.newOffsetsToLast(),
 	}
 }
 

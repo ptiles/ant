@@ -4,60 +4,28 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ptiles/ant/pgrid"
+	"github.com/ptiles/ant/result"
+	"github.com/ptiles/ant/step"
 	"github.com/ptiles/ant/utils"
-	"golang.org/x/image/draw"
 	"image"
 	"image/png"
 	"os"
 	"path"
 )
 
-func mergeImage(dst, src *image.RGBA, scaleFactor int) {
-	dstRect := utils.RectDiv(src.Rect, scaleFactor)
-	draw.BiLinear.Scale(dst, dstRect, src, src.Rect, draw.Over, nil)
-}
+func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fileNameFmt string, flags *Flags, commonFlags *utils.CommonFlags) uint64 {
+	out := result.NewImage(commonFlags.Rectangle, commonFlags.ScaleFactor, flags.maxDimension)
 
-func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fileNameFmt string, flags *Flags, commonFlags *utils.CommonFlags) uint64 {
-	maxDimension := flags.maxDimension
-	dynamic := commonFlags.Rectangle.Empty()
 	stepsTotal := uint64(0)
 	minSteps := commonFlags.MaxSteps * commonFlags.MinStepsPct / 100
 
 	imagesCount := 0
-	scaleFactor := 0
-
-	var resultRectN image.Rectangle
-	var paddingRectN image.Rectangle
-	var resultImageS *image.RGBA
-
-	if dynamic {
-		resultImageS = image.NewRGBA(image.Rectangle{})
-	} else {
-		resultRectN = commonFlags.Rectangle
-		scaleFactor = commonFlags.ScaleFactor
-		resultImageS = image.NewRGBA(utils.RectDiv(commonFlags.Rectangle, scaleFactor))
-	}
 
 	for mImg := range modifiedImagesCh {
-		if dynamic {
-			resultRectN = resultRectN.Union(mImg.Img.Rect)
-			if !resultRectN.In(paddingRectN) {
-				if scaleFactor == 0 {
-					scaleFactor = 1
-				} else {
-					scaleFactor *= 2
-					maxDimension *= 2
-				}
-				paddingRectN = utils.RectGrow(resultRectN, maxDimension)
-				newResultImageS := image.NewRGBA(utils.RectDiv(paddingRectN, scaleFactor))
-				mergeImage(newResultImageS, resultImageS, 2)
-				resultImageS = newResultImageS
-			}
-		}
-
-		mergeImage(resultImageS, mImg.Img, scaleFactor)
+		out.Merge(mImg.Img)
 		if mImg.Save {
-			saveImage(resultImageS, resultRectN, scaleFactor, commonFlags.Alpha, fileNameFmt, mImg.Steps)
+			img, resultRectS := out.Draw(commonFlags.Alpha)
+			saveImage(img, resultRectS, out.ResultRectN, out.ScaleFactor, fileNameFmt, mImg.Steps)
 		}
 		imagesCount += 1
 		stepsTotal = mImg.Steps
@@ -70,8 +38,9 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 		utils.WithUnderscores(uniq), uniqPct, utils.WithUnderscores(uint64(uMaps)),
 	)
 
+	img, resultRectS := out.Draw(commonFlags.Alpha)
 	if stepsTotal >= minSteps && uniqPct >= commonFlags.MinUniqPct {
-		fmt.Printf(saveImage(resultImageS, resultRectN, scaleFactor, commonFlags.Alpha, fileNameFmt, stepsTotal))
+		fmt.Printf(saveImage(img, resultRectS, out.ResultRectN, out.ScaleFactor, fileNameFmt, stepsTotal))
 	}
 
 	if flags.jsonStats {
@@ -82,32 +51,15 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan pgrid.ModifiedImage, fi
 			Steps:            stepsTotal,
 			UniqPct:          uniqPct,
 			ImagesCount:      imagesCount,
-			MaxSide:          max(resultRectN.Dx(), resultRectN.Dy()),
-			Dimensions:       resultRectN.Size().String(),
-			DimensionsScaled: resultRectN.Size().Div(scaleFactor).String(),
+			MaxSide:          max(out.ResultRectN.Dx(), out.ResultRectN.Dy()),
+			Dimensions:       out.ResultRectN.Size().String(),
+			DimensionsScaled: out.ResultRectN.Size().Div(out.ScaleFactor).String(),
 		})
 	}
 	return stepsTotal
 }
 
-func cropImage(src *image.RGBA, cropRect image.Rectangle, keepAlpha bool) *image.NRGBA {
-	dstRect := image.Rectangle{Min: image.Point{}, Max: cropRect.Size()}
-	dstImage := image.NewNRGBA(dstRect)
-	draw.Draw(dstImage, dstRect, src, cropRect.Min, draw.Over)
-
-	if !keepAlpha {
-		for y := range dstImage.Rect.Dy() {
-			yOffset := y * dstImage.Stride
-			for x := range dstImage.Rect.Dx() {
-				dstImage.Pix[yOffset+x*4+3] = 255
-			}
-		}
-	}
-
-	return dstImage
-}
-
-func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFactor int, keepAlpha bool, fileNameFmt string, steps uint64) string {
+func saveImage(resultImageS *image.NRGBA, resultRectS, resultRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps uint64) string {
 	fileName := fmt.Sprintf(fileNameFmt, utils.WithUnderscores(steps), "png")
 	err := os.MkdirAll(path.Dir(fileName), 0755)
 	if err != nil {
@@ -120,8 +72,6 @@ func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFacto
 	}
 	defer file.Close()
 
-	activeRectS := utils.RectDiv(activeRectN, scaleFactor)
-	resultImageS := cropImage(activeImageS, activeRectS, keepAlpha)
 	err = png.Encode(file, resultImageS)
 	if err != nil {
 		panic(err)
@@ -130,9 +80,9 @@ func saveImage(activeImageS *image.RGBA, activeRectN image.Rectangle, scaleFacto
 	return fmt.Sprintf(
 		"%s %s %s %s/%d\n",
 		fileName,
-		activeRectS.Size().String(),
-		activeRectN.Size().String(),
-		activeRectN.String(), scaleFactor,
+		resultRectS.Size().String(),
+		resultRectN.Size().String(),
+		resultRectN.String(), scaleFactor,
 	)
 }
 

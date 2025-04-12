@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ptiles/ant/pgrid"
+	"github.com/ptiles/ant/step"
 	"github.com/ptiles/ant/utils"
 	"log"
 	"os"
@@ -37,7 +38,7 @@ func main() {
 
 	field := pgrid.New(commonFlags.Radius, rules, commonFlags.InitialPoint)
 
-	field.DryRunStepper(commonFlags.MaxSteps, commonFlags.MinCleanStreak, commonFlags.MaxNoisyDots)
+	step.DryRunStepper(field, commonFlags.MaxSteps, commonFlags.MaxNoisyDots)
 	fmt.Printf(" %s\n", commonFlags.String())
 
 	if commonFlags.Memprofile != "" {

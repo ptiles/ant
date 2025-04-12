@@ -1,6 +1,8 @@
 package utils
 
-import "regexp"
+import (
+	"regexp"
+)
 
 func NamedMatches(r, s string) map[string]string {
 	expr := regexp.MustCompile(r)

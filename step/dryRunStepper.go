@@ -1,12 +1,13 @@
-package pgrid
+package step
 
 import (
 	"fmt"
+	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/utils"
 	"image"
 )
 
-func (f *Field) DryRunStepper(maxSteps, minCleanStreak, maxNoisyDots uint64) {
+func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {
 	modifiedCount := uint64(0)
 
 	dotSize := getDotSize(maxSteps)
@@ -18,13 +19,12 @@ func (f *Field) DryRunStepper(maxSteps, minCleanStreak, maxNoisyDots uint64) {
 		utils.WithUnderscores(dotSize*50),
 	)
 
-	visited := make(map[GridAxes]uint64, max(MaxModifiedPoints, noiseMax, noiseClear))
+	visited := make(map[pgrid.GridAxes]uint64, max(MaxModifiedPoints, noiseMax, noiseClear))
 	stepNumber := uint64(0)
 	dotNumber := 0
 	noise := uint64(0)
 
 	shouldStop := false
-	cleanStreak := uint64(0)
 	noisyCount := uint64(0)
 
 	fmt.Printf("\n")
@@ -57,14 +57,11 @@ func (f *Field) DryRunStepper(maxSteps, minCleanStreak, maxNoisyDots uint64) {
 			noise = 0
 
 			noisyDot := dotNoise > 3
-			if noisyDot && cleanStreak > minCleanStreak || noisyCount > maxNoisyDots {
-				shouldStop = true
-			}
 			if noisyDot {
-				cleanStreak = 0
 				noisyCount += 1
-			} else {
-				cleanStreak += 1
+			}
+			if noisyCount >= maxNoisyDots {
+				shouldStop = true
 			}
 		}
 

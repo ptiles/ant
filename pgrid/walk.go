@@ -18,7 +18,7 @@ func init() {
 	}
 }
 
-func (f *Field) next(currPoint GridPoint, currLine, prevLine GridLine, prevPointSign bool) (GridPoint, GridLine, GridLine, bool, uint8) {
+func (f *Field) Next(currPoint GridPoint, currLine, prevLine GridLine, prevPointSign bool) (GridPoint, GridLine, GridLine, bool, uint8) {
 	isRightTurn, currPointColor := f.step(currPoint.Axes)
 
 	axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
@@ -42,7 +42,7 @@ func (f *Field) step0(axes GridAxes) bool {
 
 func (f *Field) Run(maxSteps uint64) iter.Seq2[GridPoint, uint8] {
 	return func(yield func(GridPoint, uint8) bool) {
-		currPoint, currLine, prevLine, pointSign := f.initialState()
+		currPoint, currLine, prevLine, pointSign := f.InitialState()
 
 		for range maxSteps {
 			isRightTurn, pointColor := f.step(currPoint.Axes)
@@ -63,7 +63,7 @@ func (f *Field) Run(maxSteps uint64) iter.Seq2[GridPoint, uint8] {
 
 func (f *Field) RunAxes(maxSteps uint64) iter.Seq[GridAxes] {
 	return func(yield func(GridAxes) bool) {
-		currPoint, currLine, prevLine, pointSign := f.initialState()
+		currPoint, currLine, prevLine, pointSign := f.InitialState()
 
 		for range maxSteps {
 			isRightTurn := f.step0(currPoint.Axes)
@@ -84,12 +84,12 @@ func (f *Field) RunAxes(maxSteps uint64) iter.Seq[GridAxes] {
 
 func (f *Field) RunPoint(maxSteps uint64) iter.Seq2[GridAxes, image.Point] {
 	return func(yield func(GridAxes, image.Point) bool) {
-		currPoint, currLine, prevLine, pointSign := f.initialState()
+		currPoint, currLine, prevLine, pointSign := f.InitialState()
 
 		for range maxSteps {
 			isRightTurn := f.step0(currPoint.Axes)
 
-			if !yield(currPoint.Axes, currPoint.getCenterPoint()) {
+			if !yield(currPoint.Axes, currPoint.GetCenterPoint()) {
 				return
 			}
 

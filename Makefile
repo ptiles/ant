@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := build
 
-build: ant ant-batch ant-dry ant-rl
+build: ant ant-batch ant-dry
 
 ant:
 	go build -o bin ./cmd/ant
@@ -10,9 +10,6 @@ ant-batch:
 
 ant-dry:
 	go build -o bin ./cmd/ant-dry
-
-ant-rl:
-	go build -o bin ./cmd/ant-rl
 
 bench-prep-swiss:
 	go1.23.7 build -o bin/ant-1.23.7 ./cmd/ant

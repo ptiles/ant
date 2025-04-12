@@ -1,8 +1,9 @@
-package pgrid
+package step
 
 import (
 	"fmt"
 	"github.com/StephaneBunel/bresenham"
+	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/utils"
 	"image"
 	"image/color"
@@ -11,7 +12,7 @@ import (
 )
 
 type gridPointColor struct {
-	gridPoint   GridPoint
+	gridPoint   pgrid.GridPoint
 	centerPoint image.Point
 	color       uint8
 }
@@ -50,10 +51,11 @@ func getDotSize(maxSteps uint64) uint64 {
 var noiseChars = []rune("....▁▂▂▃▃▃▄▄▄▄▅▅▅▅▅▆▆▆▆▆▆▇▇▇▇▇▇▇████████")
 var noiseCharsLen = uint64(len(noiseChars))
 
-func (f *Field) ModifiedPointsStepper(
+func ModifiedPointsStepper(
+	f *pgrid.Field,
 	modifiedImagesCh chan<- ModifiedImage,
 	palette []color.RGBA,
-	maxSteps, partialSteps, minCleanStreak, maxNoisyDots uint64,
+	maxSteps, partialSteps, maxNoisyDots uint64,
 ) {
 	modifiedPointsCh := make(chan []gridPointColor, 64)
 
@@ -72,10 +74,10 @@ func (f *Field) ModifiedPointsStepper(
 		utils.WithUnderscores(dotSize*50),
 	)
 
-	var visited [GridLinesTotal][GridLinesTotal]map[GridCoords]uint64
-	for ax0 := range GridLinesTotal {
-		for ax1 := range GridLinesTotal {
-			visited[ax0][ax1] = make(map[GridCoords]uint64, visitedMapSize)
+	var visited [pgrid.GridLinesTotal][pgrid.GridLinesTotal]map[pgrid.GridCoords]uint64
+	for ax0 := range pgrid.GridLinesTotal {
+		for ax1 := range pgrid.GridLinesTotal {
+			visited[ax0][ax1] = make(map[pgrid.GridCoords]uint64, visitedMapSize)
 		}
 	}
 
@@ -84,7 +86,6 @@ func (f *Field) ModifiedPointsStepper(
 	noise := uint64(0)
 
 	shouldStop := false
-	cleanStreak := uint64(0)
 	noisyCount := uint64(0)
 
 	for gridPoint, color := range f.Run(maxSteps) {
@@ -119,22 +120,19 @@ func (f *Field) ModifiedPointsStepper(
 			noise = 0
 
 			noisyDot := dotNoise > 3
-			if noisyDot && cleanStreak > minCleanStreak || noisyCount > maxNoisyDots {
-				shouldStop = true
-			}
 			if noisyDot {
-				cleanStreak = 0
 				noisyCount += 1
-			} else {
-				cleanStreak += 1
+			}
+			if noisyCount >= maxNoisyDots {
+				shouldStop = true
 			}
 		}
 
 		if modifiedCount == MaxModifiedPoints {
 			if stepNumber >= noiseClear {
 				clearStep := stepNumber - noiseClear
-				for ax0 := range GridLinesTotal {
-					for ax1 := range GridLinesTotal {
+				for ax0 := range pgrid.GridLinesTotal {
+					for ax1 := range pgrid.GridLinesTotal {
 						for k, v := range visited[ax0][ax1] {
 							if v < clearStep {
 								delete(visited[ax0][ax1], k)
@@ -176,9 +174,9 @@ func overflowCheck(centerPoint, prevPoint image.Point) {
 }
 
 func drawPoints(rect image.Rectangle, points []gridPointColor, palette []color.RGBA) *image.RGBA {
-	img := image.NewRGBA(utils.SnapRect(rect, padding))
+	img := image.NewRGBA(utils.SnapRect(rect, pgrid.Padding))
 
-	if drawTilesAndPoints {
+	if pgrid.DrawTilesAndPoints {
 		for i := range points {
 			drawTile(img, points[i].gridPoint, palette[points[i].color])
 		}
@@ -192,8 +190,8 @@ func drawPoints(rect image.Rectangle, points []gridPointColor, palette []color.R
 	return img
 }
 
-func drawTile(currentImage *image.RGBA, gridPoint GridPoint, color color.RGBA) {
-	cornerPoints := gridPoint.getCornerPoints()
+func drawTile(currentImage *image.RGBA, gridPoint pgrid.GridPoint, color color.RGBA) {
+	cornerPoints := gridPoint.GetCornerPoints()
 	p0, p1, p2, p3 := cornerPoints[0], cornerPoints[1], cornerPoints[2], cornerPoints[3]
 
 	bresenham.DrawLine(currentImage, p0.X, p0.Y, p1.X, p1.Y, color)
@@ -230,7 +228,7 @@ func modifiedPointsToImages(
 		for i := range points {
 			gridPoint := points[i].gridPoint
 
-			centerPoint := gridPoint.getCenterPoint()
+			centerPoint := gridPoint.GetCenterPoint()
 			if !rect.Empty() {
 				overflowCheck(centerPoint, prevPoint)
 			}

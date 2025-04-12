@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ptiles/ant/pgrid"
+	"github.com/ptiles/ant/step"
 	"github.com/ptiles/ant/utils"
 	"image/color"
 	"log"
@@ -78,12 +79,13 @@ func main() {
 		palette = utils.GetPaletteRainbow(int(field.Limit))
 	}
 
-	modifiedImagesCh := make(chan pgrid.ModifiedImage, 64)
+	modifiedImagesCh := make(chan step.ModifiedImage, 64)
 
-	go field.ModifiedPointsStepper(
+	go step.ModifiedPointsStepper(
+		field,
 		modifiedImagesCh, palette,
 		commonFlags.MaxSteps, flags.partialSteps,
-		commonFlags.MinCleanStreak, commonFlags.MaxNoisyDots,
+		commonFlags.MaxNoisyDots,
 	)
 
 	fileNameFmt := fmt.Sprintf(
