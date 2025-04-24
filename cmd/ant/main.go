@@ -73,7 +73,7 @@ func main() {
 	field := pgrid.New(commonFlags.Radius, rules, commonFlags.InitialPoint)
 	var palette []color.RGBA
 	if commonFlags.Monochrome {
-		rng := pgrid.InitialPointSeed(field.InitialPoint)
+		rng := pgrid.InitialPointSeed(commonFlags.InitialPoint)
 		palette = utils.GetPaletteMonochromatic(int(field.Limit), rng)
 	} else {
 		palette = utils.GetPaletteRainbow(int(field.Limit))

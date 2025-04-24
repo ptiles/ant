@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/utils"
-	"image"
 )
 
 func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {
@@ -28,13 +27,8 @@ func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {
 	noisyCount := uint64(0)
 
 	fmt.Printf("\n")
-	rect := image.Rectangle{}
-	one := image.Rectangle{Min: image.Point{X: 0, Y: 0}, Max: image.Point{X: 1, Y: 1}}
 
-	//for gridPointAxes := range f.RunAxes(maxSteps) {
-	for gridPointAxes, centerPoint := range f.RunPoint(maxSteps) {
-		rect = rect.Union(one.Add(centerPoint))
-
+	for gridPointAxes := range f.RunAxes(maxSteps) {
 		if visitedStep, ok := visited[gridPointAxes]; ok {
 			stepDiff := stepNumber - visitedStep
 			if noiseMin < stepDiff && stepDiff < noiseMax {
@@ -85,6 +79,8 @@ func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {
 			break
 		}
 	}
+
+	rect := pgrid.Rect(f)
 	fmt.Printf("\n%s", rect.String())
 	//fmt.Printf("\n")
 }

@@ -11,14 +11,20 @@ import (
 	"time"
 )
 
-type gridPointColor struct {
+type gridTileColor struct {
 	gridPoint   pgrid.GridPoint
 	centerPoint image.Point
 	color       uint8
 }
 
+type gridPointColor struct {
+	gridAxes    pgrid.GridAxes
+	centerPoint image.Point
+	color       uint8
+}
+
 func (gpc *gridPointColor) String() string {
-	return fmt.Sprintf("%s %d", gpc.gridPoint.Axes.String(), gpc.color)
+	return fmt.Sprintf("%s %d", gpc.gridAxes.String(), gpc.color)
 }
 
 const MaxModifiedPoints = 32 * 1024
@@ -59,7 +65,11 @@ func ModifiedPointsStepper(
 ) {
 	modifiedPointsCh := make(chan []gridPointColor, 64)
 
-	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, palette, partialSteps)
+	//if pgrid.DrawTilesAndPoints {
+	go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, palette, partialSteps, drawPoints)
+	//} else {
+	//	go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, palette, partialSteps, drawTiles)
+	//}
 
 	points := make([]gridPointColor, MaxModifiedPoints)
 	modifiedCount := uint64(0)
@@ -90,15 +100,15 @@ func ModifiedPointsStepper(
 	start := time.Now()
 	lineSize := float64(dotSize * 50)
 
-	for gridPoint, color := range f.Run(maxSteps) {
-		visitedStep, ok := visited[gridPoint.Axes.Axis0][gridPoint.Axes.Axis1][gridPoint.Axes.Coords]
+	for gridAxes, color := range f.RunAxesColor(maxSteps) {
+		visitedStep, ok := visited[gridAxes.Axis0][gridAxes.Axis1][gridAxes.Coords]
 		if ok {
 			stepDiff := stepNumber - visitedStep
 			if noiseMin < stepDiff && stepDiff < noiseMax {
 				noise += 1
 			}
 		}
-		visited[gridPoint.Axes.Axis0][gridPoint.Axes.Axis1][gridPoint.Axes.Coords] = stepNumber
+		visited[gridAxes.Axis0][gridAxes.Axis1][gridAxes.Coords] = stepNumber
 
 		if stepNumber%dotSize == 0 {
 			// new row
@@ -154,7 +164,7 @@ func ModifiedPointsStepper(
 			modifiedCount = 0
 			points = make([]gridPointColor, MaxModifiedPoints)
 		}
-		points[modifiedCount] = gridPointColor{gridPoint: gridPoint, color: color}
+		points[modifiedCount] = gridPointColor{gridAxes: gridAxes, color: color}
 
 		stepNumber += 1
 		modifiedCount += 1
@@ -189,28 +199,30 @@ func overflowCheck(centerPoint, prevPoint image.Point) {
 func drawPoints(rect image.Rectangle, points []gridPointColor, palette []color.RGBA) *image.RGBA {
 	img := image.NewRGBA(utils.SnapRect(rect, pgrid.Padding))
 
-	if pgrid.DrawTilesAndPoints {
-		for i := range points {
-			drawTile(img, points[i].gridPoint, palette[points[i].color])
-		}
-	} else {
-		for i := range points {
-			x, y := points[i].centerPoint.X, points[i].centerPoint.Y
-			img.Set(x, y, palette[points[i].color])
-		}
+	for i := range points {
+		x, y := points[i].centerPoint.X, points[i].centerPoint.Y
+		img.Set(x, y, palette[points[i].color])
 	}
 
 	return img
 }
 
-func drawTile(currentImage *image.RGBA, gridPoint pgrid.GridPoint, color color.RGBA) {
-	cornerPoints := gridPoint.GetCornerPoints()
-	p0, p1, p2, p3 := cornerPoints[0], cornerPoints[1], cornerPoints[2], cornerPoints[3]
+func drawTiles(rect image.Rectangle, points []gridTileColor, palette []color.RGBA) *image.RGBA {
+	img := image.NewRGBA(utils.SnapRect(rect, pgrid.Padding))
 
-	bresenham.DrawLine(currentImage, p0.X, p0.Y, p1.X, p1.Y, color)
-	bresenham.DrawLine(currentImage, p1.X, p1.Y, p2.X, p2.Y, color)
-	bresenham.DrawLine(currentImage, p2.X, p2.Y, p3.X, p3.Y, color)
-	bresenham.DrawLine(currentImage, p3.X, p3.Y, p0.X, p0.Y, color)
+	for i := range points {
+		gridPoint := points[i].gridPoint
+		color := palette[points[i].color]
+		cornerPoints := gridPoint.GetCornerPoints()
+		p0, p1, p2, p3 := cornerPoints[0], cornerPoints[1], cornerPoints[2], cornerPoints[3]
+
+		bresenham.DrawLine(img, p0.X, p0.Y, p1.X, p1.Y, color)
+		bresenham.DrawLine(img, p1.X, p1.Y, p2.X, p2.Y, color)
+		bresenham.DrawLine(img, p2.X, p2.Y, p3.X, p3.Y, color)
+		bresenham.DrawLine(img, p3.X, p3.Y, p0.X, p0.Y, color)
+	}
+
+	return img
 }
 
 func rectIsLarge(rect image.Rectangle) bool {
@@ -225,10 +237,12 @@ type ModifiedImage struct {
 }
 
 func modifiedPointsToImages(
+	f *pgrid.Field,
 	modifiedPointsCh <-chan []gridPointColor,
 	modifiedImagesCh chan<- ModifiedImage,
 	palette []color.RGBA,
 	partialSteps uint64,
+	drawPointsFn func(rect image.Rectangle, points []gridPointColor, palette []color.RGBA) *image.RGBA,
 ) {
 	stepsCount := uint64(0)
 	prevPoint := image.Point{}
@@ -239,7 +253,7 @@ func modifiedPointsToImages(
 		pixelRect := image.Point{X: 1, Y: 1}
 
 		for i := range points {
-			centerPoint := points[i].gridPoint.GetCenterPoint()
+			centerPoint := f.GetCenterPoint(points[i].gridAxes)
 			if !rect.Empty() {
 				overflowCheck(centerPoint, prevPoint)
 			}
@@ -255,7 +269,7 @@ func modifiedPointsToImages(
 			shouldSave := partialSteps > 0 && stepsCount > 0 && stepsCount%partialSteps == 0
 			if rectIsLarge(rect) || shouldSave {
 				mImage := ModifiedImage{Steps: stepsCount, Save: shouldSave}
-				mImage.Img = drawPoints(rect, points[start:i], palette)
+				mImage.Img = drawPointsFn(rect, points[start:i], palette)
 				modifiedImagesCh <- mImage
 
 				rect = image.Rectangle{}
@@ -265,7 +279,7 @@ func modifiedPointsToImages(
 		}
 
 		mImage := ModifiedImage{Steps: stepsCount}
-		mImage.Img = drawPoints(rect, points[start:], palette)
+		mImage.Img = drawPointsFn(rect, points[start:], palette)
 		modifiedImagesCh <- mImage
 	}
 	close(modifiedImagesCh)

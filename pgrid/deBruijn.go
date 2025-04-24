@@ -42,6 +42,21 @@ func (gp *GridPoint) GetCenterPoint() image.Point {
 	return image.Point{X: int(x * deBruijnScale), Y: int(y * deBruijnScale)}
 }
 
+func (f *Field) GetCenterPoint(ga GridAxes) image.Point {
+	off0, off1 := float64(ga.Coords.Offset0), float64(ga.Coords.Offset1)
+
+	x := (0.5+off0)*deBruijnX[ga.Axis0] + (0.5+off1)*deBruijnX[ga.Axis1]
+	y := (0.5+off0)*deBruijnY[ga.Axis0] + (0.5+off1)*deBruijnY[ga.Axis1]
+
+	for _, otl := range f.offsetsToLast[ga.Axis0][ga.Axis1] {
+		off := math.Ceil(otl.zeroZero + off0*otl.ax0Delta + off1*otl.ax1Delta)
+		x += off * deBruijnX[otl.targetAx]
+		y += off * deBruijnY[otl.targetAx]
+	}
+
+	return image.Point{X: int(x * deBruijnScale), Y: int(y * deBruijnScale)}
+}
+
 const _0 = 0.05
 const _1 = 0.95
 

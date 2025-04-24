@@ -8,20 +8,18 @@ import (
 	"strconv"
 )
 
-func (f *Field) InitialState() (GridPoint, GridLine, GridLine, bool) {
+func (f *Field) InitialState() (GridLine, GridLine, bool) {
 	currAxis, currOffset, prevPointSign, prevAxis, prevOffset := ParseInitialPoint(f.InitialPoint)
 
 	currLine := GridLine{Axis: uint8(currAxis), Offset: offsetInt(currOffset)}
 	prevLine := GridLine{Axis: uint8(prevAxis), Offset: offsetInt(prevOffset)}
-
-	currPoint := f.makeGridPoint(currLine, prevLine)
 
 	//fmt.Printf(
 	//	"Initial step: %s %s %s %t\n",
 	//	currPoint.String(), currLine.String(), prevLine.String(), prevPointSign,
 	//)
 
-	return currPoint, currLine, prevLine, prevPointSign
+	return currLine, prevLine, prevPointSign
 }
 
 func (f *Field) initialStateString(currLine GridLine, prevLine GridLine, prevPointSign bool) string {

@@ -18,87 +18,116 @@ func init() {
 	}
 }
 
-func (f *Field) Next(currPoint GridPoint, currLine, prevLine GridLine, prevPointSign bool) (GridPoint, GridLine, GridLine, bool, uint8) {
-	isRightTurn, currPointColor := f.step(currPoint.Axes)
+//func (ga *GridAxes) update(gridLine0, gridLine1 GridLine) {
+//	// Keep axes in ascending order
+//	if gridLine0.Axis > gridLine1.Axis {
+//		ga.Axis0, ga.Coords.Offset0 = gridLine1.Axis, gridLine1.Offset
+//		ga.Axis1, ga.Coords.Offset1 = gridLine0.Axis, gridLine0.Offset
+//	} else {
+//		ga.Axis0, ga.Coords.Offset0 = gridLine0.Axis, gridLine0.Offset
+//		ga.Axis1, ga.Coords.Offset1 = gridLine1.Axis, gridLine1.Offset
+//	}
+//}
 
-	axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
-	positiveSide := isRightTurn != axisRotation != prevPointSign
-
-	nextPoint, nextLine, nextPointSign := f.nearestNeighbor(currPoint.Offsets, prevLine, currLine, positiveSide)
-
-	return nextPoint, nextLine, currLine, nextPointSign, currPointColor
-}
-
-func (f *Field) step(axes GridAxes) (bool, uint8) {
-	value, newValue := Inc(axes, f.Limit)
-	return f.Rules[value], newValue
-}
-
-func (f *Field) step0(axes GridAxes) bool {
-	value := Get(axes)
-	Set0(axes, (value+1)%f.Limit)
-	return f.Rules[value]
-}
-
-func (f *Field) Run(maxSteps uint64) iter.Seq2[GridPoint, uint8] {
-	return func(yield func(GridPoint, uint8) bool) {
-		currPoint, currLine, prevLine, pointSign := f.InitialState()
+// RunAxesColor is used in cmd/ant
+func (f *Field) RunAxesColor(maxSteps uint64) iter.Seq2[GridAxes, uint8] {
+	return func(yield func(GridAxes, uint8) bool) {
+		var currAxes GridAxes
+		currLine, prevLine, pointSign := f.InitialState()
 
 		for range maxSteps {
-			isRightTurn, pointColor := f.step(currPoint.Axes)
+			// Keep axes in ascending order
+			//currAxes.update(currLine, prevLine) // TODO: inline if needed
+			if currLine.Axis > prevLine.Axis {
+				currAxes.Axis0, currAxes.Coords.Offset0 = prevLine.Axis, prevLine.Offset
+				currAxes.Axis1, currAxes.Coords.Offset1 = currLine.Axis, currLine.Offset
+			} else {
+				currAxes.Axis0, currAxes.Coords.Offset0 = currLine.Axis, currLine.Offset
+				currAxes.Axis1, currAxes.Coords.Offset1 = prevLine.Axis, prevLine.Offset
+			}
 
-			if !yield(currPoint, pointColor) {
+			rule, pointColor := StepColor(currAxes, f.Limit)
+			isRightTurn := f.Rules[rule]
+
+			if !yield(currAxes, pointColor) {
 				return
 			}
 
 			axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
 			positiveSide := isRightTurn != axisRotation != pointSign
 
-			nextPoint, nextLine, nextPointSign := f.nearestNeighbor(currPoint.Offsets, prevLine, currLine, positiveSide)
+			nextLine, nextPointSign := f.nearestNeighbor(prevLine, currLine, positiveSide)
 
-			currPoint, currLine, prevLine, pointSign = nextPoint, nextLine, currLine, nextPointSign
+			currLine, prevLine, pointSign = nextLine, currLine, nextPointSign
 		}
 	}
 }
 
-func (f *Field) RunAxes(maxSteps uint64) iter.Seq[GridAxes] {
-	return func(yield func(GridAxes) bool) {
-		currPoint, currLine, prevLine, pointSign := f.InitialState()
-
-		for range maxSteps {
-			isRightTurn := f.step0(currPoint.Axes)
-
-			if !yield(currPoint.Axes) {
-				return
-			}
-
-			axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
-			positiveSide := isRightTurn != axisRotation != pointSign
-
-			nextPoint, nextLine, nextPointSign := f.nearestNeighbor(currPoint.Offsets, prevLine, currLine, positiveSide)
-
-			currPoint, currLine, prevLine, pointSign = nextPoint, nextLine, currLine, nextPointSign
-		}
-	}
-}
-
+// RunPoint was used in cmd/ant-dry
 func (f *Field) RunPoint(maxSteps uint64) iter.Seq2[GridAxes, image.Point] {
 	return func(yield func(GridAxes, image.Point) bool) {
-		currPoint, currLine, prevLine, pointSign := f.InitialState()
+		var currAxes GridAxes
+		currLine, prevLine, pointSign := f.InitialState()
 
 		for range maxSteps {
-			isRightTurn := f.step0(currPoint.Axes)
+			// Keep axes in ascending order
+			//currAxes.update(currLine, prevLine) // TODO: inline if needed
+			if currLine.Axis > prevLine.Axis {
+				currAxes.Axis0, currAxes.Coords.Offset0 = prevLine.Axis, prevLine.Offset
+				currAxes.Axis1, currAxes.Coords.Offset1 = currLine.Axis, currLine.Offset
+			} else {
+				currAxes.Axis0, currAxes.Coords.Offset0 = currLine.Axis, currLine.Offset
+				currAxes.Axis1, currAxes.Coords.Offset1 = prevLine.Axis, prevLine.Offset
+			}
 
-			if !yield(currPoint.Axes, currPoint.GetCenterPoint()) {
+			rule := Step(currAxes, f.Limit)
+			isRightTurn := f.Rules[rule]
+
+			centerPoint := f.GetCenterPoint(currAxes)
+			if !yield(currAxes, centerPoint) {
 				return
 			}
 
 			axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
 			positiveSide := isRightTurn != axisRotation != pointSign
 
-			nextPoint, nextLine, nextPointSign := f.nearestNeighbor(currPoint.Offsets, prevLine, currLine, positiveSide)
+			nextLine, nextPointSign := f.nearestNeighbor(prevLine, currLine, positiveSide)
 
-			currPoint, currLine, prevLine, pointSign = nextPoint, nextLine, currLine, nextPointSign
+			currLine, prevLine, pointSign = nextLine, currLine, nextPointSign
+		}
+	}
+}
+
+// RunAxes is used in cmd/ant-dry
+func (f *Field) RunAxes(maxSteps uint64) iter.Seq[GridAxes] {
+	return func(yield func(GridAxes) bool) {
+		var currAxes GridAxes
+		currLine, prevLine, pointSign := f.InitialState()
+
+		for range maxSteps {
+			// Keep axes in ascending order
+			//currAxes.update(currLine, prevLine) // TODO: inline if needed
+			if currLine.Axis > prevLine.Axis {
+				currAxes.Axis0, currAxes.Coords.Offset0 = prevLine.Axis, prevLine.Offset
+				currAxes.Axis1, currAxes.Coords.Offset1 = currLine.Axis, currLine.Offset
+			} else {
+				currAxes.Axis0, currAxes.Coords.Offset0 = currLine.Axis, currLine.Offset
+				currAxes.Axis1, currAxes.Coords.Offset1 = prevLine.Axis, prevLine.Offset
+			}
+
+			rule := Step(currAxes, f.Limit)
+			isRightTurn := f.Rules[rule]
+
+			if !yield(currAxes) {
+				return
+			}
+
+			axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
+			positiveSide := isRightTurn != axisRotation != pointSign
+
+			nextLine, nextPointSign := f.nearestNeighbor(prevLine, currLine, positiveSide)
+
+			currLine, prevLine, pointSign = nextLine, currLine, nextPointSign
 		}
 	}
 }

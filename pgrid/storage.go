@@ -1,6 +1,9 @@
 package pgrid
 
 import (
+	"github.com/ptiles/ant/utils"
+	"image"
+	"iter"
 	"os"
 	"strconv"
 )
@@ -108,7 +111,7 @@ type gridCoordsDown struct {
 
 var bits = 8
 var downMask = downInt(0b11111111)
-var initialMapSize = 3 * 1024
+var initialMapSize = 512
 
 func init() {
 	ResetValues()
@@ -129,7 +132,7 @@ func (gc *GridCoords) equals(oth GridCoords) bool {
 	return gc.Offset0 == oth.Offset0 && gc.Offset1 == oth.Offset1
 }
 
-func DivCoords(c GridCoords) (GridCoords, gridCoordsDown) {
+func divCoords(c GridCoords) (GridCoords, gridCoordsDown) {
 	return GridCoords{
 			Offset0: c.Offset0 >> bits,
 			Offset1: c.Offset1 >> bits,
@@ -140,38 +143,65 @@ func DivCoords(c GridCoords) (GridCoords, gridCoordsDown) {
 }
 
 func Get(axes GridAxes) uint8 {
-	up, down := DivCoords(axes.Coords)
+	up, down := divCoords(axes.Coords)
 	val := aValues[axes.Axis0][axes.Axis1].Get(up)
 	return val[down]
 }
 
 func Set(axes GridAxes, value uint8) {
-	up, down := DivCoords(axes.Coords)
+	up, down := divCoords(axes.Coords)
 	val := aValues[axes.Axis0][axes.Axis1].Get(up)
 	val[down] = value
 }
 
-func Inc(axes GridAxes, limit uint8) (uint8, uint8) {
-	up, down := DivCoords(axes.Coords)
+func StepColor(axes GridAxes, limit uint8) (uint8, uint8) {
+	up, down := divCoords(axes.Coords)
 	val := aValues[axes.Axis0][axes.Axis1].Get(up)
-	value := val[down]
-	newValue := value + 1
-	if newValue == limit {
+	rule := val[down]
+	color := rule + 1
+	if color == limit {
 		delete(val, down) // no need to store 0 in map
-		return value, 0
+		return rule, 0
 	}
-	val[down] = newValue
-	return value, newValue
+	val[down] = color
+	return rule, color
 }
 
-func Set0(axes GridAxes, value uint8) {
-	up, down := DivCoords(axes.Coords)
+func StepColor0(axes GridAxes, limit uint8) (uint8, uint8) {
+	up, down := divCoords(axes.Coords)
 	val := aValues[axes.Axis0][axes.Axis1].Get(up)
-	if value == 0 {
-		delete(val, down)
-	} else {
-		val[down] = value
+	rule := val[down]
+	color := rule + 1
+	if color == limit {
+		color = 0
 	}
+	val[down] = color
+	return rule, color
+}
+
+func Step(axes GridAxes, limit uint8) uint8 {
+	up, down := divCoords(axes.Coords)
+	val := aValues[axes.Axis0][axes.Axis1].Get(up)
+	rule := val[down]
+	color := rule + 1
+	if color == limit {
+		delete(val, down) // no need to store 0 in map
+		return rule
+	}
+	val[down] = color
+	return rule
+}
+
+func Step0(axes GridAxes, limit uint8) uint8 {
+	up, down := divCoords(axes.Coords)
+	val := aValues[axes.Axis0][axes.Axis1].Get(up)
+	rule := val[down]
+	color := rule + 1
+	if color == limit {
+		color = 0
+	}
+	val[down] = color
+	return rule
 }
 
 func ResetValues() {
@@ -199,4 +229,68 @@ func Uniq() (uint64, int) {
 	}
 
 	return uPoints, uMaps
+}
+
+func (ua *upArray) MinCoords() iter.Seq[GridCoords] {
+	return func(yield func(GridCoords) bool) {
+		for off1 := range ua.Max.Offset1 - ua.Min.Offset1 {
+			for off0 := range ua.Max.Offset0 - ua.Min.Offset0 {
+				if ua.Maps[off1*ua.Stride+off0] != nil {
+					coords := GridCoords{
+						Offset0: (off0 + ua.Min.Offset0) << bits,
+						Offset1: (off1 + ua.Min.Offset1) << bits,
+					}
+					if !yield(coords) {
+						return
+					}
+				}
+			}
+		}
+	}
+}
+
+func Rect(f *Field) image.Rectangle {
+	rect := image.Rectangle{}
+	one := image.Rectangle{Min: image.Point{X: 0, Y: 0}, Max: image.Point{X: 1, Y: 1}}
+
+	for ax0 := range GridLinesTotal {
+		for ax1 := range GridLinesTotal {
+			uArr := aValues[ax0][ax1]
+			for minPoint := range uArr.MinCoords() {
+				rect = rect.Union(one.Add(
+					f.GetCenterPoint(GridAxes{
+						Axis0: ax0, Axis1: ax1,
+						Coords: GridCoords{
+							Offset0: minPoint.Offset0, Offset1: minPoint.Offset1,
+						},
+					})))
+
+				rect = rect.Union(one.Add(
+					f.GetCenterPoint(GridAxes{
+						Axis0: ax0, Axis1: ax1,
+						Coords: GridCoords{
+							Offset0: minPoint.Offset0 | offsetInt(downMask), Offset1: minPoint.Offset1,
+						},
+					})))
+
+				rect = rect.Union(one.Add(
+					f.GetCenterPoint(GridAxes{
+						Axis0: ax0, Axis1: ax1,
+						Coords: GridCoords{
+							Offset0: minPoint.Offset0, Offset1: minPoint.Offset1 | offsetInt(downMask),
+						},
+					})))
+
+				rect = rect.Union(one.Add(
+					f.GetCenterPoint(GridAxes{
+						Axis0: ax0, Axis1: ax1,
+						Coords: GridCoords{
+							Offset0: minPoint.Offset0 | offsetInt(downMask), Offset1: minPoint.Offset1 | offsetInt(downMask),
+						},
+					})))
+			}
+		}
+	}
+
+	return utils.SnapRect(rect, Padding)
 }

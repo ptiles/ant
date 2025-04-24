@@ -1,6 +1,8 @@
 package utils
 
-import "runtime"
+import (
+	"runtime"
+)
 
 func MemStatsMB() uint64 {
 	var m runtime.MemStats
