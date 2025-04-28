@@ -28,6 +28,7 @@ type CommonFlags struct {
 	Rectangle   image.Rectangle
 	ScaleFactor int
 	Monochrome  bool
+	Monochrome0 bool
 	Alpha       bool
 }
 
@@ -44,6 +45,7 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 	flag.StringVar(&cf.Dir, "d", fmt.Sprintf("results%d", gridLinesTotal), "Results directory")
 	flag.StringVar(&cf.InitialPoint, "i", "A0+B0", "Initial axes and direction")
 	flag.BoolVar(&cf.Monochrome, "m", false, "Monochromatic palette")
+	flag.BoolVar(&cf.Monochrome0, "m0", false, "Monochromatic palette exact point")
 	flag.BoolVar(&cf.Alpha, "alpha", false, "Save transparent image with alpha channel")
 	flag.StringVar(&cf.AntName, "n", "RLL", "Ant name")
 	flag.Func("r", "Output image rectangle", func(rectangleStr string) (err error) {

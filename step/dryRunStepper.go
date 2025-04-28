@@ -18,7 +18,13 @@ func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {
 		utils.WithSeparators(dotSize*50),
 	)
 
-	visited := make(map[pgrid.GridAxes]uint64, max(MaxModifiedPoints, noiseMax, noiseClear))
+	var visited [pgrid.GridLinesTotal][pgrid.GridLinesTotal]map[pgrid.GridCoords]uint64
+	for ax0 := range pgrid.GridLinesTotal {
+		for ax1 := range pgrid.GridLinesTotal {
+			visited[ax0][ax1] = make(map[pgrid.GridCoords]uint64, visitedMapSize)
+		}
+	}
+
 	stepNumber := uint64(0)
 	dotNumber := 0
 	noise := uint64(0)
@@ -28,15 +34,15 @@ func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {
 
 	fmt.Printf("\n")
 
-	for gridPointAxes := range f.RunAxes(maxSteps) {
-		if visitedStep, ok := visited[gridPointAxes]; ok {
+	for gridAxes := range f.RunAxes(maxSteps) {
+		if visitedStep, ok := visited[gridAxes.Axis0][gridAxes.Axis1][gridAxes.Coords]; ok {
 			stepDiff := stepNumber - visitedStep
 			if noiseMin < stepDiff && stepDiff < noiseMax {
 				noise += 1
 			}
 		}
 
-		visited[gridPointAxes] = stepNumber
+		visited[gridAxes.Axis0][gridAxes.Axis1][gridAxes.Coords] = stepNumber
 		if stepNumber%dotSize == 0 {
 			if dotNumber%50 == 0 {
 				fmt.Printf("\n%s", utils.WithSeparatorsSpacePadded(stepNumber, maxSteps))
@@ -62,9 +68,13 @@ func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {
 		if modifiedCount == MaxModifiedPoints {
 			if stepNumber > noiseClear {
 				clearStep := stepNumber - noiseClear
-				for k, v := range visited {
-					if v < clearStep {
-						delete(visited, k)
+				for ax0 := range pgrid.GridLinesTotal {
+					for ax1 := range pgrid.GridLinesTotal {
+						for k, v := range visited[ax0][ax1] {
+							if v < clearStep {
+								delete(visited[ax0][ax1], k)
+							}
+						}
 					}
 				}
 			}
@@ -80,7 +90,7 @@ func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {
 		}
 	}
 
-	rect := pgrid.Rect(f)
+	rect := f.Rect()
 	fmt.Printf("\n%s", rect.String())
 	//fmt.Printf("\n")
 }

@@ -48,9 +48,14 @@ func ParseInitialPoint(initialPoint string) (int, int, bool, int, int) {
 	return currAxis, currOffset, currAxIncreasing, prevAxis, prevOffset
 }
 
-const seedDropBits = 8
+func rngFromString(seedString string) *rand.Rand {
+	var seed [32]byte
+	copy(seed[:], seedString)
 
-func InitialPointSeed(initialPoint string) *rand.Rand {
+	return rand.New(rand.NewChaCha8(seed))
+}
+
+func InitialPointSeed(initialPoint string, seedDropBits uint8) *rand.Rand {
 	currAxis, currOffset, prevPointSign, prevAxis, prevOffset := ParseInitialPoint(initialPoint)
 
 	// Same seed for five symmetric points
@@ -67,8 +72,5 @@ func InitialPointSeed(initialPoint string) *rand.Rand {
 		prevPointSign, currOffset>>seedDropBits, prevOffset>>seedDropBits,
 	)
 
-	var seed [32]byte
-	copy(seed[:], seedString)
-
-	return rand.New(rand.NewChaCha8(seed))
+	return rngFromString(seedString)
 }

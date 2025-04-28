@@ -8,7 +8,6 @@ import (
 	"github.com/ptiles/ant/step"
 	"github.com/ptiles/ant/utils"
 	"image"
-	"image/png"
 	"os"
 	"path"
 )
@@ -61,22 +60,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 
 func saveImage(resultImageS *image.NRGBA, resultRectS, resultRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps, max uint64) string {
 	fileName := fmt.Sprintf(fileNameFmt, utils.WithSeparatorsZeroPadded(steps, max), "png")
-	err := os.MkdirAll(path.Dir(fileName), 0755)
-	if err != nil {
-		panic(err)
-	}
-
-	file, err := os.Create(fileName)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	err = png.Encode(file, resultImageS)
-	if err != nil {
-		panic(err)
-	}
-
+	utils.SaveImage(fileName, resultImageS)
 	return fmt.Sprintf(
 		"%s %s %s %s/%d\n",
 		fileName,

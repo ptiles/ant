@@ -2,6 +2,9 @@ package utils
 
 import (
 	"image"
+	"image/png"
+	"os"
+	"path"
 )
 
 func floorSnap(v int) int {
@@ -45,4 +48,22 @@ func PointRect(point image.Point, maxDimension int) image.Rectangle {
 func IsOutside(point image.Point, rect image.Rectangle) bool {
 	return point.X < rect.Min.X+16 || point.Y < rect.Min.Y+16 ||
 		point.X > rect.Max.X-16 || point.Y > rect.Max.Y-16
+}
+
+func SaveImage(fileName string, img image.Image) {
+	err := os.MkdirAll(path.Dir(fileName), 0755)
+	if err != nil {
+		panic(err)
+	}
+
+	file, err := os.Create(fileName)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	err = png.Encode(file, img)
+	if err != nil {
+		panic(err)
+	}
 }

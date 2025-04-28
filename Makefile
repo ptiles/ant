@@ -23,9 +23,7 @@ bench-prep-swiss:
 RECT = '(-423424,-430080)-(423424,375296)/2048'
 ANT = RLL__7e-06__B15160-E10890
 
-bench-swiss:
-	make bench-prep-swiss
-
+bench-swiss: bench-prep-swiss
 	hyperfine -i --warmup 1 -r 5 \
 		"./bin/ant            -r $(RECT) $(ANT)__500_000_000" \
 		"./bin/ant-1.23.8     -r $(RECT) $(ANT)__500_000_001" \
@@ -33,84 +31,69 @@ bench-swiss:
 		"./bin/ant-1.24.2-swi -r $(RECT) $(ANT)__500_000_003" \
 		# end
 
-bench-swiss-mem:
-	make bench-prep-swiss
-
+bench-swiss-mem: bench-prep-swiss
 	time -lh ./bin/ant-1.23.8     -r $(RECT) $(ANT)__2_000_000_001
 	time -lh ./bin/ant-1.24.2-old -r $(RECT) $(ANT)__2_000_000_002
 	time -lh ./bin/ant-1.24.2-swi -r $(RECT) $(ANT)__2_000_000_003
 
-prof-ant-swiss:
-	make bench-prep-swiss
-
+prof-ant-swiss: bench-prep-swiss
 	./bin/ant-1.24.2-swi -cpuprofile tmp/ant-swi.prof $(ANT)__140_000_009
 	go tool pprof -http=: -no_browser tmp/ant-swi.prof
 
-bench-prep:
+ant-old:
 	git stash
 	make ant
 	cp ./bin/ant ./bin/ant-old
 	git stash pop
-	make ant
 
-bench:
-	make bench-prep
+bench: ant
 	hyperfine -i --warmup 1 \
 		"./bin/ant     -r $(RECT) $(ANT)__50_000_002" \
 		"./bin/ant-old -r $(RECT) $(ANT)__50_000_001" \
 		# end
 
-bench-fast:
-	make bench-prep
+bench-fast: ant
 	hyperfine -i -r 5 \
 		"./bin/ant     -r $(RECT) $(ANT)__50_000_002" \
 		"./bin/ant-old -r $(RECT) $(ANT)__50_000_001" \
 		# end
 
-bench-large:
-	make bench-prep
+bench-large: ant
 	hyperfine -i -r 2 \
 		"./bin/ant     -r $(RECT) $(ANT)__250_000_002" \
 		"./bin/ant-old -r $(RECT) $(ANT)__250_000_001" \
 		# end
 
-bench-huge:
-	make bench-prep
+bench-huge: ant
 	hyperfine -i -r 2 \
 		"./bin/ant     -r $(RECT) $(ANT)__2_500_000_002" \
 		"./bin/ant-old -r $(RECT) $(ANT)__2_500_000_001" \
 		# end
 
-bench-prep-dry:
+ant-dry-old:
 	git stash
 	make ant-dry
 	cp ./bin/ant-dry ./bin/ant-dry-old
 	git stash pop
-	make ant-dry
 
-bench-dry:
-	make bench-prep-dry
+bench-dry: ant-dry
 	hyperfine -i --warmup 1 \
 		"./bin/ant-dry     $(ANT)__50_000_002" \
 		"./bin/ant-dry-old $(ANT)__50_000_001" \
 		# end
 
-bench-dry-large:
-	make bench-prep-dry
+bench-dry-large: ant-dry
 	hyperfine -i --warmup 1 \
 		"./bin/ant-dry     $(ANT)__250_000_002" \
 		"./bin/ant-dry-old $(ANT)__250_000_001" \
 		# end
 
-bench-mem:
-	make bench-prep
-
+bench-mem: ant
 	time -lh ./bin/ant     -r $(RECT) $(ANT)__2_000_000_002
 	time -lh ./bin/ant-old -r $(RECT) $(ANT)__2_000_000_001
 
 STEPS = 50_000_001
-compare:
-	make bench-prep
+compare: ant
 	time -lh ./bin/ant-old $(ANT)__$(STEPS)
 	mv            results5/$(ANT)__$(STEPS).png results5/old.png
 	time -lh ./bin/ant     $(ANT)__$(STEPS)
@@ -118,18 +101,30 @@ compare:
 	open results5/old.png
 	open results5/new.png
 
-bench-ant:
-	make ant
+NOISY_ANT = RLL__7e-06__B151-E108
+compare-dry: ant-dry
+	time -lh ./bin/ant-dry-old $(NOISY_ANT)__$(STEPS)
+	time -lh ./bin/ant-dry     $(NOISY_ANT)__$(STEPS)
+
+bench-dry-compare: ant ant-dry
+	hyperfine -i --warmup 1 \
+		"./bin/ant     -r $(RECT) $(ANT)__250_000_002" \
+		"./bin/ant-dry            $(ANT)__250_000_001" \
+		# end
+
+bench-ant: ant
 	hyperfine -i --warmup 1 "./bin/ant $(ANT)__25_000_002"
 
-prof-ant:
-	make ant
-	./bin/ant -cpuprofile tmp/ant.prof -r $(RECT) $(ANT)__140_000_009
+prof-ant: ant
+	./bin/ant -cpuprofile tmp/ant.prof $(ANT)__250_000_000
+
+pprof-ant: prof-ant
 	go tool pprof -http=: -no_browser tmp/ant.prof
 
-prof-ant-mem:
-	make ant
+prof-ant-mem: ant
 	./bin/ant -memprofile tmp/ant-mem.prof $(ANT)__300_000_009
+
+pprof-ant-mem: prof-ant-mem
 	go tool pprof -http=: -no_browser tmp/ant-mem.prof
 
 test:

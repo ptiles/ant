@@ -24,7 +24,7 @@ func (gp *GridPoint) String() string {
 	offsets := gp.Offsets
 	ax0, ax1 := gp.Axes.Axis0, gp.Axes.Axis1
 	return fmt.Sprintf(
-		"[A:%d, B:%d, C:%d, D:%d, E:%d] %s%d:%s%d",
+		"[A%d B%d C%d D%d E%d] %s%d:%s%d",
 		offsets[0], offsets[1], offsets[2], offsets[3], offsets[4],
 		AxisNames[ax0], offsets[ax0], AxisNames[ax1], offsets[ax1],
 	)
@@ -32,6 +32,10 @@ func (gp *GridPoint) String() string {
 
 func (gc *GridCoords) String() string {
 	return fmt.Sprintf("(%d,%d)", gc.Offset0, gc.Offset1)
+}
+
+func (gcu *gridCoordsUp) String() string {
+	return fmt.Sprintf("(%d,%d)", gcu.Offset0, gcu.Offset1)
 }
 
 func (ga *GridAxes) String() string {

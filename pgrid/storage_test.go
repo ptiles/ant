@@ -4,23 +4,31 @@ import (
 	"testing"
 )
 
-func height(ua *upArray) offsetInt {
+func height(ua *upArray) upInt {
 	return ua.Max.Offset0 - ua.Min.Offset0
 }
 
-func width(ua *upArray) offsetInt {
+func width(ua *upArray) upInt {
 	return ua.Max.Offset1 - ua.Min.Offset1
 }
 
+func (gcu *gridCoordsUp) equals(oth gridCoordsUp) bool {
+	return gcu.Offset0 == oth.Offset0 && gcu.Offset1 == oth.Offset1
+}
+
 func TestInitialize(t *testing.T) {
-	initial := GridCoords{Offset0: -128, Offset1: 127}
-	expectedMin := GridCoords{Offset0: -256, Offset1: 0}
-	expectedMax := GridCoords{Offset0: 0, Offset1: 256}
+	initial := divUp(GridCoords{Offset0: -50, Offset1: 50})
 
 	subj := upArray{}
 	subj.Initialize(initial)
 
-	expectedSize := offsetInt(256)
+	//expectedMin := gridCoordsUp{Offset0: -256, Offset1: 0}
+	//expectedMax := gridCoordsUp{Offset0: 0, Offset1: 256}
+	//expectedSize := upInt(256)
+	expectedMin := gridCoordsUp{Offset0: -256, Offset1: -256}
+	expectedMax := gridCoordsUp{Offset0: 256, Offset1: 256}
+	expectedSize := upInt(512)
+
 	if width(&subj) != expectedSize {
 		t.Errorf("Expected width to equal %d, got %d", expectedSize, width(&subj))
 	}
@@ -35,51 +43,51 @@ func TestInitialize(t *testing.T) {
 	}
 }
 
-func up1(gc GridCoords) GridCoords {
-	return GridCoords{Offset0: gc.Offset0, Offset1: gc.Offset1 - 1}
+func up1(gc gridCoordsUp) gridCoordsUp {
+	return gridCoordsUp{Offset0: gc.Offset0, Offset1: gc.Offset1 - 1}
 }
-func up(gc GridCoords) GridCoords {
-	return GridCoords{Offset0: gc.Offset0, Offset1: gc.Offset1 - 256}
+func up(gc gridCoordsUp) gridCoordsUp {
+	return gridCoordsUp{Offset0: gc.Offset0, Offset1: gc.Offset1 - 256}
 }
-func right1(gc GridCoords) GridCoords {
-	return GridCoords{Offset0: gc.Offset0 + 1, Offset1: gc.Offset1}
+func right1(gc gridCoordsUp) gridCoordsUp {
+	return gridCoordsUp{Offset0: gc.Offset0 + 1, Offset1: gc.Offset1}
 }
-func right(gc GridCoords) GridCoords {
-	return GridCoords{Offset0: gc.Offset0 + 256, Offset1: gc.Offset1}
+func right(gc gridCoordsUp) gridCoordsUp {
+	return gridCoordsUp{Offset0: gc.Offset0 + 256, Offset1: gc.Offset1}
 }
-func down1(gc GridCoords) GridCoords {
-	return GridCoords{Offset0: gc.Offset0, Offset1: gc.Offset1 + 1}
+func down1(gc gridCoordsUp) gridCoordsUp {
+	return gridCoordsUp{Offset0: gc.Offset0, Offset1: gc.Offset1 + 1}
 }
-func down(gc GridCoords) GridCoords {
-	return GridCoords{Offset0: gc.Offset0, Offset1: gc.Offset1 + 256}
+func down(gc gridCoordsUp) gridCoordsUp {
+	return gridCoordsUp{Offset0: gc.Offset0, Offset1: gc.Offset1 + 256}
 }
-func left1(gc GridCoords) GridCoords {
-	return GridCoords{Offset0: gc.Offset0 - 1, Offset1: gc.Offset1}
+func left1(gc gridCoordsUp) gridCoordsUp {
+	return gridCoordsUp{Offset0: gc.Offset0 - 1, Offset1: gc.Offset1}
 }
-func left(gc GridCoords) GridCoords {
-	return GridCoords{Offset0: gc.Offset0 - 256, Offset1: gc.Offset1}
+func left(gc gridCoordsUp) gridCoordsUp {
+	return gridCoordsUp{Offset0: gc.Offset0 - 256, Offset1: gc.Offset1}
 }
 
 func TestResize(t *testing.T) {
-	initialPoint := GridCoords{Offset0: -128, Offset1: 127}
+	initialPoint := gridCoordsUp{Offset0: -128, Offset1: 127}
 
-	expectedMin := GridCoords{Offset0: -256, Offset1: 0}
-	expectedMax := GridCoords{Offset0: 0, Offset1: 256}
-	expectedMinPoint := GridCoords{Offset0: -256, Offset1: 0}
-	expectedMaxPoint := GridCoords{Offset0: -1, Offset1: 255}
+	expectedMin := gridCoordsUp{Offset0: -256, Offset1: 0}
+	expectedMax := gridCoordsUp{Offset0: 0, Offset1: 256}
+	expectedMinPoint := gridCoordsUp{Offset0: -256, Offset1: 0}
+	expectedMaxPoint := gridCoordsUp{Offset0: -1, Offset1: 255}
 
-	centerPoint := GridCoords{
+	centerPoint := gridCoordsUp{
 		Offset0: (expectedMin.Offset0 + expectedMax.Offset0) / 2,
 		Offset1: (expectedMin.Offset1 + expectedMax.Offset1) / 2,
 	}
 	cornerNW := expectedMinPoint
-	cornerNE := GridCoords{Offset0: expectedMaxPoint.Offset0, Offset1: expectedMinPoint.Offset1}
+	cornerNE := gridCoordsUp{Offset0: expectedMaxPoint.Offset0, Offset1: expectedMinPoint.Offset1}
 	cornerSE := expectedMaxPoint
-	cornerSW := GridCoords{Offset0: expectedMinPoint.Offset0, Offset1: expectedMaxPoint.Offset1}
+	cornerSW := gridCoordsUp{Offset0: expectedMinPoint.Offset0, Offset1: expectedMaxPoint.Offset1}
 
 	var testsKeep = []struct {
 		name  string
-		point GridCoords
+		point gridCoordsUp
 	}{
 		{name: "Should not resize if in the middle", point: centerPoint},
 		{name: "Should not resize if initialPoint", point: initialPoint},
@@ -107,9 +115,9 @@ func TestResize(t *testing.T) {
 
 	var testsResize = []struct {
 		name   string
-		point  GridCoords
-		newMin GridCoords
-		newMax GridCoords
+		point  gridCoordsUp
+		newMin gridCoordsUp
+		newMax gridCoordsUp
 	}{
 		{
 			name:   "Should resize if outside left of NW corner",
@@ -179,68 +187,70 @@ func TestResize(t *testing.T) {
 }
 
 func TestCopy(t *testing.T) {
-	coordsDown := gridCoordsDown{}
-	largerBy := offsetInt(10)
+	largerBy := upInt(10)
 
 	var testsCopy = []struct {
 		name   string
-		newMin GridCoords
-		newMax GridCoords
+		newMin gridCoordsUp
+		newMax gridCoordsUp
 	}{
 		{
 			name:   "Same rect",
-			newMin: GridCoords{0, 0},
-			newMax: GridCoords{5, 5},
+			newMin: gridCoordsUp{0, 0},
+			newMax: gridCoordsUp{5, 5},
 		},
 		{
 			name:   "Lager at N side",
-			newMin: GridCoords{0, 0 - largerBy},
-			newMax: GridCoords{5, 5},
+			newMin: gridCoordsUp{0, 0 - largerBy},
+			newMax: gridCoordsUp{5, 5},
 		},
 		{
 			name:   "Lager at NE side",
-			newMin: GridCoords{0, 0 - largerBy},
-			newMax: GridCoords{5 + largerBy, 5},
+			newMin: gridCoordsUp{0, 0 - largerBy},
+			newMax: gridCoordsUp{5 + largerBy, 5},
 		},
 		{
 			name:   "Lager at E side",
-			newMin: GridCoords{0, 0},
-			newMax: GridCoords{5 + largerBy, 5},
+			newMin: gridCoordsUp{0, 0},
+			newMax: gridCoordsUp{5 + largerBy, 5},
 		},
 		{
 			name:   "Lager at SE side",
-			newMin: GridCoords{0, 0},
-			newMax: GridCoords{5 + largerBy, 5 + largerBy},
+			newMin: gridCoordsUp{0, 0},
+			newMax: gridCoordsUp{5 + largerBy, 5 + largerBy},
 		},
 		{
 			name:   "Lager at S side",
-			newMin: GridCoords{0, 0},
-			newMax: GridCoords{5, 5 + largerBy},
+			newMin: gridCoordsUp{0, 0},
+			newMax: gridCoordsUp{5, 5 + largerBy},
 		},
 		{
 			name:   "Lager at SW side",
-			newMin: GridCoords{0 - largerBy, 0},
-			newMax: GridCoords{5, 5 + largerBy},
+			newMin: gridCoordsUp{0 - largerBy, 0},
+			newMax: gridCoordsUp{5, 5 + largerBy},
 		},
 		{
 			name:   "Lager at W side",
-			newMin: GridCoords{0 - largerBy, 0},
-			newMax: GridCoords{5, 5},
+			newMin: gridCoordsUp{0 - largerBy, 0},
+			newMax: gridCoordsUp{5, 5},
 		},
 		{
 			name:   "Lager at NW side",
-			newMin: GridCoords{0 - largerBy, 0 - largerBy},
-			newMax: GridCoords{5, 5},
+			newMin: gridCoordsUp{0 - largerBy, 0 - largerBy},
+			newMax: gridCoordsUp{5, 5},
 		},
 	}
 
 	for _, tt := range testsCopy {
 		t.Run(tt.name, func(t *testing.T) {
-			subj := newUpArray(GridCoords{0, 0}, GridCoords{5, 5})
+			subj := newUpArray(gridCoordsUp{0, 0}, gridCoordsUp{5, 5})
 
 			p := GridCoords{1, 1}
-			subj.Get(p)[coordsDown] = 42
-			oldValue := subj.Get(p)[coordsDown]
+
+			val, coordsDown := subj.Get(p)
+			val[coordsDown] = 42
+			val0, coordsDown0 := subj.Get(p)
+			oldValue := val0[coordsDown0]
 
 			if oldValue != 42 {
 				t.Errorf("Expected same value before copy got %d", oldValue)
@@ -251,7 +261,8 @@ func TestCopy(t *testing.T) {
 
 			subj.Grow(newMin, newMax)
 
-			newValue := subj.Get(p)[coordsDown]
+			val1, coordsDown1 := subj.Get(p)
+			newValue := val1[coordsDown1]
 			if newValue != 42 {
 				t.Errorf("Expected same value after copy got %d", newValue)
 			}

@@ -1,7 +1,6 @@
 package pgrid
 
 import (
-	"iter"
 	"math"
 )
 
@@ -40,25 +39,6 @@ func newGridGeometry(radius float64) gridGeometry {
 	return result
 }
 
-func otherAxes(ax0, ax1 uint8) iter.Seq2[uint8, uint8] {
-	return func(yield func(uint8, uint8) bool) {
-		if ax0 == ax1 {
-			return
-		}
-
-		i := uint8(0)
-		for ax := range GridLinesTotal {
-			if ax == ax0 || ax == ax1 {
-				continue
-			}
-			if !yield(i, ax) {
-				return
-			}
-			i += 1
-		}
-	}
-}
-
 type offsetDeltas struct {
 	targetAx uint8
 	zeroZero float64
@@ -70,12 +50,10 @@ type allOffsetDeltas [GridLinesTotal][GridLinesTotal][GridLinesTotal - 2]offsetD
 func (gg *gridGeometry) newOffsetsToFirst() allOffsetDeltas {
 	result := allOffsetDeltas{}
 
-	for ax0 := range GridLinesTotal {
-		for ax1 := range GridLinesTotal {
-			for i, axT := range otherAxes(ax0, ax1) {
-				result[ax0][ax1][i] = gg.newOffsetDeltas(ax1, axT, ax0)
-				result[ax0][ax1][i].targetAx = axT
-			}
+	for ax0, ax1 := range AxesAll() {
+		for i, axT := range otherAxes(ax0, ax1) {
+			result[ax0][ax1][i] = gg.newOffsetDeltas(ax1, axT, ax0)
+			result[ax0][ax1][i].targetAx = axT
 		}
 	}
 
@@ -85,12 +63,10 @@ func (gg *gridGeometry) newOffsetsToFirst() allOffsetDeltas {
 func (gg *gridGeometry) newOffsetsToLast() allOffsetDeltas {
 	result := allOffsetDeltas{}
 
-	for ax0 := range GridLinesTotal {
-		for ax1 := range GridLinesTotal {
-			for i, axT := range otherAxes(ax0, ax1) {
-				result[ax0][ax1][i] = gg.newOffsetDeltas(ax0, ax1, axT)
-				result[ax0][ax1][i].targetAx = axT
-			}
+	for ax0, ax1 := range AxesAll() {
+		for i, axT := range otherAxes(ax0, ax1) {
+			result[ax0][ax1][i] = gg.newOffsetDeltas(ax0, ax1, axT)
+			result[ax0][ax1][i].targetAx = axT
 		}
 	}
 
