@@ -38,7 +38,7 @@ func main() {
 
 	field := pgrid.New(commonFlags.Radius, rules, commonFlags.InitialPoint)
 
-	step.DryRunStepper(field, commonFlags.MaxSteps, commonFlags.MaxNoisyDots)
+	step.DryRunStepper(field, commonFlags.Steps.Max, commonFlags.MaxNoisyDots)
 	fmt.Printf(" %s\n", commonFlags.String())
 
 	if commonFlags.Memprofile != "" {

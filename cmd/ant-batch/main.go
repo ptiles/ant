@@ -148,7 +148,7 @@ func getAntNames(flags *Flags, commonFlags *utils.CommonFlags) []string {
 func getInitialPoints(flags *Flags, commonFlags *utils.CommonFlags) []string {
 	initialPointRangeMin, initialPointRangeMax, _ := utils.ParseRangeStr(flags.initialPointOffset)
 	if flags.initialPointNear && flags.initialPointCount > 0 {
-		ax1, off1, _, ax2, off2 := pgrid.ParseInitialPoint(commonFlags.InitialPoint)
+		ax1, off1, _, ax2, off2 := utils.ParseInitialPoint(commonFlags.InitialPoint)
 
 		min1 := off1 - initialPointRangeMax
 		max1 := off1 + initialPointRangeMax
@@ -239,7 +239,7 @@ func main() {
 						commonFlags.Dir, alphaFlag,
 						commonFlags.MaxNoisyDots, commonFlags.MinStepsPct, commonFlags.MinUniqPct,
 						rFlag,
-						antName, radius, initialPoint, commonFlags.MaxSteps,
+						antName, radius, initialPoint, commonFlags.Steps.Max,
 					),
 				)
 			}

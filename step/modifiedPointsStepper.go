@@ -61,23 +61,24 @@ func ModifiedPointsStepper(
 	f *pgrid.Field,
 	modifiedImagesCh chan<- ModifiedImage,
 	palette []color.RGBA,
-	maxSteps, partialSteps, maxNoisyDots uint64,
+	steps utils.StepCounts,
+	maxNoisyDots uint64,
 ) {
 	modifiedPointsCh := make(chan []gridPointColor, 64)
 
 	//if pgrid.DrawTilesAndPoints {
-	go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, palette, partialSteps, drawPoints)
+	go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, palette, steps, drawPoints)
 	//} else {
-	//	go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, palette, partialSteps, drawTiles)
+	//	go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, palette, steps, drawTiles)
 	//}
 
 	points := make([]gridPointColor, MaxModifiedPoints)
 	modifiedCount := uint64(0)
 
-	dotSize := getDotSize(maxSteps)
+	dotSize := getDotSize(steps.Max)
 	fmt.Printf(
 		"%*s dot %s;   block %s;   row %s;  ",
-		1+len(utils.WithSeparators(maxSteps)), "",
+		1+len(utils.WithSeparators(steps.Max)), "",
 		utils.WithSeparators(dotSize),
 		utils.WithSeparators(dotSize*10),
 		utils.WithSeparators(dotSize*50),
@@ -100,7 +101,7 @@ func ModifiedPointsStepper(
 	start := time.Now()
 	lineSize := float64(dotSize * 50)
 
-	for gridAxes, color := range f.RunAxesColor(maxSteps) {
+	for gridAxes, color := range f.RunAxesColor(steps.Max) {
 		visitedStep, ok := visited[gridAxes.Axis0][gridAxes.Axis1][gridAxes.Coords]
 		if ok {
 			stepDiff := stepNumber - visitedStep
@@ -123,7 +124,7 @@ func ModifiedPointsStepper(
 					start = time.Now()
 				}
 
-				fmt.Printf("\n%s", utils.WithSeparatorsSpacePadded(stepNumber, maxSteps))
+				fmt.Printf("\n%s", utils.WithSeparatorsSpacePadded(stepNumber, steps.Max))
 			}
 
 			// new block
@@ -241,7 +242,7 @@ func modifiedPointsToImages(
 	modifiedPointsCh <-chan []gridPointColor,
 	modifiedImagesCh chan<- ModifiedImage,
 	palette []color.RGBA,
-	partialSteps uint64,
+	steps utils.StepCounts,
 	drawPointsFn func(rect image.Rectangle, points []gridPointColor, palette []color.RGBA) *image.RGBA,
 ) {
 	stepsCount := uint64(0)
@@ -266,7 +267,7 @@ func modifiedPointsToImages(
 				Max: centerPoint.Add(pixelRect),
 			})
 
-			shouldSave := partialSteps > 0 && stepsCount > 0 && stepsCount%partialSteps == 0
+			shouldSave := steps.Inc > 0 && stepsCount > 0 && stepsCount >= steps.Min && stepsCount%steps.Inc == 0
 			if rectIsLarge(rect) || shouldSave {
 				mImage := ModifiedImage{Steps: stepsCount, Save: shouldSave}
 				mImage.Img = drawPointsFn(rect, points[start:i], palette)

@@ -16,7 +16,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 	out := result.NewImage(commonFlags.Rectangle, commonFlags.ScaleFactor, flags.maxDimension)
 
 	stepsTotal := uint64(0)
-	minSteps := commonFlags.MaxSteps * commonFlags.MinStepsPct / 100
+	minSteps := commonFlags.Steps.Max * commonFlags.MinStepsPct / 100
 
 	imagesCount := 0
 
@@ -24,7 +24,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 		out.Merge(mImg.Img)
 		if mImg.Save {
 			img, resultRectS := out.Draw(commonFlags.Alpha)
-			saveImage(img, resultRectS, out.ResultRectN, out.ScaleFactor, fileNameFmt, mImg.Steps, commonFlags.MaxSteps)
+			saveImage(img, resultRectS, out.ResultRectN, out.ScaleFactor, fileNameFmt, mImg.Steps, commonFlags.Steps.Max)
 		}
 		imagesCount += 1
 		stepsTotal = mImg.Steps
@@ -33,13 +33,13 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 	uniq, uMaps := pgrid.Uniq()
 	uniqPct := uint64(len(commonFlags.AntName)) * uniq * 100 / stepsTotal
 	fmt.Printf("%s steps;  %s unique points  (%d%%) in %s maps\n",
-		utils.WithSeparatorsSpacePadded(stepsTotal, commonFlags.MaxSteps),
+		utils.WithSeparatorsSpacePadded(stepsTotal, commonFlags.Steps.Max),
 		utils.WithSeparators(uniq), uniqPct, utils.WithSeparators(uint64(uMaps)),
 	)
 
 	img, resultRectS := out.Draw(commonFlags.Alpha)
 	if stepsTotal >= minSteps && uniqPct >= commonFlags.MinUniqPct {
-		fmt.Print(saveImage(img, resultRectS, out.ResultRectN, out.ScaleFactor, fileNameFmt, stepsTotal, commonFlags.MaxSteps))
+		fmt.Print(saveImage(img, resultRectS, out.ResultRectN, out.ScaleFactor, fileNameFmt, stepsTotal, commonFlags.Steps.Max))
 	}
 
 	if flags.jsonStats {

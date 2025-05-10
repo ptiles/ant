@@ -34,7 +34,6 @@ type Flags struct {
 	maxDimension int
 	openResults  bool
 	openResult   bool
-	partialSteps uint64
 }
 
 func flagsSetup() *Flags {
@@ -42,7 +41,6 @@ func flagsSetup() *Flags {
 
 	flag.BoolVar(&flags.jsonStats, "j", false, "Save stats in json file")
 	flag.BoolVar(&flags.openResult, "o", false, "Open resulting file")
-	flag.Uint64Var(&flags.partialSteps, "p", 0, "Save partial result every N steps")
 	flag.IntVar(&flags.maxDimension, "w", 16*1024, "Max image size")
 
 	flag.Usage = func() {
@@ -87,7 +85,7 @@ func main() {
 	go step.ModifiedPointsStepper(
 		field,
 		modifiedImagesCh, palette,
-		commonFlags.MaxSteps, flags.partialSteps,
+		commonFlags.Steps,
 		commonFlags.MaxNoisyDots,
 	)
 

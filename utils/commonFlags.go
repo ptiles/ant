@@ -8,8 +8,13 @@ import (
 	"os"
 	"path"
 	"strconv"
-	"strings"
 )
+
+type StepCounts struct {
+	Min uint64
+	Max uint64
+	Inc uint64
+}
 
 type CommonFlags struct {
 	Cpuprofile string
@@ -20,7 +25,8 @@ type CommonFlags struct {
 	AntName      string
 	Radius       float64
 
-	MaxSteps     uint64
+	Steps StepCounts
+
 	MaxNoisyDots uint64
 	MinStepsPct  uint64
 	MinUniqPct   uint64
@@ -35,7 +41,7 @@ type CommonFlags struct {
 func (cf *CommonFlags) String() string {
 	return fmt.Sprintf(
 		"%s__%v__%s__%s\n",
-		cf.AntName, cf.Radius, cf.InitialPoint, WithSeparators(cf.MaxSteps),
+		cf.AntName, cf.Radius, cf.InitialPoint, WithSeparators(cf.Steps.Max),
 	)
 }
 
@@ -52,7 +58,10 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 		cf.Rectangle, cf.ScaleFactor, err = ParseRectangleStr(rectangleStr)
 		return
 	})
-	flag.Uint64Var(&cf.MaxSteps, "s", 1_000_000, "Steps")
+	flag.Func("s", "Steps", func(stepsStr string) (err error) {
+		cf.Steps.Min, cf.Steps.Max, cf.Steps.Inc, err = ParseStepsStr(stepsStr)
+		return
+	})
 	flag.Uint64Var(&cf.MaxNoisyDots, "sn", 0, "Max noisy dots")
 	flag.Uint64Var(&cf.MinStepsPct, "sm", 0, "Min steps percent")
 	flag.Uint64Var(&cf.MinUniqPct, "su", 0, "Min uniq points percent")
@@ -76,11 +85,11 @@ func (cf *CommonFlags) ParseShorthand(shorthand string) {
 	antNameR := `[RL]+`
 	radiusR := `([01]\.\d+)|(\d+e-\d+)`
 	initialPointR := `[A-X]-?\d+[+-]?[A-X]-?\d+`
-	maxStepsR := `[0-9_]+`
+	stepsR := `(([0-9_]+)-)?([0-9_]+)(%([0-9_]+))?`
 
 	expr := fmt.Sprintf(
-		"(?P<antName>%s)__(?P<radius>%s)__(?P<initialPoint>%s)__(?P<maxSteps>%s)",
-		antNameR, radiusR, initialPointR, maxStepsR,
+		"(?P<antName>%s)__(?P<radius>%s)__(?P<initialPoint>%s)__(?P<steps>%s)",
+		antNameR, radiusR, initialPointR, stepsR,
 	)
 
 	matches := NamedMatches(expr, shorthand)
@@ -101,9 +110,5 @@ func (cf *CommonFlags) ParseShorthand(shorthand string) {
 
 	cf.InitialPoint = matches["initialPoint"]
 
-	maxStepsS := strings.Replace(matches["maxSteps"], "_", "", -1)
-	maxSteps, maxStepsErr := strconv.ParseUint(maxStepsS, 10, 0)
-	if maxStepsErr == nil {
-		cf.MaxSteps = maxSteps
-	}
+	cf.Steps.Min, cf.Steps.Max, cf.Steps.Inc, _ = ParseStepsStr(matches["steps"])
 }
