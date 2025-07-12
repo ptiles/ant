@@ -4,6 +4,7 @@ import (
 	"github.com/ptiles/ant/utils"
 	"image"
 	"iter"
+	"math"
 )
 
 func Uniq() (uint64, int) {
@@ -21,6 +22,79 @@ func Uniq() (uint64, int) {
 	}
 
 	return uPoints, uMaps
+}
+
+type Bounds [GridLinesTotal]struct {
+	Axis     uint8     `json:"axis"`
+	Min      offsetInt `json:"min"`
+	MinCount int       `json:"minCount"`
+	Max      offsetInt `json:"max"`
+	MaxCount int       `json:"maxCount"`
+}
+
+type BoundsSize [GridLinesTotal]offsetInt
+
+func GetBounds() (Bounds, BoundsSize, offsetInt, offsetInt) {
+	bounds := Bounds{}
+	for ax := range GridLinesTotal {
+		bounds[ax].Axis = ax
+		bounds[ax].Min = math.MaxInt32
+		bounds[ax].Max = math.MinInt32
+	}
+
+	for ax0, ax1 := range AxesCanon() {
+		uArr := aValues[ax0][ax1]
+		for i, dMap := range uArr.Maps {
+			baseOff0 := offsetInt(uArr.Min.Offset0+upInt(i)%uArr.Stride) << bits
+			baseOff1 := offsetInt(uArr.Min.Offset1+upInt(i)/uArr.Stride) << bits
+			for dCoord := range dMap {
+				off0 := offsetInt(dCoord.Offset0) + baseOff0
+				off1 := offsetInt(dCoord.Offset1) + baseOff1
+
+				if off0 < bounds[ax0].Min {
+					bounds[ax0].Min = off0
+					bounds[ax0].MinCount = 1
+				} else if off0 == bounds[ax0].Min {
+					bounds[ax0].MinCount += 1
+				}
+				if off1 < bounds[ax1].Min {
+					bounds[ax1].Min = off1
+					bounds[ax1].MinCount = 1
+				} else if off1 == bounds[ax1].Min {
+					bounds[ax1].MinCount += 1
+				}
+
+				if off0 > bounds[ax0].Max {
+					bounds[ax0].Max = off0
+					bounds[ax0].MaxCount = 1
+				} else if off0 == bounds[ax0].Max {
+					bounds[ax0].MaxCount += 1
+				}
+				if off1 > bounds[ax1].Max {
+					bounds[ax1].Max = off1
+					bounds[ax1].MaxCount = 1
+				} else if off1 == bounds[ax1].Max {
+					bounds[ax1].MaxCount += 1
+				}
+			}
+		}
+	}
+
+	sizeMin := offsetInt(math.MaxInt32)
+	sizeMax := offsetInt(math.MinInt32)
+	sizes := BoundsSize{}
+	for ax := range GridLinesTotal {
+		diff := bounds[ax].Max - bounds[ax].Min
+		sizes[ax] = diff
+		if diff < sizeMin {
+			sizeMin = diff
+		}
+		if diff > sizeMax {
+			sizeMax = diff
+		}
+	}
+
+	return bounds, sizes, sizeMin, sizeMax
 }
 
 func (f *Field) Rect() image.Rectangle {

@@ -40,21 +40,33 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 	img, resultRectS := out.Draw(commonFlags.Alpha)
 	if stepsTotal >= minSteps && uniqPct >= commonFlags.MinUniqPct {
 		fmt.Print(saveImage(img, resultRectS, out.ResultRectN, out.ScaleFactor, fileNameFmt, stepsTotal, commonFlags.Steps.Max))
+		if flags.jsonStats {
+			fileName := fmt.Sprintf(fileNameFmt, utils.WithSeparators(stepsTotal), "png")
+			bounds, sizes, sizeMin, sizeMax := pgrid.GetBounds()
+
+			writeStats(fileNameFmt, statsType{
+				AntName:          commonFlags.AntName,
+				FileName:         fileName,
+				Steps:            stepsTotal,
+				UniqPct:          uniqPct,
+				ImagesCount:      imagesCount,
+				MaxSide:          max(out.ResultRectN.Dx(), out.ResultRectN.Dy()),
+				Dimensions:       out.ResultRectN.Size().String(),
+				DimensionsScaled: out.ResultRectN.Size().Div(out.ScaleFactor).String(),
+				Rect:             out.ResultRectN.String(),
+				RectMinX:         out.ResultRectN.Min.X,
+				RectMinY:         out.ResultRectN.Min.Y,
+				RectMaxX:         out.ResultRectN.Max.X,
+				RectMaxY:         out.ResultRectN.Max.Y,
+				ScaleFactor:      out.ScaleFactor,
+				Bounds:           bounds,
+				BoundsSizes:      sizes,
+				BoundsSizeMin:    int32(sizeMin),
+				BoundsSizeMax:    int32(sizeMax),
+			})
+		}
 	}
 
-	if flags.jsonStats {
-		fileName := fmt.Sprintf(fileNameFmt, utils.WithSeparators(stepsTotal), "png")
-		writeStats(fileNameFmt, statsType{
-			AntName:          commonFlags.AntName,
-			FileName:         fileName,
-			Steps:            stepsTotal,
-			UniqPct:          uniqPct,
-			ImagesCount:      imagesCount,
-			MaxSide:          max(out.ResultRectN.Dx(), out.ResultRectN.Dy()),
-			Dimensions:       out.ResultRectN.Size().String(),
-			DimensionsScaled: out.ResultRectN.Size().Div(out.ScaleFactor).String(),
-		})
-	}
 	return stepsTotal
 }
 
@@ -79,6 +91,17 @@ type statsType struct {
 	MaxSide          int    `json:"maxSide"`
 	Dimensions       string `json:"dimensions"`
 	DimensionsScaled string `json:"dimensionsScaled"`
+	Rect             string `json:"rect"`
+	RectMinX         int    `json:"rectMinX"`
+	RectMinY         int    `json:"rectMinY"`
+	RectMaxX         int    `json:"rectMaxX"`
+	RectMaxY         int    `json:"rectMaxY"`
+	ScaleFactor      int    `json:"scaleFactor"`
+
+	Bounds        pgrid.Bounds     `json:"bounds"`
+	BoundsSizes   pgrid.BoundsSize `json:"boundsSizes"`
+	BoundsSizeMin int32            `json:"boundsSizeMin"`
+	BoundsSizeMax int32            `json:"boundsSizeMax"`
 }
 
 func writeStats(fileNameFmt string, stats statsType) {
@@ -101,4 +124,5 @@ func writeStats(fileNameFmt string, stats statsType) {
 	}
 	file.Write(b)
 	file.WriteString("\n")
+	fmt.Println(fileName)
 }
