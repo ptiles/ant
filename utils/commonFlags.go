@@ -33,6 +33,7 @@ type CommonFlags struct {
 
 	Rectangle   image.Rectangle
 	ScaleFactor int
+	QuitOutside bool
 	Monochrome  bool
 	Monochrome0 bool
 	Alpha       bool
@@ -58,6 +59,7 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 		cf.Rectangle, cf.ScaleFactor, err = ParseRectangleStr(rectangleStr)
 		return
 	})
+	flag.BoolVar(&cf.QuitOutside, "rq", false, "Quit if initial point is outside of rectangle")
 	flag.Func("s", "Steps", func(stepsStr string) (err error) {
 		cf.Steps.Min, cf.Steps.Max, cf.Steps.Inc, err = ParseStepsStr(stepsStr)
 		return

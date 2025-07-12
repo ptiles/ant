@@ -3,6 +3,7 @@ package pgrid
 import (
 	"fmt"
 	"github.com/ptiles/ant/utils"
+	"image"
 	"math/rand/v2"
 )
 
@@ -34,6 +35,20 @@ func rngFromString(seedString string) *rand.Rand {
 	copy(seed[:], seedString)
 
 	return rand.New(rand.NewChaCha8(seed))
+}
+
+func (f *Field) InitialPointOutside(r image.Rectangle) bool {
+	return !f.InitialCenterPoint().In(r)
+}
+
+func (f *Field) InitialCenterPoint() image.Point {
+	currAxis, currOffset, _, prevAxis, prevOffset := utils.ParseInitialPoint(f.InitialPoint)
+	return f.GetCenterPoint(GridAxes{
+		Axis0: uint8(currAxis), Axis1: uint8(prevAxis),
+		Coords: GridCoords{
+			Offset0: offsetInt(currOffset), Offset1: offsetInt(prevOffset),
+		},
+	})
 }
 
 func InitialPointSeed(initialPoint string, seedDropBits uint8) *rand.Rand {

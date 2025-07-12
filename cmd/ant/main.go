@@ -69,6 +69,12 @@ func main() {
 	}
 
 	field := pgrid.New(commonFlags.Radius, rules, commonFlags.InitialPoint)
+
+	if commonFlags.QuitOutside && field.InitialPointOutside(commonFlags.Rectangle) {
+		fmt.Fprintln(os.Stderr, "Initial point is outside of rectangle.")
+		os.Exit(0)
+	}
+
 	var palette []color.RGBA
 	if commonFlags.Monochrome {
 		rng := pgrid.InitialPointSeed(commonFlags.InitialPoint, 8)
