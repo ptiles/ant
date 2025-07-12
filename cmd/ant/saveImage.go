@@ -73,12 +73,12 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 func saveImage(resultImageS *image.NRGBA, resultRectS, resultRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps, max uint64) string {
 	fileName := fmt.Sprintf(fileNameFmt, utils.WithSeparatorsZeroPadded(steps, max), "png")
 	utils.SaveImage(fileName, resultImageS)
+	resultRectNFormatted := utils.RectCenteredString(resultRectN, scaleFactor)
 	return fmt.Sprintf(
-		"%s %s %s %s/%d\n",
+		"%s %s %s %s\n",
 		fileName,
-		resultRectS.Size().String(),
-		resultRectN.Size().String(),
-		resultRectN.String(), scaleFactor,
+		resultRectS.Size(), resultRectN.Size(),
+		resultRectNFormatted,
 	)
 }
 

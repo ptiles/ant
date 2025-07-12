@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+#set -e
+set -o xtrace
+
+PARALLEL="4"
+DIR="results5/wythoff600k960mmp4"
+#STEPS="1_000_000_000%100_000_000"
+STEPS="960_000_000%1_000_000"
+PATTERN="7e-10"
+#ANT_ARGS="-p ${PATTERN} -m0 -r '(9160704,2393856)-(12972288,4678656)/1024'"
+ANT_ARGS="-p ${PATTERN} -m0 -rq -r '(11000960,3536256)#(3840,2160)*1024'"
+
+IA="A-C"
+#IO=$(./bin/grid -min 600_000 -max 900_000 -delta 6_000)
+#IO=$(./bin/grid -min 600_000 -max 900_000 -rmin 1 -rmax 6)
+IO="600200,628857,646568,675225,692936,721593,750250,767961,796618,825275"
+
+mkdir -p ${DIR}
+open ${DIR}
+
+merge () {
+  find "${1}" -name "${2}" | xargs -n 256 | {  \
+    sed 's/$/ -evaluate-sequence Max/';       \
+    echo "-write ${3}";                       \
+  } | magick -script -
+}
+
+./bin/ant-batch -ia "${IA}" -io "${IO}"  \
+| xargs -t -L1 -P "${PARALLEL}" -I{} \
+  sh -c "./bin/ant -d ${DIR} -s ${STEPS} ${ANT_ARGS} {} || true"
+
+mkdir "${DIR}/RLL__${PATTERN}__${STEPS}"
+mv    "${DIR}/RLL__${PATTERN}__"*"__${STEPS}.png" \
+      "${DIR}/RLL__${PATTERN}__${STEPS}"
+
+merge "${DIR}/RLL__${PATTERN}__${STEPS}" \
+      "RLL__${PATTERN}__*__${STEPS}.png" \
+      "${DIR}/Merged_RLL__${PATTERN}__${STEPS}.png"

@@ -7,34 +7,31 @@ import (
 	"math/rand/v2"
 )
 
-func (f *Field) InitialState() (GridLine, GridLine, bool) {
+type Turn struct {
+	CurrLine GridLine
+	PrevLine GridLine
+	sign     bool
+}
+
+func (f *Field) InitialTurn() Turn {
 	currAxis, currOffset, prevPointSign, prevAxis, prevOffset := utils.ParseInitialPoint(f.InitialPoint)
 
 	currLine := GridLine{Axis: uint8(currAxis), Offset: offsetInt(currOffset)}
 	prevLine := GridLine{Axis: uint8(prevAxis), Offset: offsetInt(prevOffset)}
 
-	//fmt.Printf(
-	//	"Initial step: %s %s %s %t\n",
-	//	currPoint.String(), currLine.String(), prevLine.String(), prevPointSign,
-	//)
-
-	return currLine, prevLine, prevPointSign
+	return Turn{
+		CurrLine: currLine,
+		PrevLine: prevLine,
+		sign:     prevPointSign,
+	}
 }
 
-func (f *Field) initialStateString(currLine GridLine, prevLine GridLine, prevPointSign bool) string {
+func (t Turn) String() string {
 	prevPointSignString := "-"
-	if prevPointSign {
+	if t.sign {
 		prevPointSignString = "+"
 	}
-
-	return fmt.Sprintf("%s%s%s", currLine.String(), prevPointSignString, prevLine.String())
-}
-
-func rngFromString(seedString string) *rand.Rand {
-	var seed [32]byte
-	copy(seed[:], seedString)
-
-	return rand.New(rand.NewChaCha8(seed))
+	return fmt.Sprintf("%s%s%s", t.CurrLine.String(), prevPointSignString, t.PrevLine.String())
 }
 
 func (f *Field) InitialPointOutside(r image.Rectangle) bool {
@@ -68,5 +65,5 @@ func InitialPointSeed(initialPoint string, seedDropBits uint8) *rand.Rand {
 		prevPointSign, currOffset>>seedDropBits, prevOffset>>seedDropBits,
 	)
 
-	return rngFromString(seedString)
+	return utils.RngFromString(seedString)
 }

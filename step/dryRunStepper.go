@@ -91,6 +91,6 @@ func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {
 	}
 
 	rect := f.Rect()
-	fmt.Printf("\n%s", rect.String())
+	fmt.Printf("\n%s", utils.RectCenteredString(rect, 0))
 	//fmt.Printf("\n")
 }

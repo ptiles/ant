@@ -8,14 +8,8 @@ import (
 	"github.com/ptiles/ant/utils"
 	"log"
 	"os"
-	"path/filepath"
 	"runtime"
 	"runtime/pprof"
-)
-
-var (
-	programName    = filepath.Base(os.Args[0])
-	usageTextShort = "\nFor usage run: %s -h\n"
 )
 
 func main() {
@@ -29,14 +23,7 @@ func main() {
 	utils.StartCPUProfile(commonFlags.Cpuprofile)
 	defer utils.StopCPUProfile()
 
-	rules, err := utils.GetRules(commonFlags.AntName)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid name.  Should consist of at least two letters R L r l.")
-		fmt.Fprintf(os.Stderr, usageTextShort, programName)
-		os.Exit(1)
-	}
-
-	field := pgrid.New(commonFlags.Radius, rules, commonFlags.InitialPoint)
+	field := pgrid.New(commonFlags.Pattern, commonFlags.AntRules, commonFlags.InitialPoint)
 
 	step.DryRunStepper(field, commonFlags.Steps.Max, commonFlags.MaxNoisyDots)
 	fmt.Printf(" %s\n", commonFlags.String())

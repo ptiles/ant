@@ -16,6 +16,10 @@ type StepCounts struct {
 	Inc uint64
 }
 
+func (sc StepCounts) String() string {
+	return fmt.Sprintf("%d-%d%%%d", sc.Min, sc.Max, sc.Inc)
+}
+
 type CommonFlags struct {
 	Cpuprofile string
 	Memprofile string
@@ -23,7 +27,8 @@ type CommonFlags struct {
 	Dir          string
 	InitialPoint string
 	AntName      string
-	Radius       float64
+	AntRules     []bool
+	Pattern      float64
 
 	Steps StepCounts
 
@@ -42,7 +47,7 @@ type CommonFlags struct {
 func (cf *CommonFlags) String() string {
 	return fmt.Sprintf(
 		"%s__%v__%s__%s\n",
-		cf.AntName, cf.Radius, cf.InitialPoint, WithSeparators(cf.Steps.Max),
+		cf.AntName, cf.Pattern, cf.InitialPoint, WithSeparators(cf.Steps.Max),
 	)
 }
 
@@ -54,7 +59,11 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 	flag.BoolVar(&cf.Monochrome, "m", false, "Monochromatic palette")
 	flag.BoolVar(&cf.Monochrome0, "m0", false, "Monochromatic palette exact point")
 	flag.BoolVar(&cf.Alpha, "alpha", false, "Save transparent image with alpha channel")
-	flag.StringVar(&cf.AntName, "n", "RLL", "Ant name")
+	flag.Func("n", "Ant name", func(antName string) (err error) {
+		cf.AntName = antName
+		cf.AntRules, err = GetRules(antName)
+		return
+	})
 	flag.Func("r", "Output image rectangle", func(rectangleStr string) (err error) {
 		cf.Rectangle, cf.ScaleFactor, err = ParseRectangleStr(rectangleStr)
 		return
@@ -67,13 +76,22 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 	flag.Uint64Var(&cf.MaxNoisyDots, "sn", 0, "Max noisy dots")
 	flag.Uint64Var(&cf.MinStepsPct, "sm", 0, "Min steps percent")
 	flag.Uint64Var(&cf.MinUniqPct, "su", 0, "Min uniq points percent")
-	flag.Float64Var(&cf.Radius, "tr", 0.000007, "Tiles config - radius")
+	flag.Float64Var(&cf.Pattern, "p", 7e-06, "Pattern radius")
 }
 
 func (cf *CommonFlags) ParseArgs() {
 	shorthand := flag.Arg(0)
 	if shorthand != "" {
 		cf.ParseShorthand(shorthand)
+	}
+
+	if cf.AntName == "" {
+		cf.AntName = "RLL"
+		cf.AntRules = []bool{true, false, false}
+	}
+
+	if cf.Steps.Max == 0 {
+		cf.Steps = StepCounts{Min: 0, Max: 5_000_000, Inc: 0}
 	}
 
 	if cf.MaxNoisyDots == 0 {
@@ -94,20 +112,21 @@ func (cf *CommonFlags) ParseShorthand(shorthand string) {
 		antNameR, radiusR, initialPointR, stepsR,
 	)
 
-	matches := NamedMatches(expr, shorthand)
+	matches := NamedStringMatches(expr, shorthand)
 
 	cf.AntName = matches["antName"]
+	cf.AntRules, _ = GetRules(cf.AntName)
 
 	radius, radiusErr := strconv.ParseFloat(matches["radius"], 64)
 	if radiusErr == nil {
-		cf.Radius = radius
+		cf.Pattern = radius
 	}
 	if radius == 0 {
-		fmt.Println("Radius cannot be zero")
+		fmt.Println("Pattern cannot be zero")
 		os.Exit(1)
 	}
 	if radius < 1e-10 {
-		fmt.Println("Radius too small, can be inaccurate")
+		fmt.Println("Pattern too small, can be inaccurate")
 	}
 
 	cf.InitialPoint = matches["initialPoint"]

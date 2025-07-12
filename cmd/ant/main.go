@@ -26,7 +26,6 @@ Steps (default: 1000000) should be a positive integer.
 
 Flags:
 `
-	usageTextShort = "\nFor usage run: %s -h\n"
 )
 
 type Flags struct {
@@ -61,14 +60,7 @@ func main() {
 	utils.StartCPUProfile(commonFlags.Cpuprofile)
 	defer utils.StopCPUProfile()
 
-	rules, err := utils.GetRules(commonFlags.AntName)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Invalid name.  Should consist of at least two letters R L r l.")
-		fmt.Fprintf(os.Stderr, usageTextShort, programName)
-		os.Exit(1)
-	}
-
-	field := pgrid.New(commonFlags.Radius, rules, commonFlags.InitialPoint)
+	field := pgrid.New(commonFlags.Pattern, commonFlags.AntRules, commonFlags.InitialPoint)
 
 	if commonFlags.QuitOutside && field.InitialPointOutside(commonFlags.Rectangle) {
 		fmt.Fprintln(os.Stderr, "Initial point is outside of rectangle.")
@@ -97,7 +89,7 @@ func main() {
 
 	fileNameFmt := fmt.Sprintf(
 		"%s/%s__%v__%s__%%s.%%s",
-		commonFlags.Dir, commonFlags.AntName, commonFlags.Radius, commonFlags.InitialPoint,
+		commonFlags.Dir, commonFlags.AntName, commonFlags.Pattern, commonFlags.InitialPoint,
 	)
 
 	stepsTotal := saveImageFromModifiedImages(modifiedImagesCh, fileNameFmt, flags, commonFlags)

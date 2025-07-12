@@ -1,9 +1,10 @@
 package utils
 
 import (
+	"fmt"
 	"image"
+	"math"
 	"regexp"
-	"strconv"
 )
 
 func ParseRectangleStr(rectangleStr string) (rect image.Rectangle, scaleFactor int, err error) {
@@ -11,35 +12,56 @@ func ParseRectangleStr(rectangleStr string) (rect image.Rectangle, scaleFactor i
 		return
 	}
 
-	re := regexp.MustCompile(`\((-?\d+),(-?\d+)\)-\((-?\d+),(-?\d+)\)/(\d+)`)
-	result := re.FindStringSubmatch(rectangleStr)
-
-	x1s, y1s, x2s, y2s, scs := result[1], result[2], result[3], result[4], result[5]
-
-	x1, err := strconv.Atoi(x1s)
-	if err != nil {
-		return
+	exprMinMaxDiv := regexp.MustCompile(
+		`\((?P<minX>-?\d+),(?P<minY>-?\d+)\)-\((?P<maxX>-?\d+),(?P<maxY>-?\d+)\)/(?P<scale>\d+)`,
+	)
+	if matches := NamedIntMatches(exprMinMaxDiv, rectangleStr); matches != nil {
+		minPoint := image.Point{X: matches["minX"], Y: matches["minY"]}
+		maxPoint := image.Point{X: matches["maxX"], Y: matches["maxY"]}
+		return image.Rectangle{Min: minPoint, Max: maxPoint}, matches["scale"], nil
 	}
 
-	y1, err := strconv.Atoi(y1s)
-	if err != nil {
-		return
+	exprCenterSizeDiv := regexp.MustCompile(
+		`\((?P<centerX>-?\d+),(?P<centerY>-?\d+)\)#\((?P<sizeX>-?\d+),(?P<sizeY>-?\d+)\)/(?P<scale>\d+)`,
+	)
+	if matches := NamedIntMatches(exprCenterSizeDiv, rectangleStr); matches != nil {
+		centerPoint := image.Point{X: matches["centerX"], Y: matches["centerY"]}
+		halfSizePoint := image.Point{X: matches["sizeX"], Y: matches["sizeY"]}.Div(2)
+		minPoint := centerPoint.Sub(halfSizePoint)
+		maxPoint := centerPoint.Add(halfSizePoint)
+		return image.Rectangle{Min: minPoint, Max: maxPoint}, matches["scale"], nil
 	}
 
-	x2, err := strconv.Atoi(x2s)
-	if err != nil {
-		return
+	exprCenterSizeMul := regexp.MustCompile(
+		`\((?P<centerX>-?\d+),(?P<centerY>-?\d+)\)#\((?P<sizeX>-?\d+),(?P<sizeY>-?\d+)\)\*(?P<scale>\d+)`,
+	)
+	if matches := NamedIntMatches(exprCenterSizeMul, rectangleStr); matches != nil {
+		centerPoint := image.Point{X: matches["centerX"], Y: matches["centerY"]}
+		halfSizePoint := image.Point{X: matches["sizeX"], Y: matches["sizeY"]}.Mul(matches["scale"]).Div(2)
+		minPoint := centerPoint.Sub(halfSizePoint)
+		maxPoint := centerPoint.Add(halfSizePoint)
+		return image.Rectangle{Min: minPoint, Max: maxPoint}, matches["scale"], nil
 	}
 
-	y2, err := strconv.Atoi(y2s)
-	if err != nil {
-		return
+	exprSizeMul := regexp.MustCompile(
+		`\((?P<sizeX>-?\d+),(?P<sizeY>-?\d+)\)\*(?P<scale>\d+)`,
+	)
+	if matches := NamedIntMatches(exprSizeMul, rectangleStr); matches != nil {
+		sizePoint := image.Point{X: matches["sizeX"], Y: matches["sizeY"]}.Mul(matches["scale"])
+		return image.Rectangle{Min: image.Point{}, Max: sizePoint}, matches["scale"], nil
+	}
+	return image.Rectangle{}, 0, nil
+}
+
+func RectCenteredString(rect image.Rectangle, scaleFactor int) string {
+	centerPoint := rect.Min.Add(rect.Max).Div(2)
+	sizePoint := rect.Size()
+
+	if scaleFactor == 0 {
+		size := max(sizePoint.X, sizePoint.Y)
+		m := float64(size / (16 * 1024))
+		scaleFactor = 2 << uint(math.Log2(m+1))
 	}
 
-	sc, err := strconv.Atoi(scs)
-	if err != nil {
-		return
-	}
-
-	return image.Rectangle{Min: image.Point{X: x1, Y: y1}, Max: image.Point{X: x2, Y: y2}}, sc, nil
+	return fmt.Sprintf("%s#%s/%d", centerPoint, sizePoint, scaleFactor)
 }

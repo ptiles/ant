@@ -16,7 +16,7 @@ var AxisNames = []string{
 }
 
 func ParseInitialPoint(initialPoint string) (int, int, bool, int, int) {
-	re := regexp.MustCompile(`([A-X])(-?\d+)([+-]?)([A-X])(-?\d+)`)
+	re := regexp.MustCompile(`([A-X])(-?\d+)([+-])([A-X])(-?\d+)`)
 	result := re.FindStringSubmatch(initialPoint)
 
 	currAx, currOff, dir, prevAx, prevOff := result[1], result[2], result[3], result[4], result[5]
@@ -30,6 +30,13 @@ func ParseInitialPoint(initialPoint string) (int, int, bool, int, int) {
 	prevOffset, _ := strconv.Atoi(prevOff)
 
 	return currAxis, currOffset, currAxIncreasing, prevAxis, prevOffset
+}
+
+func ParseInitialAxes(initialPoint string) (string, string, string) {
+	re := regexp.MustCompile(`([A-X])([+-])([A-X])`)
+	result := re.FindStringSubmatch(initialPoint)
+
+	return result[1], result[2], result[3]
 }
 
 func ParseStepsStr(stepsStr string) (uint64, uint64, uint64, error) {

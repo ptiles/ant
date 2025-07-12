@@ -67,9 +67,9 @@ func ModifiedPointsStepper(
 	modifiedPointsCh := make(chan []gridPointColor, 64)
 
 	//if pgrid.DrawTilesAndPoints {
-	go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, palette, steps, drawPoints)
-	//} else {
 	//	go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, palette, steps, drawTiles)
+	//} else {
+	go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, palette, steps, drawPoints)
 	//}
 
 	points := make([]gridPointColor, MaxModifiedPoints)

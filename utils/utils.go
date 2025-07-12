@@ -33,7 +33,7 @@ func GetPaletteMonochromatic(steps int, rng *rand.Rand) []color.RGBA {
 
 	h := float64(rng.IntN(360))
 	for si := range steps {
-		sf := float64(si) / float64(steps-1)
+		sf := float64(si) / float64(steps)
 		c := .95 - 0.3*sf
 		l := .65 + 0.3*sf
 		r, g, b := colorful.Hcl(h, c, l).Clamped().RGB255()
@@ -41,6 +41,13 @@ func GetPaletteMonochromatic(steps int, rng *rand.Rand) []color.RGBA {
 	}
 
 	return palette
+}
+
+func RngFromString(seedString string) *rand.Rand {
+	var seed [32]byte
+	copy(seed[:], seedString)
+
+	return rand.New(rand.NewChaCha8(seed))
 }
 
 func StartCPUProfile(cpuprofile string) {
@@ -69,18 +76,16 @@ func Open(fileName string) {
 }
 
 func GetRules(antName string) ([]bool, error) {
-	limit := uint8(len(antName))
-	var nameInvalid = limit < 2
+	limit := len(antName)
+	if limit < 2 {
+		return nil, errors.New("name too short")
+	}
 	rules := make([]bool, limit)
 	for i, letter := range antName {
 		if letter != 'R' && letter != 'r' && letter != 'L' && letter != 'l' {
-			nameInvalid = true
-			break
+			return nil, errors.New("invalid letters in name")
 		}
 		rules[i] = letter == 'R' || letter == 'r'
-	}
-	if nameInvalid {
-		return rules, errors.New("invalid name")
 	}
 	return rules, nil
 }

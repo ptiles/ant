@@ -1,27 +1,35 @@
 package utils
 
 import (
-	"regexp"
 	"strconv"
 )
 
-func ParseRangeStr(rangeStr string) (minimum, maximum int, err error) {
-	re := regexp.MustCompile(`((\d+)-)?(\d+)`)
-	result := re.FindStringSubmatch(rangeStr)
+func ParseRangeStr(rangeStr string) (minimum, maximum, delta int, err error) {
+	expr := `((?P<min>\d+)-)?(?P<max>\d+)((?P<mode>[%W])((?P<row>\d+)-)?(?P<delta>\d+))?`
+	result := NamedStringMatches(expr, rangeStr)
+	//fmt.Println(matches)
 
-	maximum, err = strconv.Atoi(result[3])
+	//re := regexp.MustCompile(`((\d+)-)?(\d+)(%(\d+))?`)
+	//result := re.FindStringSubmatch(rangeStr)
+
+	maximum, err = strconv.Atoi(result["max"])
 	if err != nil {
 		return
 	}
 
-	if result[2] == "" {
-		return 0, maximum, nil
-	}
-
-	minimum, err = strconv.Atoi(result[2])
+	delta, err = strconv.Atoi(result["delta"])
 	if err != nil {
 		return
 	}
 
-	return minimum, maximum, nil
+	if result["min"] == "" {
+		return 0, maximum, delta, nil
+	}
+
+	minimum, err = strconv.Atoi(result["min"])
+	if err != nil {
+		return
+	}
+
+	return minimum, maximum, delta, nil
 }
