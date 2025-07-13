@@ -7,6 +7,7 @@ import (
 
 var axesRotation = [GridLinesTotal][GridLinesTotal]bool{}
 
+// TODO: calculate this properly from angles instead of heuristic
 func init() {
 	for ax0 := range GridLinesTotal {
 		for i := range GridLinesTotal {

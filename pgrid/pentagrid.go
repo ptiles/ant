@@ -8,21 +8,15 @@ type Field struct {
 	Rules        []bool
 	Limit        uint8
 	InitialPoint string
-
-	offsetsToFirst allOffsetDeltas
-	offsetsToLast  allOffsetDeltas
+	Geometry
 }
 
 func New(radius float64, rules []bool, initialPoint string) *Field {
-	gg := newGridGeometry(radius)
-
 	return &Field{
 		Rules:        rules,
 		Limit:        uint8(len(rules)),
 		InitialPoint: initialPoint,
-
-		offsetsToFirst: gg.newOffsetsToFirst(),
-		offsetsToLast:  gg.newOffsetsToLast(),
+		Geometry:     newGridGeometry(radius),
 	}
 }
 

@@ -8,6 +8,11 @@ type Point [2]float64
 
 type Line [2]Point
 
+type Geometry struct {
+	offsetsToFirst allOffsetDeltas
+	offsetsToLast  allOffsetDeltas
+}
+
 type gridGeometry struct {
 	anchors [GridLinesTotal]Point
 	normals [GridLinesTotal]Point
@@ -17,26 +22,41 @@ type gridGeometry struct {
 const X = 0
 const Y = 1
 
-func newGridGeometry(radius float64) gridGeometry {
-	result := gridGeometry{}
+func fromDeg(deg float64) float64 {
+	return deg / 180 * math.Pi
+}
 
-	phi := 2 * math.Pi / float64(GridLinesTotal)
-	rightAngle := 0.5 * math.Pi
+func newGridGeometry(radius float64) Geometry {
+	gg := gridGeometry{}
+
+	alpha := 360 / float64(GridLinesTotal)
+	rightAngle := float64(90)
 
 	for ax := range GridLinesTotal {
-		phiAx := phi * float64(ax)
+		alphaAx := alpha * float64(ax)
 
-		result.anchors[ax][X] = radius * math.Cos(phiAx)
-		result.anchors[ax][Y] = radius * math.Sin(phiAx)
+		gg.anchors[ax][X] = radius * math.Cos(fromDeg(alphaAx))
+		gg.anchors[ax][Y] = radius * math.Sin(fromDeg(alphaAx))
 
-		result.normals[ax][X] = math.Cos(phiAx + phi/2)
-		result.normals[ax][Y] = math.Sin(phiAx + phi/2)
+		gg.normals[ax][X] = math.Cos(fromDeg(alphaAx + alpha/2))
+		gg.normals[ax][Y] = math.Sin(fromDeg(alphaAx + alpha/2))
 
-		result.units[ax][X] = math.Cos(phiAx + phi/2 + rightAngle)
-		result.units[ax][Y] = math.Sin(phiAx + phi/2 + rightAngle)
+		gg.units[ax][X] = math.Cos(fromDeg(alphaAx + alpha/2 + rightAngle))
+		gg.units[ax][Y] = math.Sin(fromDeg(alphaAx + alpha/2 + rightAngle))
 	}
 
-	return result
+	offsetsToFirst := gg.newOffsetsToFirst()
+	offsetsToLast := gg.newOffsetsToLast()
+
+	if GridLinesTotal == 5 {
+		//printOffsets("offsetsToFirst", offsetsToFirst)
+		//printOffsets("offsetsToLast", offsetsToLast)
+		//os.Exit(1)
+		updateOffsetsToFirst(&offsetsToFirst)
+		updateOffsetsToLast(&offsetsToLast)
+	}
+
+	return Geometry{offsetsToFirst: offsetsToFirst, offsetsToLast: offsetsToLast}
 }
 
 type offsetDeltas struct {
