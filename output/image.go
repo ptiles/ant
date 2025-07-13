@@ -1,4 +1,4 @@
-package result
+package output
 
 import (
 	"github.com/ptiles/ant/utils"
@@ -29,18 +29,20 @@ func NewImage(rectangle image.Rectangle, scaleFactor, maxDimension int) (i Image
 	return
 }
 
-func halveImage(dst, src *image.RGBA) {
+func (i *Image) halveImage() {
+	newResultImageS := image.NewRGBA(utils.RectDiv(i.paddingRectN, i.ScaleFactor))
 	draw.ApproxBiLinear.Scale(
-		dst, utils.RectDiv(src.Rect, 2),
-		src, src.Rect,
+		newResultImageS, utils.RectDiv(i.resultImageS.Rect, 2),
+		i.resultImageS, i.resultImageS.Rect,
 		draw.Over, nil,
 	)
+	i.resultImageS = newResultImageS
 }
 
-func mergeImage(dst, src *image.RGBA, scaleFactor int) {
+func (i *Image) mergeImage(modifiedImage *image.RGBA) {
 	draw.BiLinear.Scale(
-		dst, utils.RectDiv(src.Rect, scaleFactor),
-		src, src.Rect,
+		i.resultImageS, utils.RectDiv(modifiedImage.Rect, i.ScaleFactor),
+		modifiedImage, modifiedImage.Rect,
 		draw.Over, nil,
 	)
 }
@@ -56,12 +58,10 @@ func (i *Image) Merge(modifiedImage *image.RGBA) {
 				i.maxDimension *= 2
 			}
 			i.paddingRectN = utils.RectGrow(i.ResultRectN, i.maxDimension)
-			newResultImageS := image.NewRGBA(utils.RectDiv(i.paddingRectN, i.ScaleFactor))
-			halveImage(newResultImageS, i.resultImageS)
-			i.resultImageS = newResultImageS
+			i.halveImage()
 		}
 	}
-	mergeImage(i.resultImageS, modifiedImage, i.ScaleFactor)
+	i.mergeImage(modifiedImage)
 }
 
 func (i *Image) Draw(keepAlpha bool) (*image.NRGBA, image.Rectangle) {

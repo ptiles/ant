@@ -269,9 +269,10 @@ func modifiedPointsToImages(
 
 			shouldSave := steps.Inc > 0 && stepsCount > 0 && stepsCount >= steps.Min && stepsCount%steps.Inc == 0
 			if rectIsLarge(rect) || shouldSave {
-				mImage := ModifiedImage{Steps: stepsCount, Save: shouldSave}
-				mImage.Img = drawPointsFn(rect, points[start:i], palette)
-				modifiedImagesCh <- mImage
+				modifiedImagesCh <- ModifiedImage{
+					Steps: stepsCount, Save: shouldSave,
+					Img: drawPointsFn(rect, points[start:i], palette),
+				}
 
 				rect = image.Rectangle{}
 				start = i + 1
@@ -279,9 +280,12 @@ func modifiedPointsToImages(
 			stepsCount += 1
 		}
 
-		mImage := ModifiedImage{Steps: stepsCount}
-		mImage.Img = drawPointsFn(rect, points[start:], palette)
-		modifiedImagesCh <- mImage
+		if start < len(points) {
+			modifiedImagesCh <- ModifiedImage{
+				Steps: stepsCount, Save: false,
+				Img: drawPointsFn(rect, points[start:], palette),
+			}
+		}
 	}
 	close(modifiedImagesCh)
 }

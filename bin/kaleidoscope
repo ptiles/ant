@@ -6,50 +6,54 @@ set -o xtrace
 PARALLEL="${PARALLEL:="4"}"
 
 NAME="${NAME:="RLL"}"
-RADIUS="${RADIUS:="0.000007"}"
+PATTERN="${PATTERN:="7e-06"}"
 IK="${IK:="false"}"
-IC="${IC:="384"}"
-IO="${IO:="12800"}"
-MAX_STEPS="${MAX_STEPS:="200_000 250_000 500_000 1_000_000 2_000_000 5_000_000 10_000_000"}"
+IC="${IC:="1536"}"
+IO="${IO:="16384"}"
+MAX_STEPS="${MAX_STEPS:="100_000 200_000 500_000 1_000_000 2_000_000 5_000_000"}"
 
 ID="${ID:="kaleidoscope"}"
 
-BASE="${NAME}_${RADIUS}_${ID}"
-DIR="results5/${BASE}"
-DATE=$(date "+%Y-%m-%d_%H-%M")
+BASE="${NAME}_${PATTERN}_${ID}"
+BASE_DIR="results5/${BASE}"
 
-mkdir -p "${DIR}"
-mkdir -p "${DIR}/done"
-open "${DIR}"
+RECT="${RECT:="(0,0)#(3588,3588)*64"}"
+#NOISE="-sm 80 -sn 1 -su 10"
+NOISE="-sm 50 -sn 35 -su 10"
+ANT_ARGS="-n ${NAME} -p ${PATTERN} -m -alpha -r '${RECT}' ${NOISE}"
+
+merge () {
+  find "${1}" -name "${2}" | xargs -n 20 | {  \
+    sed 's/$/ -evaluate-sequence Max/';       \
+    echo "-write ${3}";                       \
+  } | magick -script -
+}
+
+open "${BASE_DIR}"
 
 MAX_STEPS_ARRAY=($MAX_STEPS)
 for STEPS in "${MAX_STEPS_ARRAY[@]}"; do
-  ./bin/ant-batch -alpha -n "${NAME}"                        \
-    -d "${DIR}/${STEPS}_${DATE}"                             \
-    -tr "${RADIUS}"                                          \
-    -ik="$IK" -ic "$IC" -io "$IO"                            \
-    -r '(-114816,-114816)-(114816,114816)/64'                \
-    -s "${STEPS}" -sm 50 -sn 35 -su 10                       \
+  DATE=$(date "+%Y-%m-%d_%H-%M-%S")
+  DIR="${BASE_DIR}/${STEPS}_${DATE}"
+
+  ./bin/ant-batch -ik="$IK" -ic "$IC" -io "$IO"              \
   | xargs -t -L1 -P "${PARALLEL}" -I{}                       \
-       sh -c "./bin/ant -m {} || true"
+    sh -c "./bin/ant -d ${DIR} -s ${STEPS} ${ANT_ARGS} {} || true"
 
-  magick "${DIR}/${STEPS}_${DATE}/"*".png"                   \
-    -evaluate-sequence Max                                   \
-         "${DIR}/Transparent_${STEPS}_${DATE}.png"
-  mv "${DIR}/${STEPS}_${DATE}" "${DIR}/done"
+  merge "${DIR}" "*.png" "${BASE_DIR}/Transparent_${STEPS}_${DATE}.png"
 
-  magick "${DIR}/Transparent_"*".png"                        \
-    -evaluate-sequence Max                                   \
-         "${DIR}/${BASE}_Transparent.png"
+  mkdir -p "${BASE_DIR}/done"
+  mv "${DIR}" "${BASE_DIR}/done"
 
-  magick "${DIR}/${BASE}_Transparent.png"                    \
-    -background "#202020" -alpha remove -alpha off           \
-         "${DIR}/${BASE}_Black.png"
+  merge "${BASE_DIR}" "Transparent_*.png" "${BASE_DIR}/${BASE}_Transparent.png"
+
+  magick "${BASE_DIR}/${BASE}_Transparent.png" -background black -alpha remove -alpha off -gamma 1.3 \
+         "${BASE_DIR}/${BASE}_Black.png"
 done
 
-magick "${DIR}/${BASE}_Black.png" -rotate 90  -gravity west -crop 2560x1600+0+0 "${DIR}/${BASE}_Black_West_90.png"
-magick "${DIR}/${BASE}_Black.png" -rotate 270 -gravity west -crop 2560x1600+0+0 "${DIR}/${BASE}_Black_West_270.png"
-magick "${DIR}/${BASE}_Black.png" -rotate 90  -gravity east -crop 2560x1600+0+0 "${DIR}/${BASE}_Black_East_90.png"
-magick "${DIR}/${BASE}_Black.png" -rotate 270 -gravity east -crop 2560x1600+0+0 "${DIR}/${BASE}_Black_East_270.png"
+magick "${BASE_DIR}/${BASE}_Black.png" -rotate 90  -gravity west -crop 2560x1600+0+0 "${BASE_DIR}/${BASE}_Black_West_90.png"
+magick "${BASE_DIR}/${BASE}_Black.png" -rotate 270 -gravity west -crop 2560x1600+0+0 "${BASE_DIR}/${BASE}_Black_West_270.png"
+magick "${BASE_DIR}/${BASE}_Black.png" -rotate 90  -gravity east -crop 2560x1600+0+0 "${BASE_DIR}/${BASE}_Black_East_90.png"
+magick "${BASE_DIR}/${BASE}_Black.png" -rotate 270 -gravity east -crop 2560x1600+0+0 "${BASE_DIR}/${BASE}_Black_East_270.png"
 
-#open   "${DIR}/${BASE}_Black.png"
+#open   "${BASE_DIR}/${BASE}_Black.png"

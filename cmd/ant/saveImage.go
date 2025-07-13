@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ptiles/ant/output"
 	"github.com/ptiles/ant/pgrid"
-	"github.com/ptiles/ant/result"
 	"github.com/ptiles/ant/step"
 	"github.com/ptiles/ant/utils"
 	"image"
@@ -13,7 +13,7 @@ import (
 )
 
 func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fileNameFmt string, flags *Flags, commonFlags *utils.CommonFlags) uint64 {
-	out := result.NewImage(commonFlags.Rectangle, commonFlags.ScaleFactor, flags.maxDimension)
+	out := output.NewImage(commonFlags.Rectangle, commonFlags.ScaleFactor, flags.maxDimension)
 
 	stepsTotal := uint64(0)
 	minSteps := commonFlags.Steps.Max * commonFlags.MinStepsPct / 100

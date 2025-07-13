@@ -11,6 +11,12 @@ ant-batch:
 ant-dry:
 	go build -o bin ./cmd/ant-dry
 
+ant-old:
+	go build -o bin/ant-old ./cmd/ant
+
+ant-dry-old:
+	go build -o bin/ant-dry-old ./cmd/ant-dry
+
 bench-prep-swiss:
 	go build -o bin ./cmd/ant
 	go1.23.8 build -o bin/ant-1.23.8 ./cmd/ant
@@ -40,12 +46,6 @@ prof-ant-swiss: bench-prep-swiss
 	./bin/ant-1.24.2-swi -cpuprofile tmp/ant-swi.prof $(ANT)__140_000_009
 	go tool pprof -http=: -no_browser tmp/ant-swi.prof
 
-ant-old:
-	git stash
-	make ant
-	cp ./bin/ant ./bin/ant-old
-	git stash pop
-
 bench: ant
 	hyperfine -i --warmup 1 \
 		"./bin/ant     -r $(RECT) $(ANT)__50_000_002" \
@@ -69,12 +69,6 @@ bench-huge: ant
 		"./bin/ant     -r $(RECT) $(ANT)__2_500_000_002" \
 		"./bin/ant-old -r $(RECT) $(ANT)__2_500_000_001" \
 		# end
-
-ant-dry-old:
-	git stash
-	make ant-dry
-	cp ./bin/ant-dry ./bin/ant-dry-old
-	git stash pop
 
 bench-dry: ant-dry
 	hyperfine -i --warmup 1 \
