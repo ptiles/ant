@@ -12,6 +12,7 @@ import (
 const DrawTilesAndPoints = false
 const deBruijnScale = 2
 const Padding = deBruijnScale * 4
+const LineScale = deBruijnScale * 2.5
 
 //const inflation = 1
 //const inflation = 2

@@ -7,13 +7,19 @@ import (
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/step"
 	"github.com/ptiles/ant/utils"
-	"image"
 	"os"
 	"path"
+	"strings"
 )
 
 func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fileNameFmt string, flags *Flags, commonFlags *utils.CommonFlags) uint64 {
 	out := output.NewImage(commonFlags.Rectangle, commonFlags.ScaleFactor, flags.maxDimension)
+
+	if flags.gridSize > 0 && flags.gridEmpty && !commonFlags.Rectangle.Empty() {
+		gridPrefix := fmt.Sprintf("grid_%d_", flags.gridSize)
+		fileName := fmt.Sprintf(fileNameFmt, gridPrefix, utils.WithSeparators(0), "png")
+		out.SaveGridOnly(fileName, flags.gridSize, commonFlags.Alpha)
+	}
 
 	stepsTotal := uint64(0)
 	minSteps := commonFlags.Steps.Max * commonFlags.MinStepsPct / 100
@@ -22,10 +28,14 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 
 	for mImg := range modifiedImagesCh {
 		out.Merge(mImg.Img)
+
 		if mImg.Save {
-			img, resultRectS := out.Draw(commonFlags.Alpha)
-			saveImage(img, resultRectS, out.ResultRectN, out.ScaleFactor, fileNameFmt, mImg.Steps, commonFlags.Steps.Max)
+			saveImages(
+				out, commonFlags.Alpha, flags.gridBoth, flags.gridSize,
+				fileNameFmt, mImg.Steps, commonFlags.Steps.Max,
+			)
 		}
+
 		imagesCount += 1
 		stepsTotal = mImg.Steps
 	}
@@ -37,12 +47,16 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 		utils.WithSeparators(uniq), uniqPct, utils.WithSeparators(uint64(uMaps)),
 	)
 
-	img, resultRectS := out.Draw(commonFlags.Alpha)
 	if stepsTotal >= minSteps && uniqPct >= commonFlags.MinUniqPct {
-		fmt.Print(saveImage(img, resultRectS, out.ResultRectN, out.ScaleFactor, fileNameFmt, stepsTotal, commonFlags.Steps.Max))
+		fmt.Print(saveImages(
+			out, commonFlags.Alpha, flags.gridBoth, flags.gridSize,
+			fileNameFmt, stepsTotal, commonFlags.Steps.Max,
+		))
+
 		if flags.jsonStats {
-			fileName := fmt.Sprintf(fileNameFmt, utils.WithSeparators(stepsTotal), "png")
+			fileName := fmt.Sprintf(fileNameFmt, "", utils.WithSeparators(stepsTotal), "png")
 			bounds, sizes, sizeMin, sizeMax := pgrid.GetBounds(32)
+			resultRectN := out.ResultRectN
 
 			writeStats(fileNameFmt, statsType{
 				AntName:          commonFlags.AntName,
@@ -50,14 +64,14 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 				Steps:            stepsTotal,
 				UniqPct:          uniqPct,
 				ImagesCount:      imagesCount,
-				MaxSide:          max(out.ResultRectN.Dx(), out.ResultRectN.Dy()),
-				Dimensions:       out.ResultRectN.Size().String(),
-				DimensionsScaled: out.ResultRectN.Size().Div(out.ScaleFactor).String(),
-				Rect:             out.ResultRectN.String(),
-				RectMinX:         out.ResultRectN.Min.X,
-				RectMinY:         out.ResultRectN.Min.Y,
-				RectMaxX:         out.ResultRectN.Max.X,
-				RectMaxY:         out.ResultRectN.Max.Y,
+				MaxSide:          max(resultRectN.Dx(), resultRectN.Dy()),
+				Dimensions:       resultRectN.Size().String(),
+				DimensionsScaled: resultRectN.Size().Div(out.ScaleFactor).String(),
+				Rect:             resultRectN.String(),
+				RectMinX:         resultRectN.Min.X,
+				RectMinY:         resultRectN.Min.Y,
+				RectMaxX:         resultRectN.Max.X,
+				RectMaxY:         resultRectN.Max.Y,
 				ScaleFactor:      out.ScaleFactor,
 				Bounds:           bounds,
 				BoundsSizes:      sizes,
@@ -70,16 +84,28 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 	return stepsTotal
 }
 
-func saveImage(resultImageS *image.NRGBA, resultRectS, resultRectN image.Rectangle, scaleFactor int, fileNameFmt string, steps, max uint64) string {
-	fileName := fmt.Sprintf(fileNameFmt, utils.WithSeparatorsZeroPadded(steps, max), "png")
-	utils.SaveImage(fileName, resultImageS)
-	resultRectNFormatted := utils.RectCenteredString(resultRectN, scaleFactor)
-	return fmt.Sprintf(
-		"%s %s %s %s\n",
-		fileName,
-		resultRectS.Size(), resultRectN.Size(),
-		resultRectNFormatted,
-	)
+func saveImages(out *output.Image, keepAlpha, gridBoth bool, gridSize int, fileNameFmt string, steps, max uint64) string {
+	var fileName, gridFileName string
+	var result strings.Builder
+	result.WriteString("\n")
+
+	if gridBoth || gridSize == 0 {
+		fileName = fmt.Sprintf(fileNameFmt, "", utils.WithSeparatorsZeroPadded(steps, max), "png")
+		fmt.Fprintf(&result, "%s\n", fileName)
+	}
+	if gridSize > 0 {
+		gridPrefix := fmt.Sprintf("grid_%d_", gridSize)
+		gridFileName = fmt.Sprintf(fileNameFmt, gridPrefix, utils.WithSeparatorsZeroPadded(steps, max), "png")
+		fmt.Fprintf(&result, "%s\n", gridFileName)
+	}
+
+	resultRectS := out.SaveImages(fileName, gridFileName, gridSize, keepAlpha)
+	resultRectN := out.ResultRectN
+	resultRectNFormatted := out.RectCenteredString()
+
+	fmt.Fprintf(&result, "\n%s %s %s\n", resultRectS.Size(), resultRectN.Size(), resultRectNFormatted)
+
+	return result.String()
 }
 
 type statsType struct {
@@ -105,7 +131,7 @@ type statsType struct {
 }
 
 func writeStats(fileNameFmt string, stats statsType) {
-	fileName := fmt.Sprintf(fileNameFmt, utils.WithSeparators(stats.Steps), "json")
+	fileName := fmt.Sprintf(fileNameFmt, "", utils.WithSeparators(stats.Steps), "json")
 
 	err := os.MkdirAll(path.Dir(fileName), 0755)
 	if err != nil {

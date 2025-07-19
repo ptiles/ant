@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/ptiles/ant/output"
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/step"
 	"github.com/ptiles/ant/utils"
@@ -31,6 +32,10 @@ Flags:
 type Flags struct {
 	jsonStats    bool
 	maxDimension int
+	gridSize     int
+	gridBoth     bool
+	gridEmpty    bool
+	gridOnly     int
 	openResults  bool
 	openResult   bool
 }
@@ -39,6 +44,10 @@ func flagsSetup() *Flags {
 	flags := &Flags{}
 
 	flag.BoolVar(&flags.jsonStats, "j", false, "Save stats in json file")
+	flag.IntVar(&flags.gridSize, "g", 0, "Save files with grid")
+	flag.BoolVar(&flags.gridBoth, "gb", false, "Save both files with and without grid")
+	flag.BoolVar(&flags.gridEmpty, "ge", false, "Save empty grid file")
+	flag.IntVar(&flags.gridOnly, "go", 0, "Save only empty grid file")
 	flag.BoolVar(&flags.openResult, "o", false, "Open resulting file")
 	flag.IntVar(&flags.maxDimension, "w", 16*1024, "Max image size")
 
@@ -59,6 +68,14 @@ func main() {
 
 	utils.StartCPUProfile(commonFlags.Cpuprofile)
 	defer utils.StopCPUProfile()
+
+	if flags.gridOnly > 0 && !commonFlags.Rectangle.Empty() {
+		out := output.NewImage(commonFlags.Rectangle, commonFlags.ScaleFactor, flags.maxDimension)
+		fileName := fmt.Sprintf("%s/grid_%d_%s.png", commonFlags.Dir, flags.gridOnly, out.RectCenteredString())
+		out.SaveGridOnly(fileName, flags.gridOnly, commonFlags.Alpha)
+		fmt.Println(fileName)
+		os.Exit(0)
+	}
 
 	field := pgrid.New(commonFlags.Pattern, commonFlags.AntRules, commonFlags.InitialPoint)
 
@@ -88,15 +105,20 @@ func main() {
 	)
 
 	fileNameFmt := fmt.Sprintf(
-		"%s/%s__%v__%s__%%s.%%s",
+		"%s/%%s%s__%v__%s__%%s.%%s",
 		commonFlags.Dir, commonFlags.AntName, commonFlags.Pattern, commonFlags.InitialPoint,
 	)
 
 	stepsTotal := saveImageFromModifiedImages(modifiedImagesCh, fileNameFmt, flags, commonFlags)
 
+	if flags.openResult && flags.gridSize > 0 {
+		gridPrefix := fmt.Sprintf("grid_%d_", flags.gridSize)
+		fileName := fmt.Sprintf(fileNameFmt, gridPrefix, utils.WithSeparators(stepsTotal), "png")
+		utils.Open(fileName)
+	}
 	//if flags.openResult || flags.openResults {
-	if flags.openResult {
-		fileName := fmt.Sprintf(fileNameFmt, utils.WithSeparators(stepsTotal), "png")
+	if flags.openResult && flags.gridSize == 0 {
+		fileName := fmt.Sprintf(fileNameFmt, "", utils.WithSeparators(stepsTotal), "png")
 		utils.Open(fileName)
 	}
 

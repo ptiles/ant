@@ -1,11 +1,19 @@
 package geom
 
 import (
+	"image"
 	"math"
 )
 
 type Point struct{ X, Y float64 }
 type Line struct{ A, B Point }
+
+func (l Line) SegmentContains(p Point) bool {
+	lr := image.Rect(int(l.A.X), int(l.A.Y), int(l.B.X), int(l.B.Y)).Inset(-1)
+	pp := image.Point{X: int(math.Round(p.X)), Y: int(math.Round(p.Y))}
+
+	return pp.In(lr)
+}
 
 func FromDeg(deg float64) float64 {
 	return deg / 180 * math.Pi
@@ -39,6 +47,10 @@ func Intersection(line1, line2 Line) Point {
 		X: ((x1A*y1B-y1A*x1B)*dx2 - dx1*(x2A*y2B-y2A*x2B)) / den,
 		Y: ((x1A*y1B-y1A*x1B)*dy2 - dy1*(x2A*y2B-y2A*x2B)) / den,
 	}
+}
+
+func NewPoint(p image.Point) Point {
+	return Point{X: float64(p.X), Y: float64(p.Y)}
 }
 
 func Distance(line Line, point Point) float64 {

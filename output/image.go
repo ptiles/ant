@@ -1,84 +1,108 @@
 package output
 
 import (
+	"github.com/ptiles/ant/geom"
 	"github.com/ptiles/ant/utils"
 	"golang.org/x/image/draw"
 	"image"
 )
 
 type Image struct {
-	ResultRectN  image.Rectangle
-	paddingRectN image.Rectangle
-	resultImageS *image.RGBA
+	ResultRectN  image.Rectangle // Area with active pixels
+	imageRectN   image.Rectangle
+	imageS       *image.RGBA
 	ScaleFactor  int
 	maxDimension int
 	dynamic      bool
+	edges        []geom.Line
 }
 
-func NewImage(rectangle image.Rectangle, scaleFactor, maxDimension int) (i Image) {
-	if rectangle.Empty() {
-		i.dynamic = true
-		i.resultImageS = image.NewRGBA(image.Rectangle{})
-	} else {
-		i.ResultRectN = rectangle
-		i.ScaleFactor = scaleFactor
-		i.resultImageS = image.NewRGBA(utils.RectDiv(rectangle, scaleFactor))
+func NewImage(rectangle image.Rectangle, scaleFactor, maxDimension int) *Image {
+	rectS := utils.RectDiv(rectangle, scaleFactor)
+	return &Image{
+		ResultRectN:  rectangle,
+		imageRectN:   rectangle,
+		imageS:       image.NewRGBA(rectS),
+		ScaleFactor:  scaleFactor,
+		maxDimension: maxDimension,
+		dynamic:      rectangle.Empty(),
+		edges:        edgeLines(rectS),
 	}
-	i.maxDimension = maxDimension
+}
 
-	return
+func (i *Image) outputRectN() image.Rectangle {
+	if i.dynamic {
+		return i.ResultRectN
+	}
+	return i.imageRectN
+}
+
+func (i *Image) RectCenteredString() string {
+	return utils.RectCenteredString(i.ResultRectN, i.ScaleFactor)
 }
 
 func (i *Image) halveImage() {
-	newResultImageS := image.NewRGBA(utils.RectDiv(i.paddingRectN, i.ScaleFactor))
+	i.imageRectN = utils.RectGrow(i.ResultRectN, i.maxDimension)
+	imageRectS := utils.RectDiv(i.imageRectN, i.ScaleFactor)
+
+	newResultImageS := image.NewRGBA(imageRectS)
 	draw.ApproxBiLinear.Scale(
-		newResultImageS, utils.RectDiv(i.resultImageS.Rect, 2),
-		i.resultImageS, i.resultImageS.Rect,
+		newResultImageS, utils.RectDiv(i.imageS.Rect, 2),
+		i.imageS, i.imageS.Rect,
 		draw.Over, nil,
 	)
-	i.resultImageS = newResultImageS
+	i.imageS = newResultImageS
 }
 
 func (i *Image) mergeImage(modifiedImage *image.RGBA) {
 	draw.BiLinear.Scale(
-		i.resultImageS, utils.RectDiv(modifiedImage.Rect, i.ScaleFactor),
+		i.imageS, utils.RectDiv(modifiedImage.Rect, i.ScaleFactor),
 		modifiedImage, modifiedImage.Rect,
 		draw.Over, nil,
 	)
 }
 
 func (i *Image) Merge(modifiedImage *image.RGBA) {
+	i.ResultRectN = i.ResultRectN.Union(modifiedImage.Rect)
 	if i.dynamic {
-		i.ResultRectN = i.ResultRectN.Union(modifiedImage.Rect)
-		if !i.ResultRectN.In(i.paddingRectN) {
+		if !i.ResultRectN.In(i.imageRectN) {
 			if i.ScaleFactor == 0 {
 				i.ScaleFactor = 1
 			} else {
 				i.ScaleFactor *= 2
 				i.maxDimension *= 2
 			}
-			i.paddingRectN = utils.RectGrow(i.ResultRectN, i.maxDimension)
 			i.halveImage()
+			i.edges = edgeLines(i.imageS.Rect)
 		}
 	}
 	i.mergeImage(modifiedImage)
 }
 
-func (i *Image) Draw(keepAlpha bool) (*image.NRGBA, image.Rectangle) {
-	resultRectS := utils.RectDiv(i.ResultRectN, i.ScaleFactor)
-	croppedRect := image.Rectangle{Min: image.Point{}, Max: resultRectS.Size()}
-	croppedImage := image.NewNRGBA(croppedRect)
+func (i *Image) SaveImages(fileName, withGridFileName string, gridSize int, keepAlpha bool) image.Rectangle {
+	cropped := newCropped(i)
 
-	draw.Draw(croppedImage, croppedRect, i.resultImageS, resultRectS.Min, draw.Over)
-
+	cropped.draw(i.imageS)
 	if !keepAlpha {
-		for y := range croppedImage.Rect.Dy() {
-			yOffset := y * croppedImage.Stride
-			for x := range croppedImage.Rect.Dx() {
-				croppedImage.Pix[yOffset+x*4+3] = 255
-			}
-		}
+		cropped.removeAlpha()
+	}
+	if fileName != "" {
+		cropped.savePNG(fileName)
 	}
 
-	return croppedImage, resultRectS
+	if withGridFileName != "" && gridSize > 0 {
+		cropped.draw(i.DrawGrid(gridSize))
+		cropped.savePNG(withGridFileName)
+	}
+
+	return cropped.dst.Rect
+}
+
+func (i *Image) SaveGridOnly(gridOnlyFileName string, gridSize int, keepAlpha bool) {
+	cropped := newCropped(i)
+	cropped.draw(i.DrawGrid(gridSize))
+	if !keepAlpha {
+		cropped.removeAlpha()
+	}
+	cropped.savePNG(gridOnlyFileName)
 }

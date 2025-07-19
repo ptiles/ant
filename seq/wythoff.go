@@ -58,6 +58,19 @@ func WythoffMinColumn(a, b, minColumn int) iter.Seq2[int, int] {
 	}
 }
 
+func WythoffMinMaxColumn(a, b, minColumn, maxColumn int) iter.Seq[int] {
+	return func(yield func(int) bool) {
+		for off := a; off <= b; off += 1 {
+			col := WythoffReverse[off].Col
+			if col > minColumn && col <= maxColumn {
+				if !yield(off) {
+					return
+				}
+			}
+		}
+	}
+}
+
 func logPhi(a float64) float64 {
 	return math.Log(a) / math.Log(math.Phi)
 }
