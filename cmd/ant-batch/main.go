@@ -17,6 +17,7 @@ type Flags struct {
 	initialAxis1        string
 	initialDirection    string
 	initialAxis2        string
+	initialLines        string
 	initialOffsets      string
 	initialPointWythoff string
 
@@ -42,6 +43,7 @@ func main() {
 		flags.initialAxis1, flags.initialDirection, flags.initialAxis2 = utils.ParseInitialAxes(axisPairStr)
 		return
 	})
+	flag.StringVar(&flags.initialLines, "il", "", "Initial point lines (comma separated)")
 	flag.StringVar(&flags.initialOffsets, "io", "", "Initial point offsets (comma separated), use with -ia")
 	flag.StringVar(&flags.initialPointWythoff, "iw", "", "Initial point offsets from wythoff array 'min-max%delta', use with -ia")
 
@@ -69,6 +71,7 @@ func main() {
 	patterns := slices.Collect(flags.Patterns(&debug))
 
 	var initialPoints []string
+	initialPoints = slices.AppendSeq(initialPoints, flags.ListLines(&debug))
 	initialPoints = slices.AppendSeq(initialPoints, flags.ListOffsets(&debug))
 	initialPoints = slices.AppendSeq(initialPoints, flags.WythoffOffsets(&debug))
 	initialPoints = slices.AppendSeq(initialPoints, flags.PathPoints(&debug))

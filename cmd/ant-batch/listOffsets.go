@@ -20,12 +20,14 @@ func (fl *Flags) ListOffsets(debug *strings.Builder) iter.Seq[string] {
 
 		for _, initialOffset1 := range offsets {
 			for _, initialOffset2 := range offsets {
-				yield(fmt.Sprintf(
+				if !yield(fmt.Sprintf(
 					" -i %s%s%s%s%s",
 					fl.initialAxis1, initialOffset1,
 					fl.initialDirection,
 					fl.initialAxis2, initialOffset2,
-				))
+				)) {
+					return
+				}
 			}
 		}
 	}

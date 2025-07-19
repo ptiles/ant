@@ -18,6 +18,7 @@ func (fl *Flags) WythoffOffsets(debug *strings.Builder) iter.Seq[string] {
 
 		rangeMin, rangeMax, rangeDelta, _ := utils.ParseRangeStr(fl.initialPointWythoff)
 		offsets := slices.Sorted(seq.WythoffDelta(rangeMin, rangeMax, rangeDelta))
+
 		if fl.debug {
 			debug.WriteString(fmt.Sprintf(
 				"\nWythoffOffsets: %s%s%s %d:%v",
