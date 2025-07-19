@@ -1,12 +1,8 @@
 package pgrid
 
 import (
-	"math"
+	"github.com/ptiles/ant/geom"
 )
-
-type Point [2]float64
-
-type Line [2]Point
 
 type Geometry struct {
 	offsetsToFirst allOffsetDeltas
@@ -14,16 +10,9 @@ type Geometry struct {
 }
 
 type gridGeometry struct {
-	anchors [GridLinesTotal]Point
-	normals [GridLinesTotal]Point
-	units   [GridLinesTotal]Point
-}
-
-const X = 0
-const Y = 1
-
-func fromDeg(deg float64) float64 {
-	return deg / 180 * math.Pi
+	anchors [GridLinesTotal]geom.Point
+	normals [GridLinesTotal]geom.Point
+	units   [GridLinesTotal]geom.Point
 }
 
 func newGridGeometry(radius float64) Geometry {
@@ -35,14 +24,14 @@ func newGridGeometry(radius float64) Geometry {
 	for ax := range GridLinesTotal {
 		alphaAx := alpha * float64(ax)
 
-		gg.anchors[ax][X] = radius * math.Cos(fromDeg(alphaAx))
-		gg.anchors[ax][Y] = radius * math.Sin(fromDeg(alphaAx))
+		gg.anchors[ax].X = radius * geom.Cos(alphaAx)
+		gg.anchors[ax].Y = radius * geom.Sin(alphaAx)
 
-		gg.normals[ax][X] = math.Cos(fromDeg(alphaAx + alpha/2))
-		gg.normals[ax][Y] = math.Sin(fromDeg(alphaAx + alpha/2))
+		gg.normals[ax].X = geom.Cos(alphaAx + alpha/2)
+		gg.normals[ax].Y = geom.Sin(alphaAx + alpha/2)
 
-		gg.units[ax][X] = math.Cos(fromDeg(alphaAx + alpha/2 + rightAngle))
-		gg.units[ax][Y] = math.Sin(fromDeg(alphaAx + alpha/2 + rightAngle))
+		gg.units[ax].X = geom.Cos(alphaAx + alpha/2 + rightAngle)
+		gg.units[ax].Y = geom.Sin(alphaAx + alpha/2 + rightAngle)
 	}
 
 	offsetsToFirst := gg.newOffsetsToFirst()
@@ -100,61 +89,25 @@ func (gg *gridGeometry) newOffsetDeltas(axA, axB, axT uint8) offsetDeltas {
 	axB1Line := gg.getLine(GridLine{axB, 1})
 	axT0Line := gg.getLine(GridLine{axT, 0})
 
-	axA0B0Point := intersection(axA0Line, axB0Line)
-	axA0B0Offset := distance(axT0Line, axA0B0Point)
+	axA0B0Point := geom.Intersection(axA0Line, axB0Line)
+	axA0B0Offset := geom.Distance(axT0Line, axA0B0Point)
 
-	axA1B0Point := intersection(axA1Line, axB0Line)
-	axA1Delta := distance(axT0Line, axA1B0Point) - axA0B0Offset
+	axA1B0Point := geom.Intersection(axA1Line, axB0Line)
+	axA1Delta := geom.Distance(axT0Line, axA1B0Point) - axA0B0Offset
 
-	axA0B1Point := intersection(axA0Line, axB1Line)
-	axB1Delta := distance(axT0Line, axA0B1Point) - axA0B0Offset
+	axA0B1Point := geom.Intersection(axA0Line, axB1Line)
+	axB1Delta := geom.Distance(axT0Line, axA0B1Point) - axA0B0Offset
 
 	return offsetDeltas{zeroZero: axA0B0Offset, ax0Delta: axA1Delta, ax1Delta: axB1Delta}
 }
 
-func (gg *gridGeometry) getLine(gl GridLine) Line {
+func (gg *gridGeometry) getLine(gl GridLine) geom.Line {
 	anchor := gg.anchors[gl.Axis]
 	normal := gg.normals[gl.Axis]
 	unit := gg.units[gl.Axis]
 	offset := float64(gl.Offset)
 
-	point1 := Point{anchor[X] + normal[X]*offset, anchor[Y] + normal[Y]*offset}
-	point2 := Point{point1[X] + unit[X], point1[Y] + unit[Y]}
-	return Line{point1, point2}
-}
-
-func intersection(line1, line2 Line) Point {
-	line1point1, line1point2 := line1[0], line1[1]
-	line2point1, line2point2 := line2[0], line2[1]
-
-	x1, y1 := line1point1[X], line1point1[Y]
-	x2, y2 := line1point2[X], line1point2[Y]
-	x3, y3 := line2point1[X], line2point1[Y]
-	x4, y4 := line2point2[X], line2point2[Y]
-
-	dx12 := x1 - x2
-	dy12 := y1 - y2
-	dx34 := x3 - x4
-	dy34 := y3 - y4
-
-	den := dx12*dy34 - dy12*dx34
-
-	return Point{
-		((x1*y2-y1*x2)*dx34 - dx12*(x3*y4-y3*x4)) / den,
-		((x1*y2-y1*x2)*dy34 - dy12*(x3*y4-y3*x4)) / den,
-	}
-}
-
-func distance(line Line, point Point) float64 {
-	x1, y1 := line[0][X], line[0][Y]
-	x2, y2 := line[1][X], line[1][Y]
-
-	x0, y0 := point[X], point[Y]
-
-	x10 := x1 - x0
-	y10 := y1 - y0
-	x21 := x2 - x1
-	y21 := y2 - y1
-
-	return x21*y10 - x10*y21
+	pointA := geom.Point{X: anchor.X + normal.X*offset, Y: anchor.Y + normal.Y*offset}
+	pointB := geom.Point{X: pointA.X + unit.X, Y: pointA.Y + unit.Y}
+	return geom.Line{A: pointA, B: pointB}
 }
