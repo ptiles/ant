@@ -20,9 +20,9 @@ func SnapRect(rect image.Rectangle, padding int) image.Rectangle {
 }
 
 func RectGrow(rect image.Rectangle, maxDimension int) image.Rectangle {
-	centerPoint := rect.Min.Add(rect.Max).Div(2)
-	halfSize := image.Point{X: maxDimension / 2, Y: maxDimension / 2}
-	return image.Rectangle{Min: centerPoint.Sub(halfSize), Max: centerPoint.Add(halfSize)}
+	center := RectCenter(rect)
+	size := image.Point{X: maxDimension, Y: maxDimension}
+	return RectCenterSize(center, size)
 }
 
 func RectDiv(rect image.Rectangle, scaleFactor int) image.Rectangle {
@@ -33,4 +33,16 @@ func RectDiv(rect image.Rectangle, scaleFactor int) image.Rectangle {
 		return rect
 	}
 	return image.Rectangle{Min: rect.Min.Div(scaleFactor), Max: rect.Max.Div(scaleFactor)}
+}
+
+func RectCenter(rect image.Rectangle) image.Point {
+	return rect.Min.Add(rect.Max).Div(2)
+}
+
+func RectCenterSize(center, size image.Point) image.Rectangle {
+	halfSize := size.Div(2)
+	return image.Rectangle{
+		Min: center.Sub(halfSize),
+		Max: center.Add(halfSize),
+	}
 }

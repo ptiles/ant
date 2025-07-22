@@ -8,8 +8,8 @@ PARALLEL="${PARALLEL:="4"}"
 NAME="${NAME:="RLL"}"
 PATTERN="${PATTERN:="7e-06"}"
 IK="${IK:="false"}"
-IC="${IC:="1536"}"
-IO="${IO:="16384"}"
+IC="${IC:="2000"}"
+IR="${IR:="0-16000"}"
 MAX_STEPS="${MAX_STEPS:="100_000 200_000 500_000 1_000_000 2_000_000 5_000_000"}"
 
 ID="${ID:="kaleidoscope"}"
@@ -17,13 +17,12 @@ ID="${ID:="kaleidoscope"}"
 BASE="${NAME}_${PATTERN}_${ID}"
 BASE_DIR="results5/${BASE}"
 
-RECT="${RECT:="(0,0)#(3588,3588)*64"}"
-#NOISE="-sm 80 -sn 1 -su 10"
-NOISE="-sm 50 -sn 35 -su 10"
-ANT_ARGS="-n ${NAME} -p ${PATTERN} -m -alpha -r '${RECT}' ${NOISE}"
+RECT="${RECT:="[0,0]#[3588,3588]*48"}"
+NOISE="-sm 35 -sn 75"
+ANT_BASE_ARGS="-n ${NAME} -p ${PATTERN} -m -alpha -rq -r ${RECT} ${NOISE}"
 
 merge () {
-  find "${1}" -name "${2}" | xargs -n 20 | {  \
+  find "${1}" -name "${2}" | xargs -n 50 | {  \
     sed 's/$/ -evaluate-sequence Max/';       \
     echo "-write ${3}";                       \
   } | magick -script -
@@ -36,9 +35,9 @@ for STEPS in "${MAX_STEPS_ARRAY[@]}"; do
   DATE=$(date "+%Y-%m-%d_%H-%M-%S")
   DIR="${BASE_DIR}/${STEPS}_${DATE}"
 
-  ./bin/ant-batch -ik="$IK" -ic "$IC" -io "$IO"              \
-  | xargs -t -L1 -P "${PARALLEL}" -I{}                       \
-    sh -c "./bin/ant -d ${DIR} -s ${STEPS} ${ANT_ARGS} {} || true"
+  BATCH_ARGS="-ik=${IK} -ic ${IC} -ir ${IR}"          \
+  ANT_ARGS="-d ${DIR} -s ${STEPS} ${ANT_BASE_ARGS}"   \
+  X_ARGS="-P ${PARALLEL}" ./bin/xargs-ant-batch
 
   merge "${DIR}" "*.png" "${BASE_DIR}/Transparent_${STEPS}_${DATE}.png"
 
@@ -55,5 +54,3 @@ magick "${BASE_DIR}/${BASE}_Black.png" -rotate 90  -gravity west -crop 2560x1600
 magick "${BASE_DIR}/${BASE}_Black.png" -rotate 270 -gravity west -crop 2560x1600+0+0 "${BASE_DIR}/${BASE}_Black_West_270.png"
 magick "${BASE_DIR}/${BASE}_Black.png" -rotate 90  -gravity east -crop 2560x1600+0+0 "${BASE_DIR}/${BASE}_Black_East_90.png"
 magick "${BASE_DIR}/${BASE}_Black.png" -rotate 270 -gravity east -crop 2560x1600+0+0 "${BASE_DIR}/${BASE}_Black_East_270.png"
-
-#open   "${BASE_DIR}/${BASE}_Black.png"

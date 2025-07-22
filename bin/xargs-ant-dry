@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 
-./bin/ant-batch "$@" | sort -R | xargs -L1 -P 1 -I{} sh -c "./bin/ant-dry {} || true"
-#cat results/*.json | jq -r 'select(.maxSide > 100000) | [.maxSide, .fileName]|@csv'
+#set -e
+set -o xtrace
+
+./bin/ant-batch $BATCH_ARGS | xargs -t -L1 $X_ARGS -I{} sh -c "./bin/ant-dry $ANT_ARGS {} || true"
