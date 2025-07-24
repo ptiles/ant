@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/utils"
+	"maps"
 )
 
 func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {
@@ -70,11 +71,9 @@ func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {
 				clearStep := stepNumber - noiseClear
 				for ax0 := range pgrid.GridLinesTotal {
 					for ax1 := range pgrid.GridLinesTotal {
-						for k, v := range visited[ax0][ax1] {
-							if v < clearStep {
-								delete(visited[ax0][ax1], k)
-							}
-						}
+						maps.DeleteFunc(visited[ax0][ax1], func(_ pgrid.GridCoords, v uint64) bool {
+							return v < clearStep
+						})
 					}
 				}
 			}

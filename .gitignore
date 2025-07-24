@@ -6,3 +6,5 @@
 /results*
 /tmp
 /*.prof
+
+*_ignore*

@@ -7,6 +7,7 @@ import (
 	"github.com/ptiles/ant/utils"
 	"image"
 	"image/color"
+	"maps"
 	"os"
 	"time"
 )
@@ -152,11 +153,9 @@ func ModifiedPointsStepper(
 				clearStep := stepNumber - noiseClear
 				for ax0 := range pgrid.GridLinesTotal {
 					for ax1 := range pgrid.GridLinesTotal {
-						for k, v := range visited[ax0][ax1] {
-							if v < clearStep {
-								delete(visited[ax0][ax1], k)
-							}
-						}
+						maps.DeleteFunc(visited[ax0][ax1], func(_ pgrid.GridCoords, v uint64) bool {
+							return v < clearStep
+						})
 					}
 				}
 			}
@@ -192,8 +191,11 @@ const OverflowOffset = 1024
 func overflowCheck(centerPoint, prevPoint image.Point) {
 	diff := image.Rectangle{Min: centerPoint, Max: prevPoint}.Canon()
 	if diff.Dx() > OverflowOffset || diff.Dy() > OverflowOffset {
-		fmt.Println("\nAnt went too far (integer overflow)", centerPoint, prevPoint)
-		os.Exit(0)
+		fmt.Fprint(os.Stderr,
+			"\nAnt went too far (integer overflow)\n",
+			centerPoint, prevPoint, "\n", os.Args, "\n\n",
+		)
+		os.Exit(1)
 	}
 }
 
