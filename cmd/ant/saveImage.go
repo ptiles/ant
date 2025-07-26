@@ -42,7 +42,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 		fmt.Print(saveImage(img, resultRectS, out.ResultRectN, out.ScaleFactor, fileNameFmt, stepsTotal, commonFlags.Steps.Max))
 		if flags.jsonStats {
 			fileName := fmt.Sprintf(fileNameFmt, utils.WithSeparators(stepsTotal), "png")
-			bounds, sizes, sizeMin, sizeMax := pgrid.GetBounds()
+			bounds, sizes, sizeMin, sizeMax := pgrid.GetBounds(32)
 
 			writeStats(fileNameFmt, statsType{
 				AntName:          commonFlags.AntName,

@@ -1,10 +1,12 @@
 package pgrid
 
 import (
+	"github.com/ptiles/ant/seq"
 	"github.com/ptiles/ant/utils"
 	"image"
 	"iter"
 	"math"
+	"sort"
 )
 
 func Uniq() (uint64, int) {
@@ -30,11 +32,13 @@ type Bounds [GridLinesTotal]struct {
 	MinCount int       `json:"minCount"`
 	Max      offsetInt `json:"max"`
 	MaxCount int       `json:"maxCount"`
+
+	Counts OffsetCounts `json:"counts"`
 }
 
 type BoundsSize [GridLinesTotal]offsetInt
 
-func GetBounds() (Bounds, BoundsSize, offsetInt, offsetInt) {
+func GetBounds(limit int) (Bounds, BoundsSize, offsetInt, offsetInt) {
 	bounds := Bounds{}
 	for ax := range GridLinesTotal {
 		bounds[ax].Axis = ax
@@ -94,7 +98,69 @@ func GetBounds() (Bounds, BoundsSize, offsetInt, offsetInt) {
 		}
 	}
 
+	topCounts := TopCounts(limit)
+	for ax := range GridLinesTotal {
+		bounds[ax].Counts = topCounts[ax]
+	}
+
 	return bounds, sizes, sizeMin, sizeMax
+}
+
+type OffsetCount struct {
+	Offset offsetInt `json:"offset"`
+	Count  int       `json:"count"`
+	Row    int       `json:"wythoffRow,omitempty"`
+	Col    int       `json:"wythoffCol,omitempty"`
+}
+type OffsetCounts []OffsetCount
+
+func (oc OffsetCounts) Len() int           { return len(oc) }
+func (oc OffsetCounts) Less(i, j int) bool { return oc[i].Count > oc[j].Count }
+func (oc OffsetCounts) Swap(i, j int)      { oc[i], oc[j] = oc[j], oc[i] }
+
+func TopCounts(limit int) [GridLinesTotal]OffsetCounts {
+	countsMap := [GridLinesTotal]map[offsetInt]int{}
+	for ax := range GridLinesTotal {
+		countsMap[ax] = make(map[offsetInt]int)
+	}
+
+	for ax0, ax1 := range AxesCanon() {
+		uArr := aValues[ax0][ax1]
+		for i, dMap := range uArr.Maps {
+			baseOff0 := offsetInt(uArr.Min.Offset0+upInt(i)%uArr.Stride) << bits
+			baseOff1 := offsetInt(uArr.Min.Offset1+upInt(i)/uArr.Stride) << bits
+			for dCoord := range dMap {
+				off0 := offsetInt(dCoord.Offset0) + baseOff0
+				off1 := offsetInt(dCoord.Offset1) + baseOff1
+
+				countsMap[ax0][off0] += 1
+				countsMap[ax1][off1] += 1
+			}
+		}
+	}
+
+	var topCounts [GridLinesTotal]OffsetCounts
+	for ax := range GridLinesTotal {
+		if limit > 0 {
+			topCounts[ax] = axisCounts(countsMap[ax])[:limit]
+		} else {
+			topCounts[ax] = axisCounts(countsMap[ax])
+		}
+	}
+
+	return topCounts
+}
+
+func axisCounts(countsMap map[offsetInt]int) OffsetCounts {
+	countsSlice := make(OffsetCounts, len(countsMap))
+	i := 0
+	for offset, count := range countsMap {
+		rev := seq.WythoffReverse[int(offset)]
+		countsSlice[i] = OffsetCount{Offset: offset, Count: count, Row: rev.Row, Col: rev.Col}
+		i++
+	}
+	sort.Sort(countsSlice)
+	return countsSlice
 }
 
 func (f *Field) Rect() image.Rectangle {
