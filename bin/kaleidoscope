@@ -17,7 +17,11 @@ ID="${ID:="kaleidoscope"}"
 BASE="${NAME}_${PATTERN}_${ID}"
 BASE_DIR="results5/${BASE}"
 
-RECT="${RECT:="[0,0]#[3588,3588]*48"}"
+RECT="${RECT:="[0,0]#[5120,5120]*48"}"
+
+#CENTER="${CENTER:="[1800,720]#[2560,1440]"}"
+CENTER="${CENTER:="[2560,1440]"}"
+
 NOISE="-sm 35 -sn 75"
 ANT_BASE_ARGS="-n ${NAME} -p ${PATTERN} -m -alpha -rq -r ${RECT} ${NOISE}"
 
@@ -50,7 +54,6 @@ for STEPS in "${MAX_STEPS_ARRAY[@]}"; do
          "${BASE_DIR}/${BASE}_Black.png"
 done
 
-magick "${BASE_DIR}/${BASE}_Black.png" -rotate 90  -gravity west -crop 2560x1600+0+0 "${BASE_DIR}/${BASE}_Black_West_90.png"
-magick "${BASE_DIR}/${BASE}_Black.png" -rotate 270 -gravity west -crop 2560x1600+0+0 "${BASE_DIR}/${BASE}_Black_West_270.png"
-magick "${BASE_DIR}/${BASE}_Black.png" -rotate 90  -gravity east -crop 2560x1600+0+0 "${BASE_DIR}/${BASE}_Black_East_90.png"
-magick "${BASE_DIR}/${BASE}_Black.png" -rotate 270 -gravity east -crop 2560x1600+0+0 "${BASE_DIR}/${BASE}_Black_East_270.png"
+./bin/ant-crop -f "${BASE_DIR}/${BASE}_Black.png"  \
+               -p "${BASE_DIR}/${BASE}_Crop" -g 14 \
+               -r "${RECT}" -c "${CENTER}" | bash -x

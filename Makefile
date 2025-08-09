@@ -1,12 +1,15 @@
 .DEFAULT_GOAL := build
 
-build: ant ant-batch ant-dry
+build: ant ant-batch ant-crop ant-dry
 
 ant:
 	go build -o bin ./cmd/ant
 
 ant-batch:
 	go build -o bin ./cmd/ant-batch
+
+ant-crop:
+	go build -o bin ./cmd/ant-crop
 
 ant-dry:
 	go build -o bin ./cmd/ant-dry

@@ -24,8 +24,8 @@ func init() {
 	floatLines := float64(GridLinesTotal)
 	for i := range GridLinesTotal {
 		floatI := float64(i) / floatLines
-		deBruijnX[i] = math.Sin(2 * math.Pi * floatI)
-		deBruijnY[i] = math.Cos(2 * math.Pi * floatI)
+		deBruijnX[i] = math.Cos(2 * math.Pi * floatI)
+		deBruijnY[i] = math.Sin(2 * math.Pi * floatI)
 	}
 }
 

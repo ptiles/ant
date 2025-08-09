@@ -30,25 +30,28 @@ var sinCos [pgrid.GridLinesTotal]struct{ sin, cos float64 }
 
 func init() {
 	alpha := 360 / float64(pgrid.GridLinesTotal)
-	rightAngle := float64(90)
 
 	for ax := range pgrid.GridLinesTotal {
-		alphaAx := alpha*float64(ax) - rightAngle
+		alphaAx := alpha * float64(ax)
 		sinCos[ax].sin = geom.Sin(alphaAx)
 		sinCos[ax].cos = geom.Cos(alphaAx)
 	}
 }
 
-func axisLine(ax uint8, offset int, scaleFactor float64) geom.Line {
+func AxisLine(ax uint8, offset int, scaleFactor float64) geom.Line {
 	aX, aY := float64(offset)*pgrid.LineScale, float64(-1_000)
 	bX, bY := float64(offset)*pgrid.LineScale, float64(1_000)
 	sin := sinCos[ax].sin
 	cos := sinCos[ax].cos
 
 	return geom.Line{
-		A: geom.Point{X: (aX*cos + aY*sin) / scaleFactor, Y: (-aX*sin + aY*cos) / scaleFactor},
-		B: geom.Point{X: (bX*cos + bY*sin) / scaleFactor, Y: (-bX*sin + bY*cos) / scaleFactor},
+		A: geom.Point{X: (aX*cos - aY*sin) / scaleFactor, Y: (aX*sin + aY*cos) / scaleFactor},
+		B: geom.Point{X: (bX*cos - bY*sin) / scaleFactor, Y: (bX*sin + bY*cos) / scaleFactor},
 	}
+}
+
+func zeroAxUnitLine(ax uint8) geom.Line {
+	return AxisLine(ax, 0, 2000)
 }
 
 func (i *Image) AxisRange(ax uint8) (int, int) {
@@ -63,7 +66,7 @@ func AxisRange(ax uint8, rect image.Rectangle) (int, int) {
 	}
 
 	cornerOffsets := make([]float64, 4)
-	axLine := axisLine(ax, 0, 2000)
+	axLine := zeroAxUnitLine(ax)
 
 	for j, cornerPoint := range cornerPoints {
 		cornerOffsets[j] = geom.Distance(axLine, geom.NewPoint(cornerPoint)) / pgrid.LineScale
@@ -76,7 +79,7 @@ func AxisRange(ax uint8, rect image.Rectangle) (int, int) {
 }
 
 func (i *Image) DrawAxis(croppedImage *image.NRGBA, ax uint8, off int, color color.RGBA) {
-	axLine := axisLine(ax, off, float64(i.ScaleFactor))
+	axLine := AxisLine(ax, off, float64(i.ScaleFactor))
 
 	var edgePoints [2]geom.Point
 	j := 0

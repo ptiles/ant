@@ -48,6 +48,32 @@ func ParseRectangleStr(rectangleStr string) (rect image.Rectangle, scaleFactor i
 	return image.Rectangle{}, 0, nil
 }
 
+func ParseCropStr(rectangleStr string) (image.Point, image.Point, error) {
+	if rectangleStr == "" {
+		return image.Point{}, image.Point{}, nil
+	}
+
+	exprSizeCenter := regexp.MustCompile(
+		`[\[(](?P<centerX>-?\d+),(?P<centerY>-?\d+)[)\]]#[\[(](?P<sizeX>-?\d+),(?P<sizeY>-?\d+)[)\]]`,
+	)
+	if matches := NamedIntMatches(exprSizeCenter, rectangleStr); matches != nil {
+		sizePoint := image.Point{X: matches["sizeX"], Y: matches["sizeY"]}
+		centerPoint := image.Point{X: matches["centerX"], Y: matches["centerY"]}
+		return sizePoint, centerPoint, nil
+	}
+
+	exprSize := regexp.MustCompile(
+		`[\[(](?P<sizeX>-?\d+),(?P<sizeY>-?\d+)[)\]]`,
+	)
+	if matches := NamedIntMatches(exprSize, rectangleStr); matches != nil {
+		sizePoint := image.Point{X: matches["sizeX"], Y: matches["sizeY"]}
+		centerPoint := sizePoint.Div(2)
+		return sizePoint, centerPoint, nil
+	}
+
+	return image.Point{}, image.Point{}, nil
+}
+
 func RectCenteredString(rect image.Rectangle, scaleFactor int) string {
 	if scaleFactor == 0 {
 		maxSide := max(rect.Size().X, rect.Size().Y)

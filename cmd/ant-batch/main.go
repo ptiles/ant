@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ptiles/ant/utils"
-	"image"
 	"os"
 	"slices"
 	"strings"
@@ -26,9 +25,6 @@ type Flags struct {
 	initialPointNear  string
 	initialPointPath  string
 	kaleidoscope      bool
-
-	Rectangle   image.Rectangle
-	ScaleFactor int
 
 	debug bool
 }
@@ -52,11 +48,6 @@ func main() {
 	flag.StringVar(&flags.initialPointNear, "in", "", "Initial point near point")
 	flag.StringVar(&flags.initialPointPath, "ip", "", "Initial points from ant path")
 	flag.BoolVar(&flags.kaleidoscope, "ik", false, "Initial point kaleidoscope style")
-
-	flag.Func("rs", "Output image rectangle size", func(rectangleStr string) (err error) {
-		flags.Rectangle, flags.ScaleFactor, err = utils.ParseRectangleStr(rectangleStr)
-		return
-	})
 
 	flag.BoolVar(&flags.debug, "d", false, "Print values")
 
