@@ -23,6 +23,8 @@ For full usage, run:
 
 ## Example results
 
+[Images generated using kaleidoscope script at ptiles.github.io](https://ptiles.github.io)
+
 ```shell
 ./bin/ant -w 2048 -alpha LRR__0.641800__C-8152+D2139__2_500_000
 ```
