@@ -6,19 +6,38 @@ import (
 	"strings"
 )
 
-func (fl *Flags) ListLines(debug *strings.Builder) iter.Seq[string] {
+type lines struct {
+	lines []string
+}
+
+func (l *lines) parser() flagParser {
+	return func(lines string) error {
+		if lines == "" {
+			return nil
+		}
+
+		l.lines = strings.Split(lines, ",")
+
+		return nil
+	}
+}
+
+func (l *lines) skip() bool {
+	return len(l.lines) == 0
+}
+
+func (l *lines) seq(debug *strings.Builder) iter.Seq[string] {
 	return func(yield func(string) bool) {
-		if fl.initialLines == "" {
+		if l.skip() {
 			return
 		}
 
-		lines := strings.Split(fl.initialLines, ",")
-		if fl.debug {
-			debug.WriteString(fmt.Sprint("\nListLines: ", len(lines), lines))
+		if debug != nil {
+			debug.WriteString(fmt.Sprint("\nListLines: ", len(l.lines), l.lines))
 		}
 
-		for i, initialLine1 := range lines {
-			for _, initialLine2 := range lines[i+1:] {
+		for i, initialLine1 := range l.lines {
+			for _, initialLine2 := range l.lines[i+1:] {
 				if initialLine1[0] == initialLine2[0] {
 					continue
 				}

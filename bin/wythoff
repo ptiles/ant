@@ -5,16 +5,12 @@ set -o xtrace
 
 PARALLEL="4"
 DIR="results5/wythoff600k960mmp4"
-#STEPS="1_000_000_000%100_000_000"
 STEPS="960_000_000%1_000_000"
 PATTERN="7e-10"
-#ANT_ARGS="-p ${PATTERN} -m0 -r '(9160704,2393856)-(12972288,4678656)/1024'"
-ANT_ARGS="-p ${PATTERN} -m0 -rq -r '[11000960,3536256]#[3840,2160]*1024'"
+ANT_ARGS="-p ${PATTERN} -m0 -rq -r [-9436320,6661856]#[5120,3200]*1024"
 
-IA="A-C"
-#IO=$(./bin/grid -min 600_000 -max 900_000 -delta 6_000)
-#IO=$(./bin/grid -min 600_000 -max 900_000 -rmin 1 -rmax 6)
-IO="600200,628857,646568,675225,692936,721593,750250,767961,796618,825275"
+W="600000-850000%20000"
+WA="B-D"
 
 mkdir -p ${DIR}
 open ${DIR}
@@ -26,14 +22,18 @@ merge () {
   } | magick -script -
 }
 
-./bin/ant-batch -ia "${IA}" -io "${IO}"  \
+./bin/ant-batch -wythoff "${W}" -wythoff-axes "${WA}"  \
 | xargs -t -L1 -P "${PARALLEL}" -I{} \
   sh -c "./bin/ant -d ${DIR} -s ${STEPS} ${ANT_ARGS} {} || true"
 
-mkdir "${DIR}/RLL__${PATTERN}__${STEPS}"
-mv    "${DIR}/RLL__${PATTERN}__"*"__${STEPS}.png" \
-      "${DIR}/RLL__${PATTERN}__${STEPS}"
+for i in $(seq -w 1 960); do
+  STEPS="${i}_000_000"
+  merge "${DIR}" "RLL__${PATTERN}__*__${STEPS}.png" "${DIR}/Merged_RLL__${PATTERN}__${STEPS}.png"
+  mv "${DIR}/RLL__${PATTERN}__"*"__${STEPS}.png" "${DIR}/RLL__${PATTERN}"
+done
 
-merge "${DIR}/RLL__${PATTERN}__${STEPS}" \
-      "RLL__${PATTERN}__*__${STEPS}.png" \
-      "${DIR}/Merged_RLL__${PATTERN}__${STEPS}.png"
+ffmpeg -framerate 24 -pattern_type glob                     \
+       -i "${DIR}/Merged_RLL__${PATTERN}__*.png"            \
+       -vf "scale=iw/2:ih/2, pad=ceil(iw/2)*2:ceil(ih/2)*2" \
+       -c:v libx264 -pix_fmt yuv422p                        \
+          "${DIR}/Merged_RLL__${PATTERN}.mp4"

@@ -1,0 +1,54 @@
+package main
+
+import (
+	"flag"
+)
+
+type flagParser func(string) error
+
+type Flags struct {
+	interval interval
+	lines    lines
+	list     list
+	names    names
+	near     near
+	path     path
+	patterns patterns
+	wythoff  wythoff
+
+	debug bool
+}
+
+func parseFlags() *Flags {
+	fl := Flags{}
+	flag.BoolVar(&fl.debug, "d", false, "Print values\n")
+
+	flag.Func("interval", "Initial point offsets interval", fl.interval.intervalParser())
+	flag.Func("interval-count", "Initial point offsets interval count", fl.interval.countParser())
+	flag.BoolFunc("interval-kaleidoscope", "Initial point kaleidoscope style\n", fl.interval.kaleidoscopeParser())
+
+	flag.Func("lines", "Initial point from lines (comma separated)\n", fl.lines.parser())
+
+	flag.Func("offsets", "Initial point offsets (comma separated)", fl.list.offsetsParser())
+	flag.Func("offsets-axes", "Initial axes and direction (ex: A+C)\n", fl.list.axesParser())
+
+	flag.Func("names", "Ant name range MIN-MAX\n", fl.names.parser())
+
+	flag.Func("near", "Initial point near point", fl.near.pointParser())
+	flag.Func("near-count", "Initial point near count", fl.near.countParser())
+	flag.Func("near-distance", "Initial point near distance\n", fl.near.distanceParser())
+
+	flag.Func("path", "Initial points from ant path\n", fl.path.parser())
+
+	flag.Func("patterns", "Patterns random count\n", fl.patterns.parser())
+
+	flag.Func("wythoff", "Initial point offsets from wythoff array 'min-max%delta'", fl.wythoff.intervalParser())
+	flag.Func("wythoff-axes", "Axes and direction for Wythoff offsets (ex: A+C)", fl.wythoff.axesParser())
+
+	flag.Usage = func() {
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+
+	return &fl
+}

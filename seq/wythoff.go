@@ -49,7 +49,7 @@ func WythoffMinColumn(a, b, minColumn int) iter.Seq2[int, int] {
 	return func(yield func(int, int) bool) {
 		for off := a; off <= b; off += 1 {
 			col := WythoffReverse[off].Col
-			if col > minColumn {
+			if col >= minColumn {
 				if !yield(col, off) {
 					return
 				}
@@ -62,7 +62,7 @@ func WythoffMinMaxColumn(a, b, minColumn, maxColumn int) iter.Seq[int] {
 	return func(yield func(int) bool) {
 		for off := a; off <= b; off += 1 {
 			col := WythoffReverse[off].Col
-			if col > minColumn && col <= maxColumn {
+			if col >= minColumn && col < maxColumn {
 				if !yield(off) {
 					return
 				}
@@ -84,7 +84,7 @@ func WythoffDelta(a, b, minDelta int) iter.Seq[int] {
 		minColumn := prevFibIndex(minDelta)
 		for off := a; off <= b; off += 1 {
 			col := WythoffReverse[off].Col
-			if col > minColumn {
+			if col >= minColumn {
 				if !yield(off) {
 					return
 				}

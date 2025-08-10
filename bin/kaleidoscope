@@ -7,9 +7,8 @@ PARALLEL="${PARALLEL:="4"}"
 
 NAME="${NAME:="RLL"}"
 PATTERN="${PATTERN:="7e-06"}"
-IK="${IK:="false"}"
 IC="${IC:="2000"}"
-IR="${IR:="0-16000"}"
+IO="${IO:="0-16000"}"
 MAX_STEPS="${MAX_STEPS:="100_000 200_000 500_000 1_000_000 2_000_000 5_000_000"}"
 
 ID="${ID:="kaleidoscope"}"
@@ -39,7 +38,7 @@ for STEPS in "${MAX_STEPS_ARRAY[@]}"; do
   DATE=$(date "+%Y-%m-%d_%H-%M-%S")
   DIR="${BASE_DIR}/${STEPS}_${DATE}"
 
-  BATCH_ARGS="-ik=${IK} -ic ${IC} -ir ${IR}"          \
+  BATCH_ARGS="-interval-count ${IC} -interval-offsets ${IO}"   \
   ANT_ARGS="-d ${DIR} -s ${STEPS} ${ANT_BASE_ARGS}"   \
   X_ARGS="-P ${PARALLEL}" ./bin/xargs-ant-batch
 
@@ -55,5 +54,5 @@ for STEPS in "${MAX_STEPS_ARRAY[@]}"; do
 done
 
 ./bin/ant-crop -f "${BASE_DIR}/${BASE}_Black.png"  \
-               -p "${BASE_DIR}/${BASE}_Crop" -g 14 \
+               -p "${BASE_DIR}/${BASE}_Crop" -g 15 \
                -r "${RECT}" -c "${CENTER}" | bash -x

@@ -8,17 +8,39 @@ import (
 	"strings"
 )
 
-func (fl *Flags) PathPoints(debug *strings.Builder) iter.Seq[string] {
+type path struct {
+	flags   utils.CommonFlags
+	present bool
+}
+
+func (p *path) parser() flagParser {
+	return func(path string) error {
+		if path == "" {
+			return nil
+		}
+
+		p.flags.ParseShorthand(path)
+		p.present = true
+
+		return nil
+	}
+}
+
+func (p *path) skip() bool {
+	return !p.present
+}
+
+func (p *path) seq(debug *strings.Builder) iter.Seq[string] {
 	return func(yield func(string) bool) {
-		if fl.initialPointPath == "" {
+		if p.skip() {
 			return
 		}
-		if fl.debug {
+
+		if debug != nil {
 			debug.WriteString("\nPathPoints: ")
 		}
 
-		pathFlags := utils.CommonFlags{}
-		pathFlags.ParseShorthand(fl.initialPointPath)
+		pathFlags := p.flags
 		field := pgrid.New(pathFlags.Pattern, pathFlags.AntRules, pathFlags.InitialPoint)
 
 		steps := pathFlags.Steps
@@ -28,7 +50,7 @@ func (fl *Flags) PathPoints(debug *strings.Builder) iter.Seq[string] {
 				if !yield(fmt.Sprintf(" -i %s", turnString)) {
 					return
 				}
-				if fl.debug {
+				if debug != nil {
 					debug.WriteString(" ")
 					debug.WriteString(turnString)
 				}

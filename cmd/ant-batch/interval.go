@@ -6,64 +6,100 @@ import (
 	"github.com/ptiles/ant/utils"
 	"iter"
 	"math/rand/v2"
+	"strconv"
 	"strings"
 )
 
-func (fl *Flags) InitialPoints(debug *strings.Builder) iter.Seq[string] {
+type interval struct {
+	count int
+
+	rangeMin     int
+	rangeMax     int
+	rangePresent bool
+
+	kaleidoscope bool
+}
+
+func (i *interval) intervalParser() flagParser {
+	return func(interval string) error {
+		if interval == "" {
+			return nil
+		}
+
+		rangeMin, rangeMax, err := utils.ParseRangeStr(interval)
+		if err != nil {
+			return err
+		}
+
+		i.rangeMin = rangeMin
+		i.rangeMax = rangeMax
+		i.rangePresent = true
+
+		return nil
+	}
+}
+
+func (i *interval) countParser() flagParser {
+	return func(countStr string) error {
+		if countStr == "" {
+			return nil
+		}
+
+		count, err := strconv.Atoi(countStr)
+		if err != nil {
+			return err
+		}
+
+		i.count = count
+
+		return nil
+	}
+}
+
+func (i *interval) kaleidoscopeParser() flagParser {
+	return func(_ string) error {
+		i.kaleidoscope = true
+
+		return nil
+	}
+}
+
+func (i *interval) skip() bool {
+	return i.count == 0 || !i.rangePresent
+}
+
+func (i *interval) seq(debug *strings.Builder) iter.Seq[string] {
 	return func(yield func(string) bool) {
-		if fl.initialPointCount == 0 {
+		if i.skip() {
 			return
 		}
 
-		rangeMin, rangeMax, _, _ := utils.ParseRangeStr(fl.initialPointRange)
-
-		if fl.initialPointNear != "" {
-			ax1, off1, _, ax2, off2 := utils.ParseInitialPoint(fl.initialPointNear)
-
-			min1 := off1 - rangeMax
-			max1 := off1 + rangeMax
-			min2 := off2 - rangeMax
-			max2 := off2 + rangeMax
-
-			if fl.debug {
-				debug.WriteString("\nInitialPoints near:")
-			}
-			for range fl.initialPointCount {
-				point := genRandomPointAround(ax1, min1, max1, ax2, min2, max2)
-				if !yield(fmt.Sprintf(" -i %s", point)) {
-					return
-				}
-				if fl.debug {
-					debug.WriteString(" ")
-					debug.WriteString(point)
-				}
-			}
-		} else if fl.kaleidoscope {
-			if fl.debug {
+		if i.kaleidoscope {
+			if debug != nil {
 				debug.WriteString("\nInitialPoints kaleidoscope:")
 			}
-			for range fl.initialPointCount {
-				points := genRandomPointKaleidoscope(rangeMin, rangeMax)
+			for range i.count {
+				points := genRandomPointKaleidoscope(i.rangeMin, i.rangeMax)
 				for _, point := range points {
 					if !yield(fmt.Sprintf(" -i %s", point)) {
 						return
 					}
-					if fl.debug {
+					if debug != nil {
 						debug.WriteString(" ")
 						debug.WriteString(point)
 					}
 				}
 			}
 		} else {
-			if fl.debug {
+			if debug != nil {
 				debug.WriteString("\nInitialPoints count:")
 			}
-			for range fl.initialPointCount {
-				point := genRandomPointString(rangeMin, rangeMax)
+			for range i.count {
+				point := genRandomPointString(i.rangeMin, i.rangeMax)
 				if !yield(fmt.Sprintf(" -i %s", point)) {
 					return
 				}
-				if fl.debug {
+				if debug != nil {
 					debug.WriteString(" ")
 					debug.WriteString(point)
 				}
@@ -118,13 +154,4 @@ func genRandomPointKaleidoscope(min, max int) [GridLinesTotal]string {
 		result[i] = point
 	}
 	return result
-}
-
-func genRandomPointAround(ax1, min1, max1, ax2, min2, max2 int) string {
-	dir := [2]string{"-", "+"}[rand.IntN(2)]
-
-	off1 := rand.IntN(max1+1-min1) + min1
-	off2 := rand.IntN(max2+1-min2) + min2
-
-	return fmt.Sprintf("%s%d%s%s%d", pgrid.AxisNames[ax1], off1, dir, pgrid.AxisNames[ax2], off2)
 }

@@ -1,93 +1,44 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"github.com/ptiles/ant/utils"
 	"os"
 	"slices"
 	"strings"
 )
 
-type Flags struct {
-	antNameRange  string
-	patternsCount int
-
-	initialAxis1        string
-	initialDirection    string
-	initialAxis2        string
-	initialLines        string
-	initialOffsets      string
-	initialPointWythoff string
-
-	initialPointCount int
-	initialPointRange string
-	initialPointNear  string
-	initialPointPath  string
-	kaleidoscope      bool
-
-	debug bool
-}
-
 func main() {
-	flags := &Flags{}
+	fl := parseFlags()
 
-	flag.StringVar(&flags.antNameRange, "nr", "", "Ant name range MIN-MAX")
-	flag.IntVar(&flags.patternsCount, "pc", 0, "Patterns random count")
+	var debug *strings.Builder
 
-	flag.Func("ia", "Initial axes and direction (ex: A+C), use with -io or -iw", func(axisPairStr string) (err error) {
-		flags.initialAxis1, flags.initialDirection, flags.initialAxis2 = utils.ParseInitialAxes(axisPairStr)
-		return
-	})
-	flag.StringVar(&flags.initialLines, "il", "", "Initial point lines (comma separated)")
-	flag.StringVar(&flags.initialOffsets, "io", "", "Initial point offsets (comma separated), use with -ia")
-	flag.StringVar(&flags.initialPointWythoff, "iw", "", "Initial point offsets from wythoff array 'min-max%delta', use with -ia")
-
-	flag.IntVar(&flags.initialPointCount, "ic", 0, "Initial point random count")
-	flag.StringVar(&flags.initialPointRange, "ir", "0-8192", "Initial point offsets range")
-	flag.StringVar(&flags.initialPointNear, "in", "", "Initial point near point")
-	flag.StringVar(&flags.initialPointPath, "ip", "", "Initial points from ant path")
-	flag.BoolVar(&flags.kaleidoscope, "ik", false, "Initial point kaleidoscope style")
-
-	flag.BoolVar(&flags.debug, "d", false, "Print values")
-
-	flag.Usage = func() {
-		flag.PrintDefaults()
+	if fl.debug {
+		debug = &strings.Builder{}
 	}
-	flag.Parse()
 
-	var debug strings.Builder
-
-	antNames := slices.Collect(flags.AntNames(&debug))
-	patterns := slices.Collect(flags.Patterns(&debug))
+	antNames := slices.Collect(fl.names.seq(debug))
+	antPatterns := slices.Collect(fl.patterns.seq(debug))
 
 	var initialPoints []string
-	initialPoints = slices.AppendSeq(initialPoints, flags.ListLines(&debug))
-	initialPoints = slices.AppendSeq(initialPoints, flags.ListOffsets(&debug))
-	initialPoints = slices.AppendSeq(initialPoints, flags.WythoffOffsets(&debug))
-	initialPoints = slices.AppendSeq(initialPoints, flags.PathPoints(&debug))
-	initialPoints = slices.AppendSeq(initialPoints, flags.InitialPoints(&debug))
+	initialPoints = slices.AppendSeq(initialPoints, fl.interval.seq(debug))
+	initialPoints = slices.AppendSeq(initialPoints, fl.lines.seq(debug))
+	initialPoints = slices.AppendSeq(initialPoints, fl.list.seq(debug))
+	initialPoints = slices.AppendSeq(initialPoints, fl.near.seq(debug))
+	initialPoints = slices.AppendSeq(initialPoints, fl.path.seq(debug))
+	initialPoints = slices.AppendSeq(initialPoints, fl.wythoff.seq(debug))
 	if len(initialPoints) == 0 {
 		initialPoints = []string{""}
 	}
 
-	for _, antName := range antNames {
-		for _, pattern := range patterns {
+	for _, name := range antNames {
+		for _, pattern := range antPatterns {
 			for _, initialPoint := range initialPoints {
-				printArgs(antName, pattern, initialPoint)
+				fmt.Print(name, pattern, initialPoint, "\n")
 			}
 		}
 	}
 
-	if flags.debug {
+	if debug != nil {
 		fmt.Fprintln(os.Stderr, "Values used:", debug.String())
 	}
-}
-
-func printArgs(all ...string) {
-	var sb strings.Builder
-	for _, one := range all {
-		sb.WriteString(one)
-	}
-	fmt.Println(sb.String())
 }
