@@ -7,8 +7,8 @@ PARALLEL="${PARALLEL:="4"}"
 
 NAME="${NAME:="RLL"}"
 PATTERN="${PATTERN:="7e-06"}"
-IC="${IC:="2000"}"
-IO="${IO:="0-16000"}"
+IC="${IC:="4000"}"
+#IO="${IO:="0-16000"}"
 MAX_STEPS="${MAX_STEPS:="100_000 200_000 500_000 1_000_000 2_000_000 5_000_000"}"
 
 ID="${ID:="kaleidoscope"}"
@@ -38,7 +38,8 @@ for STEPS in "${MAX_STEPS_ARRAY[@]}"; do
   DATE=$(date "+%Y-%m-%d_%H-%M-%S")
   DIR="${BASE_DIR}/${STEPS}_${DATE}"
 
-  BATCH_ARGS="-interval-count ${IC} -interval-offsets ${IO}"   \
+#  BATCH_ARGS="-interval-offsets ${IO} -interval-count ${IC}"   \
+  BATCH_ARGS="-rect ${RECT} -rect-count ${IC}"        \
   ANT_ARGS="-d ${DIR} -s ${STEPS} ${ANT_BASE_ARGS}"   \
   X_ARGS="-P ${PARALLEL}" ./bin/xargs-ant-batch
 

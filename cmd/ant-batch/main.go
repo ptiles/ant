@@ -25,6 +25,7 @@ func main() {
 	initialPoints = slices.AppendSeq(initialPoints, fl.list.seq(debug))
 	initialPoints = slices.AppendSeq(initialPoints, fl.near.seq(debug))
 	initialPoints = slices.AppendSeq(initialPoints, fl.path.seq(debug))
+	initialPoints = slices.AppendSeq(initialPoints, fl.rect.seq(debug))
 	initialPoints = slices.AppendSeq(initialPoints, fl.wythoff.seq(debug))
 	if len(initialPoints) == 0 {
 		initialPoints = []string{""}

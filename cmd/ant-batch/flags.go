@@ -14,6 +14,7 @@ type Flags struct {
 	near     near
 	path     path
 	patterns patterns
+	rect     rect
 	wythoff  wythoff
 
 	debug bool
@@ -41,6 +42,9 @@ func parseFlags() *Flags {
 	flag.Func("path", "Initial points from ant path\n", fl.path.parser())
 
 	flag.Func("patterns", "Patterns random count\n", fl.patterns.parser())
+
+	flag.Func("rect", "Initial points inside rectangle", fl.rect.rectParser())
+	flag.Func("rect-count", "Initial points inside rectangle count\n", fl.rect.countParser())
 
 	flag.Func("wythoff", "Initial point offsets from wythoff array 'min-max%delta'", fl.wythoff.intervalParser())
 	flag.Func("wythoff-axes", "Axes and direction for Wythoff offsets (ex: A+C)", fl.wythoff.axesParser())
