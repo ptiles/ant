@@ -19,17 +19,6 @@ func init() {
 	}
 }
 
-//func (ga *GridAxes) update(gridLine0, gridLine1 GridLine) {
-//	// Keep axes in ascending order
-//	if gridLine0.Axis > gridLine1.Axis {
-//		ga.Axis0, ga.Coords.Offset0 = gridLine1.Axis, gridLine1.Offset
-//		ga.Axis1, ga.Coords.Offset1 = gridLine0.Axis, gridLine0.Offset
-//	} else {
-//		ga.Axis0, ga.Coords.Offset0 = gridLine0.Axis, gridLine0.Offset
-//		ga.Axis1, ga.Coords.Offset1 = gridLine1.Axis, gridLine1.Offset
-//	}
-//}
-
 // RunAxesColor is used in cmd/ant
 func (f *Field) RunAxesColor(maxSteps uint64) iter.Seq2[GridAxes, uint8] {
 	return func(yield func(GridAxes, uint8) bool) {
@@ -40,7 +29,6 @@ func (f *Field) RunAxesColor(maxSteps uint64) iter.Seq2[GridAxes, uint8] {
 
 		for range maxSteps {
 			// Keep axes in ascending order
-			//currAxes.update(currLine, prevLine) // TODO: inline if needed
 			if currLine.Axis > prevLine.Axis {
 				currAxes.Axis0, currAxes.Coords.Offset0 = prevLine.Axis, prevLine.Offset
 				currAxes.Axis1, currAxes.Coords.Offset1 = currLine.Axis, currLine.Offset
@@ -76,7 +64,6 @@ func (f *Field) RunPoint(maxSteps uint64) iter.Seq2[GridAxes, image.Point] {
 
 		for range maxSteps {
 			// Keep axes in ascending order
-			//currAxes.update(currLine, prevLine) // TODO: inline if needed
 			if currLine.Axis > prevLine.Axis {
 				currAxes.Axis0, currAxes.Coords.Offset0 = prevLine.Axis, prevLine.Offset
 				currAxes.Axis1, currAxes.Coords.Offset1 = currLine.Axis, currLine.Offset
@@ -113,7 +100,6 @@ func (f *Field) RunAxes(maxSteps uint64) iter.Seq[GridAxes] {
 
 		for range maxSteps {
 			// Keep axes in ascending order
-			//currAxes.update(currLine, prevLine) // TODO: inline if needed
 			if currLine.Axis > prevLine.Axis {
 				currAxes.Axis0, currAxes.Coords.Offset0 = prevLine.Axis, prevLine.Offset
 				currAxes.Axis1, currAxes.Coords.Offset1 = currLine.Axis, currLine.Offset
@@ -149,7 +135,6 @@ func (f *Field) RunTurns(maxSteps uint64) iter.Seq2[uint64, Turn] {
 
 		for i := range maxSteps {
 			// Keep axes in ascending order
-			//currAxes.update(currLine, prevLine) // TODO: inline if needed
 			if currLine.Axis > prevLine.Axis {
 				currAxes.Axis0, currAxes.Coords.Offset0 = prevLine.Axis, prevLine.Offset
 				currAxes.Axis1, currAxes.Coords.Offset1 = currLine.Axis, currLine.Offset
