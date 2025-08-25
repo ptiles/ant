@@ -5,8 +5,8 @@ import (
 	"github.com/StephaneBunel/bresenham"
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/utils/palette"
 	"image"
-	"image/color"
 	"maps"
 	"os"
 	"time"
@@ -61,16 +61,16 @@ var noiseCharsLen = uint64(len(noiseChars))
 func ModifiedPointsStepper(
 	f *pgrid.Field,
 	modifiedImagesCh chan<- ModifiedImage,
-	palette []color.RGBA,
+	pal palette.Palette,
 	steps utils.StepCounts,
 	maxNoisyDots uint64,
 ) {
 	modifiedPointsCh := make(chan []gridPointColor, 64)
 
 	//if pgrid.DrawTilesAndPoints {
-	//	go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, palette, steps, drawTiles)
+	//	go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, pal, steps, drawTiles)
 	//} else {
-	go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, palette, steps, drawPoints)
+	go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, pal, steps, drawPoints)
 	//}
 
 	points := make([]gridPointColor, MaxModifiedPoints)
@@ -199,23 +199,23 @@ func overflowCheck(centerPoint, prevPoint image.Point) {
 	}
 }
 
-func drawPoints(rect image.Rectangle, points []gridPointColor, palette []color.RGBA) *image.RGBA {
+func drawPoints(rect image.Rectangle, points []gridPointColor, pal palette.Palette) *image.RGBA {
 	img := image.NewRGBA(utils.SnapRect(rect, pgrid.Padding))
 
 	for i := range points {
 		x, y := points[i].centerPoint.X, points[i].centerPoint.Y
-		img.Set(x, y, palette[points[i].color])
+		img.Set(x, y, pal[points[i].color])
 	}
 
 	return img
 }
 
-func drawTiles(rect image.Rectangle, points []gridTileColor, palette []color.RGBA) *image.RGBA {
+func drawTiles(rect image.Rectangle, points []gridTileColor, pal palette.Palette) *image.RGBA {
 	img := image.NewRGBA(utils.SnapRect(rect, pgrid.Padding))
 
 	for i := range points {
 		gridPoint := points[i].gridPoint
-		color := palette[points[i].color]
+		color := pal[points[i].color]
 		cornerPoints := gridPoint.GetCornerPoints()
 		p0, p1, p2, p3 := cornerPoints[0], cornerPoints[1], cornerPoints[2], cornerPoints[3]
 
@@ -243,9 +243,9 @@ func modifiedPointsToImages(
 	f *pgrid.Field,
 	modifiedPointsCh <-chan []gridPointColor,
 	modifiedImagesCh chan<- ModifiedImage,
-	palette []color.RGBA,
+	pal palette.Palette,
 	steps utils.StepCounts,
-	drawPointsFn func(rect image.Rectangle, points []gridPointColor, palette []color.RGBA) *image.RGBA,
+	drawPointsFn func(rect image.Rectangle, points []gridPointColor, pal palette.Palette) *image.RGBA,
 ) {
 	stepsCount := uint64(0)
 	prevPoint := image.Point{}
@@ -273,7 +273,7 @@ func modifiedPointsToImages(
 			if rectIsLarge(rect) || shouldSave {
 				modifiedImagesCh <- ModifiedImage{
 					Steps: stepsCount, Save: shouldSave,
-					Img: drawPointsFn(rect, points[start:i], palette),
+					Img: drawPointsFn(rect, points[start:i], pal),
 				}
 
 				rect = image.Rectangle{}
@@ -285,7 +285,7 @@ func modifiedPointsToImages(
 		if start < len(points) {
 			modifiedImagesCh <- ModifiedImage{
 				Steps: stepsCount, Save: false,
-				Img: drawPointsFn(rect, points[start:], palette),
+				Img: drawPointsFn(rect, points[start:], pal),
 			}
 		}
 	}

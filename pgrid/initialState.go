@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/ptiles/ant/utils"
 	"image"
-	"math/rand/v2"
 )
 
 type Turn struct {
@@ -48,22 +47,20 @@ func (f *Field) InitialCenterPoint() image.Point {
 	})
 }
 
-func InitialPointSeed(initialPoint string, seedDropBits uint8) *rand.Rand {
-	currAxis, currOffset, prevPointSign, prevAxis, prevOffset := utils.ParseInitialPoint(initialPoint)
+func (f *Field) SeedString(seedDropBits uint8) string {
+	currAxis, currOffset, prevPointSign, prevAxis, prevOffset := utils.ParseInitialPoint(f.InitialPoint)
 
 	// Same seed for five symmetric points
-	//seedString := fmt.Sprintf(
+	//return fmt.Sprintf(
 	//	"%d%t%d%d",
 	//	(int(GridLinesTotal)+currAxis-prevAxis)%int(GridLinesTotal),
 	//	prevPointSign, currOffset>>seedDropBits, prevOffset>>seedDropBits,
 	//)
 
 	// Different seeds
-	seedString := fmt.Sprintf(
+	return fmt.Sprintf(
 		"%s%s%t%d%d",
 		AxisNames[currAxis], AxisNames[prevAxis],
 		prevPointSign, currOffset>>seedDropBits, prevOffset>>seedDropBits,
 	)
-
-	return utils.RngFromString(seedString)
 }

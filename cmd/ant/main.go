@@ -7,7 +7,7 @@ import (
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/step"
 	"github.com/ptiles/ant/utils"
-	"image/color"
+	"github.com/ptiles/ant/utils/palette"
 	"log"
 	"os"
 	"path/filepath"
@@ -84,22 +84,22 @@ func main() {
 		os.Exit(0)
 	}
 
-	var palette []color.RGBA
+	var pal palette.Palette
 	if commonFlags.Monochrome {
-		rng := pgrid.InitialPointSeed(commonFlags.InitialPoint, 8)
-		palette = utils.GetPaletteMonochromatic(int(field.Limit), rng)
+		seedString := field.SeedString(8)
+		pal = palette.GetPaletteMonochromatic(int(field.Limit), seedString)
 	} else if commonFlags.Monochrome0 {
-		rng := pgrid.InitialPointSeed(commonFlags.InitialPoint, 0)
-		palette = utils.GetPaletteMonochromatic(int(field.Limit), rng)
+		seedString := field.SeedString(0)
+		pal = palette.GetPaletteMonochromatic(int(field.Limit), seedString)
 	} else {
-		palette = utils.GetPaletteRainbow(int(field.Limit))
+		pal = palette.GetPaletteRainbow(int(field.Limit))
 	}
 
 	modifiedImagesCh := make(chan step.ModifiedImage, 64)
 
 	go step.ModifiedPointsStepper(
 		field,
-		modifiedImagesCh, palette,
+		modifiedImagesCh, pal,
 		commonFlags.Steps,
 		commonFlags.MaxNoisyDots,
 	)
