@@ -20,6 +20,7 @@ func main() {
 	antPatterns := slices.Collect(fl.patterns.seq(debug))
 
 	var initialPoints []string
+	initialPoints = slices.AppendSeq(initialPoints, fl.grid.seq(debug))
 	initialPoints = slices.AppendSeq(initialPoints, fl.interval.seq(debug))
 	initialPoints = slices.AppendSeq(initialPoints, fl.lines.seq(debug))
 	initialPoints = slices.AppendSeq(initialPoints, fl.list.seq(debug))
@@ -31,15 +32,15 @@ func main() {
 		initialPoints = []string{""}
 	}
 
+	if debug != nil {
+		fmt.Fprintln(os.Stderr, "Values used:", debug.String())
+	}
+
 	for _, name := range antNames {
 		for _, pattern := range antPatterns {
 			for _, initialPoint := range initialPoints {
 				fmt.Print(name, pattern, initialPoint, "\n")
 			}
 		}
-	}
-
-	if debug != nil {
-		fmt.Fprintln(os.Stderr, "Values used:", debug.String())
 	}
 }

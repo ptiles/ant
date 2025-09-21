@@ -1,8 +1,8 @@
 package output
 
 import (
-	"github.com/ptiles/ant/geom"
 	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/wgrid"
 	"golang.org/x/image/draw"
 	"image"
 )
@@ -14,7 +14,7 @@ type Image struct {
 	ScaleFactor  int
 	maxDimension int
 	dynamic      bool
-	edges        []geom.Line
+	Grid         wgrid.WythoffGrid
 }
 
 func NewImage(rectangle image.Rectangle, scaleFactor, maxDimension int) *Image {
@@ -26,7 +26,7 @@ func NewImage(rectangle image.Rectangle, scaleFactor, maxDimension int) *Image {
 		ScaleFactor:  scaleFactor,
 		maxDimension: maxDimension,
 		dynamic:      rectangle.Empty(),
-		edges:        edgeLines(rectS),
+		Grid:         wgrid.New(rectangle, scaleFactor),
 	}
 }
 
@@ -73,7 +73,7 @@ func (i *Image) Merge(modifiedImage *image.RGBA) {
 				i.maxDimension *= 2
 			}
 			i.halveImage()
-			i.edges = edgeLines(i.imageS.Rect)
+			i.Grid = wgrid.New(i.ResultRectN, i.ScaleFactor)
 		}
 	}
 	i.mergeImage(modifiedImage)
@@ -91,7 +91,7 @@ func (i *Image) SaveImages(fileName, withGridFileName string, gridSize int, keep
 	}
 
 	if withGridFileName != "" && gridSize > 0 {
-		cropped.draw(i.DrawGrid(gridSize))
+		cropped.draw(i.Grid.DrawMultiGrid(gridSize))
 		cropped.savePNG(withGridFileName)
 	}
 
@@ -100,7 +100,7 @@ func (i *Image) SaveImages(fileName, withGridFileName string, gridSize int, keep
 
 func (i *Image) SaveGridOnly(gridOnlyFileName string, gridSize int, keepAlpha bool) {
 	cropped := newCropped(i)
-	cropped.draw(i.DrawGrid(gridSize))
+	cropped.draw(i.Grid.DrawMultiGrid(gridSize))
 	if !keepAlpha {
 		cropped.removeAlpha()
 	}

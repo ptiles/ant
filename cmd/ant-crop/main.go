@@ -3,11 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ptiles/ant/geom"
-	"github.com/ptiles/ant/output"
-	"github.com/ptiles/ant/pgrid"
-	"github.com/ptiles/ant/seq"
 	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/wgrid"
 	"image"
 	"math"
 	"os"
@@ -46,10 +43,11 @@ func main() {
 	flag.Parse()
 
 	exit := false
+	short := false
 
 	if flags.fileName == "" {
 		fmt.Fprintf(os.Stderr, "fileName -f is required\n")
-		exit = true
+		short = true
 	}
 
 	if flags.gridSize == 0 {
@@ -64,7 +62,7 @@ func main() {
 
 	if flags.cropSize.X == 0 || flags.cropSize.Y == 0 {
 		fmt.Fprintf(os.Stderr, "cropSize -c is required\n")
-		exit = true
+		short = true
 	}
 
 	if exit {
@@ -72,44 +70,28 @@ func main() {
 		os.Exit(1)
 	}
 
-	intersections := map[image.Point]int{}
-	rectangleS := utils.RectDiv(flags.rectangle, flags.scaleFactor)
-
-	for ax0 := uint8(0); ax0 < pgrid.GridLinesTotal-1; ax0 += 1 {
-		minOffset0, maxOffset0 := output.AxisRange(ax0, flags.rectangle)
-		for off0 := range seq.WythoffMinMaxColumn(minOffset0, maxOffset0, flags.gridSize+5, math.MaxInt) {
-			line0 := output.AxisLine(ax0, off0, float64(flags.scaleFactor))
-			for ax1 := ax0 + 1; ax1 < pgrid.GridLinesTotal; ax1 += 1 {
-				minOffset1, maxOffset1 := output.AxisRange(ax1, flags.rectangle)
-				for off1 := range seq.WythoffMinMaxColumn(minOffset1, maxOffset1, flags.gridSize+5, math.MaxInt) {
-					line1 := output.AxisLine(ax1, off1, float64(flags.scaleFactor))
-					intersection := geom.Intersection(line0, line1)
-					intersectionPoint := image.Point{
-						X: int(math.Round(intersection.X)),
-						Y: int(math.Round(intersection.Y)),
-					}
-					if intersectionPoint.In(rectangleS) {
-						intersections[intersectionPoint] += 1
-					}
-				}
-			}
-		}
-	}
+	wg := wgrid.New(flags.rectangle, flags.scaleFactor)
+	intersections := wg.IntersectionsMap(flags.gridSize+5, math.MaxInt)
 
 	fmt.Fprintf(os.Stderr, "%3d uniq intersections\n", len(intersections))
 
 	crops := make([]image.Rectangle, 0, len(intersections))
 
-	for point, count := range intersections {
-		axes := triangleRoot(count) + 1
-		fmt.Fprintf(os.Stderr, "[%6d,%6d]x%d\n", point.X, point.Y, axes)
-		if axes >= flags.minAxes {
+	for point, axes := range intersections {
+		axesCount := len(axes)
+		fmt.Fprintf(os.Stderr, "[%6d,%6d]x%d  |", point.X, point.Y, axesCount)
+		if axesCount >= flags.minAxes {
 			crop := cropRect(point, flags.cropSize, flags.cropCenter)
-			if crop.In(rectangleS) {
-				crops = append(crops, cropRect(point, flags.cropSize, flags.cropCenter))
-			}
+			if crop.In(wg.RectS) {
+				crops = append(crops, crop)
 
+				fmt.Fprintf(os.Stderr, "%s\n", axes)
+			}
 		}
+	}
+
+	if short {
+		return
 	}
 
 	fmt.Fprintf(os.Stderr, "\n%3d uniq fully contained crops\n", len(crops))
@@ -121,7 +103,7 @@ func main() {
 	for i, crop := range crops {
 		cropStr := fmt.Sprintf("%dx%d+%d+%d!",
 			flags.cropSize.X, flags.cropSize.Y,
-			crop.Min.X-rectangleS.Min.X, crop.Min.Y-rectangleS.Min.Y,
+			crop.Min.X-wg.RectS.Min.X, crop.Min.Y-wg.RectS.Min.Y,
 		)
 		fmt.Printf("magick %s -crop %-24s %s%d.png\n",
 			flags.fileName, cropStr, flags.outPrefix, i,
@@ -132,8 +114,4 @@ func main() {
 func cropRect(p, size, center image.Point) image.Rectangle {
 	minSub, maxAdd := center, size.Sub(center)
 	return image.Rectangle{Min: p.Sub(minSub), Max: p.Add(maxAdd)}
-}
-
-func triangleRoot(x int) int {
-	return int((math.Sqrt(8*float64(x)+1) - 1) / 2)
 }

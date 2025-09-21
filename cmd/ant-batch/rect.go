@@ -2,13 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/geom"
-	"github.com/ptiles/ant/output"
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/wgrid"
 	"image"
 	"iter"
-	"math"
 	"math/rand/v2"
 	"strconv"
 	"strings"
@@ -70,27 +68,20 @@ func (r *rect) seq(debug *strings.Builder) iter.Seq[string] {
 			debug.WriteString("\nRect:")
 		}
 
+		wg := wgrid.New(r.rect, r.scaleFactor)
+
 		count := 0
 
 		for count < r.count {
 			ax0, ax1, dir := genRandomAxesDirection()
 
-			minOffset0, maxOffset0 := output.AxisRange(uint8(ax0), r.rect)
-			minOffset1, maxOffset1 := output.AxisRange(uint8(ax1), r.rect)
+			minOffset0, maxOffset0 := wg.Ranges[ax0].Min, wg.Ranges[ax0].Max
+			minOffset1, maxOffset1 := wg.Ranges[ax1].Min, wg.Ranges[ax1].Max
 
 			off0 := rand.IntN(maxOffset0+1-minOffset0) + minOffset0
 			off1 := rand.IntN(maxOffset1+1-minOffset1) + minOffset1
 
-			line0 := output.AxisLine(uint8(ax0), off0, float64(r.scaleFactor))
-			line1 := output.AxisLine(uint8(ax1), off1, float64(r.scaleFactor))
-
-			intersection := geom.Intersection(line0, line1)
-			intersectionPoint := image.Point{
-				X: int(math.Round(intersection.X)),
-				Y: int(math.Round(intersection.Y)),
-			}.Mul(r.scaleFactor)
-
-			if intersectionPoint.In(r.rect) {
+			if _, in := wg.Intersection(uint8(ax0), off0, uint8(ax1), off1); in {
 				ax0s := pgrid.AxisNames[ax0%GridLinesTotal]
 				ax1s := pgrid.AxisNames[ax1%GridLinesTotal]
 				point := fmt.Sprintf("%s%d%s%s%d", ax0s, off0, dir, ax1s, off1)

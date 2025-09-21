@@ -7,6 +7,7 @@ import (
 type flagParser func(string) error
 
 type Flags struct {
+	grid     grid
 	interval interval
 	lines    lines
 	list     list
@@ -23,6 +24,10 @@ type Flags struct {
 func parseFlags() *Flags {
 	fl := Flags{}
 	flag.BoolVar(&fl.debug, "d", false, "Print values\n")
+
+	flag.Func("grid", "Initial points inside rectangle, snapped to grid", fl.grid.rectParser())
+	flag.Func("grid-min-axes", "Minimal number of axes intersecting", fl.grid.minAxesParser())
+	flag.Func("grid-size", "Initial points snapped to grid size min[-max]\n", fl.grid.gridSizeParser())
 
 	flag.Func("interval", "Initial point offsets interval", fl.interval.intervalParser())
 	flag.Func("interval-count", "Initial point offsets interval count", fl.interval.countParser())

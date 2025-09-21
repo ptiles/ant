@@ -6,13 +6,21 @@ import (
 )
 
 type Point struct{ X, Y float64 }
+
+func (p Point) Mul(scaleFactor int) Point {
+	return Point{X: p.X * float64(scaleFactor), Y: p.Y * float64(scaleFactor)}
+}
+
+func (p Point) Round() image.Point {
+	return image.Point{X: int(math.Round(p.X)), Y: int(math.Round(p.Y))}
+}
+
 type Line struct{ A, B Point }
 
 func (l Line) SegmentContains(p Point) bool {
-	lr := image.Rect(int(l.A.X), int(l.A.Y), int(l.B.X), int(l.B.Y)).Inset(-1)
-	pp := image.Point{X: int(math.Round(p.X)), Y: int(math.Round(p.Y))}
+	lineRect := image.Rect(int(l.A.X), int(l.A.Y), int(l.B.X), int(l.B.Y)).Inset(-1)
 
-	return pp.In(lr)
+	return p.Round().In(lineRect)
 }
 
 func FromDeg(deg float64) float64 {
