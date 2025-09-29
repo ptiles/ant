@@ -28,17 +28,17 @@ func Uniq() (uint64, int) {
 
 type Bounds [GridLinesTotal]struct {
 	Axis     uint8     `json:"axis"`
-	Min      offsetInt `json:"min"`
+	Min      OffsetInt `json:"min"`
 	MinCount int       `json:"minCount"`
-	Max      offsetInt `json:"max"`
+	Max      OffsetInt `json:"max"`
 	MaxCount int       `json:"maxCount"`
 
 	Counts OffsetCounts `json:"counts"`
 }
 
-type BoundsSize [GridLinesTotal]offsetInt
+type BoundsSize [GridLinesTotal]OffsetInt
 
-func GetBounds(limit int) (Bounds, BoundsSize, offsetInt, offsetInt) {
+func GetBounds(limit int) (Bounds, BoundsSize, OffsetInt, OffsetInt) {
 	bounds := Bounds{}
 	for ax := range GridLinesTotal {
 		bounds[ax].Axis = ax
@@ -49,11 +49,11 @@ func GetBounds(limit int) (Bounds, BoundsSize, offsetInt, offsetInt) {
 	for ax0, ax1 := range AxesCanon() {
 		uArr := aValues[ax0][ax1]
 		for i, dMap := range uArr.Maps {
-			baseOff0 := offsetInt(uArr.Min.Offset0+upInt(i)%uArr.Stride) << bits
-			baseOff1 := offsetInt(uArr.Min.Offset1+upInt(i)/uArr.Stride) << bits
+			baseOff0 := OffsetInt(uArr.Min.Offset0+upInt(i)%uArr.Stride) << bits
+			baseOff1 := OffsetInt(uArr.Min.Offset1+upInt(i)/uArr.Stride) << bits
 			for dCoord := range dMap {
-				off0 := offsetInt(dCoord.Offset0) + baseOff0
-				off1 := offsetInt(dCoord.Offset1) + baseOff1
+				off0 := OffsetInt(dCoord.Offset0) + baseOff0
+				off1 := OffsetInt(dCoord.Offset1) + baseOff1
 
 				if off0 < bounds[ax0].Min {
 					bounds[ax0].Min = off0
@@ -84,8 +84,8 @@ func GetBounds(limit int) (Bounds, BoundsSize, offsetInt, offsetInt) {
 		}
 	}
 
-	sizeMin := offsetInt(math.MaxInt32)
-	sizeMax := offsetInt(math.MinInt32)
+	sizeMin := OffsetInt(math.MaxInt32)
+	sizeMax := OffsetInt(math.MinInt32)
 	sizes := BoundsSize{}
 	for ax := range GridLinesTotal {
 		diff := bounds[ax].Max - bounds[ax].Min
@@ -107,7 +107,7 @@ func GetBounds(limit int) (Bounds, BoundsSize, offsetInt, offsetInt) {
 }
 
 type OffsetCount struct {
-	Offset offsetInt `json:"offset"`
+	Offset OffsetInt `json:"offset"`
 	Count  int       `json:"count"`
 	Row    int       `json:"wythoffRow,omitempty"`
 	Col    int       `json:"wythoffCol,omitempty"`
@@ -119,19 +119,19 @@ func (oc OffsetCounts) Less(i, j int) bool { return oc[i].Count > oc[j].Count }
 func (oc OffsetCounts) Swap(i, j int)      { oc[i], oc[j] = oc[j], oc[i] }
 
 func TopCounts(limit int) [GridLinesTotal]OffsetCounts {
-	countsMap := [GridLinesTotal]map[offsetInt]int{}
+	countsMap := [GridLinesTotal]map[OffsetInt]int{}
 	for ax := range GridLinesTotal {
-		countsMap[ax] = make(map[offsetInt]int)
+		countsMap[ax] = make(map[OffsetInt]int)
 	}
 
 	for ax0, ax1 := range AxesCanon() {
 		uArr := aValues[ax0][ax1]
 		for i, dMap := range uArr.Maps {
-			baseOff0 := offsetInt(uArr.Min.Offset0+upInt(i)%uArr.Stride) << bits
-			baseOff1 := offsetInt(uArr.Min.Offset1+upInt(i)/uArr.Stride) << bits
+			baseOff0 := OffsetInt(uArr.Min.Offset0+upInt(i)%uArr.Stride) << bits
+			baseOff1 := OffsetInt(uArr.Min.Offset1+upInt(i)/uArr.Stride) << bits
 			for dCoord := range dMap {
-				off0 := offsetInt(dCoord.Offset0) + baseOff0
-				off1 := offsetInt(dCoord.Offset1) + baseOff1
+				off0 := OffsetInt(dCoord.Offset0) + baseOff0
+				off1 := OffsetInt(dCoord.Offset1) + baseOff1
 
 				countsMap[ax0][off0] += 1
 				countsMap[ax1][off1] += 1
@@ -151,7 +151,7 @@ func TopCounts(limit int) [GridLinesTotal]OffsetCounts {
 	return topCounts
 }
 
-func axisCounts(countsMap map[offsetInt]int) OffsetCounts {
+func axisCounts(countsMap map[OffsetInt]int) OffsetCounts {
 	countsSlice := make(OffsetCounts, len(countsMap))
 	i := 0
 	for offset, count := range countsMap {
@@ -187,7 +187,7 @@ func (f *Field) RectUpArray(ax0, ax1 uint8) image.Rectangle {
 }
 
 func (f *Field) rectCornerPoints(ax0, ax1 uint8, minPoint GridCoords) (image.Point, image.Point, image.Point, image.Point) {
-	rSize := offsetInt(downMask)
+	rSize := OffsetInt(downMask)
 
 	ga00 := GridAxes{Axis0: ax0, Axis1: ax1, Coords: GridCoords{
 		Offset0: minPoint.Offset0, Offset1: minPoint.Offset1,
@@ -231,8 +231,8 @@ func (ua *upArray) MinCoords() iter.Seq2[upInt, GridCoords] {
 				//if len(ua.Maps[i]) > 0 {
 				if ua.Maps[i] != nil {
 					coords := GridCoords{
-						Offset0: offsetInt((off0 + ua.Min.Offset0) << bits),
-						Offset1: offsetInt((off1 + ua.Min.Offset1) << bits),
+						Offset0: OffsetInt((off0 + ua.Min.Offset0) << bits),
+						Offset1: OffsetInt((off1 + ua.Min.Offset1) << bits),
 					}
 					if !yield(i, coords) {
 						return

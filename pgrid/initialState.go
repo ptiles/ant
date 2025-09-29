@@ -15,8 +15,8 @@ type Turn struct {
 func (f *Field) InitialTurn() Turn {
 	currAxis, currOffset, prevPointSign, prevAxis, prevOffset := utils.ParseInitialPoint(f.InitialPoint)
 
-	currLine := GridLine{Axis: uint8(currAxis), Offset: offsetInt(currOffset)}
-	prevLine := GridLine{Axis: uint8(prevAxis), Offset: offsetInt(prevOffset)}
+	currLine := GridLine{Axis: uint8(currAxis), Offset: OffsetInt(currOffset)}
+	prevLine := GridLine{Axis: uint8(prevAxis), Offset: OffsetInt(prevOffset)}
 
 	return Turn{
 		CurrLine: currLine,
@@ -42,7 +42,7 @@ func (f *Field) InitialCenterPoint() image.Point {
 	return f.GetCenterPoint(GridAxes{
 		Axis0: uint8(currAxis), Axis1: uint8(prevAxis),
 		Coords: GridCoords{
-			Offset0: offsetInt(currOffset), Offset1: offsetInt(prevOffset),
+			Offset0: OffsetInt(currOffset), Offset1: OffsetInt(prevOffset),
 		},
 	})
 }

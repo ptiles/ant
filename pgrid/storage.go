@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-type upInt offsetInt // 24 bits
+type upInt OffsetInt // top 24 bits significant
 type gridCoordsUp struct {
 	Offset0 upInt
 	Offset1 upInt

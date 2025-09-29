@@ -22,7 +22,7 @@ func New(radius float64, rules []bool, initialPoint string) *Field {
 
 type GridLine struct {
 	Axis   uint8
-	Offset offsetInt
+	Offset OffsetInt
 }
 
 type GridPoint struct {
@@ -30,7 +30,7 @@ type GridPoint struct {
 	Offsets GridOffsets
 }
 
-type offsetInt int32
+type OffsetInt int32
 
 type GridAxes struct {
 	Axis0  uint8
@@ -39,11 +39,11 @@ type GridAxes struct {
 }
 
 type GridCoords struct {
-	Offset0 offsetInt
-	Offset1 offsetInt
+	Offset0 OffsetInt
+	Offset1 OffsetInt
 }
 
-type GridOffsets [GridLinesTotal]offsetInt
+type GridOffsets [GridLinesTotal]OffsetInt
 
 func (f *Field) nearestNeighbor(
 	prevLine, currentLine GridLine,
@@ -66,14 +66,14 @@ func (f *Field) nearestNeighbor(
 			absDist := math.Abs(dist)
 			if absDist < currentDistance {
 				currentDistance = absDist
-				nextLine = GridLine{otf.targetAx, offsetInt(nextLineOffset)}
+				nextLine = GridLine{otf.targetAx, OffsetInt(nextLineOffset)}
 				nextPointSign = true
 			}
 		} else {
 			absDist := math.Abs(dist - otf.ax1Delta)
 			if absDist < currentDistance {
 				currentDistance = absDist
-				nextLine = GridLine{otf.targetAx, offsetInt(nextLineOffset) - 1}
+				nextLine = GridLine{otf.targetAx, OffsetInt(nextLineOffset) - 1}
 				nextPointSign = false
 			}
 		}
