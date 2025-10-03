@@ -111,11 +111,15 @@ func axisRange(ax uint8, rect image.Rectangle) (int, int) {
 }
 
 func (wg WythoffGrid) Intersection(ax0 uint8, off0 int, ax1 uint8, off1 int) (image.Point, bool) {
-	line0 := axisLine(ax0, off0, float64(wg.ScaleFactor))
-	line1 := axisLine(ax1, off1, float64(wg.ScaleFactor))
-
-	point := geom.Intersection(line0, line1).Round()
+	point := Intersection(ax0, off0, ax1, off1, wg.ScaleFactor)
 	return point, point.In(wg.RectS)
+}
+
+func Intersection(ax0 uint8, off0 int, ax1 uint8, off1 int, scaleFactor int) image.Point {
+	line0 := axisLine(ax0, off0, float64(scaleFactor))
+	line1 := axisLine(ax1, off1, float64(scaleFactor))
+
+	return geom.Intersection(line0, line1).Round()
 }
 
 type AxesMap map[uint8]int

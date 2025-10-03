@@ -1,11 +1,12 @@
 package utils
 
 import (
+	"regexp"
 	"strconv"
 )
 
 func ParseRangeStr(rangeStr string) (int, int, error) {
-	expr := `((?P<min>\d+)-)?(?P<max>\d+)`
+	expr := regexp.MustCompile(`((?P<min>\d+)-)?(?P<max>\d+)`)
 	result := NamedStringMatches(expr, rangeStr)
 
 	maximum, err := strconv.Atoi(result["max"])
@@ -26,7 +27,7 @@ func ParseRangeStr(rangeStr string) (int, int, error) {
 }
 
 func ParseRangeDeltaStr(rangeStr string) (int, int, int, error) {
-	expr := `((?P<min>\d+)-)?(?P<max>\d+)((?P<mode>[%W])((?P<row>\d+)-)?(?P<delta>\d+))?`
+	expr := regexp.MustCompile(`((?P<min>\d+)-)?(?P<max>\d+)((?P<mode>[%W])((?P<row>\d+)-)?(?P<delta>\d+))?`)
 	result := NamedStringMatches(expr, rangeStr)
 
 	maximum, err := strconv.Atoi(result["max"])

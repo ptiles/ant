@@ -124,10 +124,10 @@ func (cf *CommonFlags) ParseShorthand(shorthand string) {
 	initialPointR := `[A-X]-?\d+[+-]?[A-X]-?\d+`
 	stepsR := `(([0-9_]+)-)?([0-9_]+)(%([0-9_]+))?`
 
-	expr := fmt.Sprintf(
+	expr := regexp.MustCompile(fmt.Sprintf(
 		"(?P<antName>%s)__(?P<radius>%s)__(?P<initialPoint>%s)__(?P<steps>%s)",
 		antNameR, radiusR, initialPointR, stepsR,
-	)
+	))
 
 	matches := NamedStringMatches(expr, shorthand)
 

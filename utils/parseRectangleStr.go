@@ -2,7 +2,9 @@ package utils
 
 import (
 	"fmt"
+	"github.com/ptiles/ant/pgrid/axis"
 	"github.com/ptiles/ant/utils/ximage"
+	"github.com/ptiles/ant/wgrid"
 	"image"
 	"regexp"
 )
@@ -10,6 +12,19 @@ import (
 func ParseRectangleStr(rectangleStr string) (rect image.Rectangle, scaleFactor int, err error) {
 	if rectangleStr == "" {
 		return
+	}
+
+	exprCenterPointSizeMul := regexp.MustCompile(
+		`[\[(](?P<ax0>[A-Z])(?P<off0>-?\d+)[:+-](?P<ax1>[A-Z])(?P<off1>-?\d+)[)\]]#[\[(](?P<sizeX>-?\d+),(?P<sizeY>-?\d+)[)\]]\*(?P<scale>\d+)`,
+	)
+	stringMatches := NamedStringMatches(exprCenterPointSizeMul, rectangleStr)
+	intMatches := NamedIntMatches(exprCenterPointSizeMul, rectangleStr)
+	if stringMatches != nil && intMatches != nil {
+		center := wgrid.Intersection(
+			axis.Index(stringMatches["ax0"]), intMatches["off0"],
+			axis.Index(stringMatches["ax1"]), intMatches["off1"], 1)
+		size := image.Point{X: intMatches["sizeX"], Y: intMatches["sizeY"]}.Mul(intMatches["scale"])
+		return ximage.RectCenterSize(center, size), intMatches["scale"], nil
 	}
 
 	exprMinMaxDiv := regexp.MustCompile(
@@ -43,8 +58,8 @@ func ParseRectangleStr(rectangleStr string) (rect image.Rectangle, scaleFactor i
 		`[\[(](?P<sizeX>-?\d+),(?P<sizeY>-?\d+)[)\]]\*(?P<scale>\d+)`,
 	)
 	if matches := NamedIntMatches(exprSizeMul, rectangleStr); matches != nil {
-		sizePoint := image.Point{X: matches["sizeX"], Y: matches["sizeY"]}.Mul(matches["scale"])
-		return image.Rectangle{Min: image.Point{}, Max: sizePoint}, matches["scale"], nil
+		size := image.Point{X: matches["sizeX"], Y: matches["sizeY"]}.Mul(matches["scale"])
+		return ximage.RectCenterSize(image.Point{}, size), matches["scale"], nil
 	}
 	return image.Rectangle{}, 0, nil
 }
