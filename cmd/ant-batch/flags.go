@@ -7,6 +7,9 @@ import (
 type flagParser func(string) error
 
 type Flags struct {
+	probability int
+	debug       bool
+
 	grid     grid
 	interval interval
 	lines    lines
@@ -17,12 +20,11 @@ type Flags struct {
 	patterns patterns
 	rect     rect
 	wythoff  wythoff
-
-	debug bool
 }
 
 func parseFlags() *Flags {
 	fl := Flags{}
+	flag.IntVar(&fl.probability, "p", 0, "Probability 1/p\n")
 	flag.BoolVar(&fl.debug, "d", false, "Print values\n")
 
 	flag.Func("grid", "Initial points inside rectangle, snapped to grid", fl.grid.rectParser())

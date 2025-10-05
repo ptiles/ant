@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"iter"
+	"math/rand/v2"
 	"os"
 	"slices"
 	"strings"
@@ -36,6 +37,10 @@ func main() {
 	}
 
 	for initialPoint := range initialPoints {
+		if fl.probability > 1 && rand.IntN(fl.probability) != 0 {
+			continue
+		}
+
 		for _, pattern := range antPatterns {
 			for _, name := range antNames {
 				fmt.Print(name, pattern, initialPoint, "\n")
