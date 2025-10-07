@@ -37,3 +37,10 @@ func (ga *GridAxes) String() string {
 		axis.Name[ga.Axis0], ga.Coords.Offset0, axis.Name[ga.Axis1], ga.Coords.Offset1,
 	)
 }
+
+func (ga *GridAxes) TurnString(dir string) string {
+	return fmt.Sprintf(
+		"%s%d%s%s%d",
+		axis.Name[ga.Axis0], ga.Coords.Offset0, dir, axis.Name[ga.Axis1], ga.Coords.Offset1,
+	)
+}

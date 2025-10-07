@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"iter"
 	"os"
 	"slices"
 	"strings"
@@ -19,28 +20,47 @@ func main() {
 	antNames := slices.Collect(fl.names.seq(debug))
 	antPatterns := slices.Collect(fl.patterns.seq(debug))
 
-	var initialPoints []string
-	initialPoints = slices.AppendSeq(initialPoints, fl.grid.seq(debug))
-	initialPoints = slices.AppendSeq(initialPoints, fl.interval.seq(debug))
-	initialPoints = slices.AppendSeq(initialPoints, fl.lines.seq(debug))
-	initialPoints = slices.AppendSeq(initialPoints, fl.list.seq(debug))
-	initialPoints = slices.AppendSeq(initialPoints, fl.near.seq(debug))
-	initialPoints = slices.AppendSeq(initialPoints, fl.path.seq(debug))
-	initialPoints = slices.AppendSeq(initialPoints, fl.rect.seq(debug))
-	initialPoints = slices.AppendSeq(initialPoints, fl.wythoff.seq(debug))
-	if len(initialPoints) == 0 {
-		initialPoints = []string{""}
-	}
+	initialPoints := concatSeq(
+		fl.grid.seq(debug),
+		fl.interval.seq(debug),
+		fl.lines.seq(debug),
+		fl.list.seq(debug),
+		fl.near.seq(debug),
+		fl.path.seq(debug),
+		fl.rect.seq(debug),
+		fl.wythoff.seq(debug),
+	)
 
 	if debug != nil {
 		fmt.Fprintln(os.Stderr, "Values used:", debug.String())
 	}
 
-	for _, name := range antNames {
+	for initialPoint := range initialPoints {
 		for _, pattern := range antPatterns {
-			for _, initialPoint := range initialPoints {
+			for _, name := range antNames {
 				fmt.Print(name, pattern, initialPoint, "\n")
 			}
+		}
+	}
+
+	if debug != nil {
+		fmt.Fprintln(os.Stderr, "Values used:", debug.String())
+	}
+}
+
+func concatSeq(seqs ...iter.Seq[string]) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		empty := true
+		for _, seq := range seqs {
+			for v := range seq {
+				if !yield(v) {
+					return
+				}
+				empty = false
+			}
+		}
+		if empty {
+			yield("")
 		}
 	}
 }

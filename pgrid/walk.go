@@ -103,7 +103,7 @@ func (f *Field) RunPoint(maxSteps uint64) iter.Seq2[GridAxes, image.Point] {
 	}
 }
 
-// RunAxes is used in cmd/ant-dry
+// RunAxes is used in cmd/ant-dry and cmd/ant-batch/path
 func (f *Field) RunAxes(maxSteps uint64) iter.Seq[GridAxes] {
 	return func(yield func(GridAxes) bool) {
 		initialTurn := f.InitialTurn()

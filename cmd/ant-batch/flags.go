@@ -44,7 +44,8 @@ func parseFlags() *Flags {
 	flag.Func("near-count", "Initial point near count", fl.near.countParser())
 	flag.Func("near-distance", "Initial point near distance\n", fl.near.distanceParser())
 
-	flag.Func("path", "Initial points from ant path\n", fl.path.parser())
+	flag.Func("path", "Initial points from ant path", fl.path.pathParser())
+	flag.Func("path-grid-size", "Initial points from path snapped to grid size\n", fl.path.gridSizeParser())
 
 	flag.Func("patterns", "Patterns random count\n", fl.patterns.parser())
 

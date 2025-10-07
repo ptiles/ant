@@ -7,8 +7,10 @@ import (
 
 type RowCol struct{ Row, Col int }
 
-var Wythoff = make(map[RowCol]int)
-var WythoffReverse = make(map[int]RowCol)
+// recalculate capacities on rowsMax or colsMax change
+
+var Wythoff = make(map[RowCol]int, 16450)
+var WythoffReverse = make(map[int]RowCol, 32901)
 
 const rowsMax = 512
 const colsMax = 36
@@ -41,19 +43,6 @@ func init() {
 			WythoffReverse[-next] = RowCol{Row: row, Col: col}
 
 			prev, curr = curr, next
-		}
-	}
-}
-
-func WythoffMinColumn(a, b, minColumn int) iter.Seq2[int, int] {
-	return func(yield func(int, int) bool) {
-		for off := a; off <= b; off += 1 {
-			col := WythoffReverse[off].Col
-			if col >= minColumn {
-				if !yield(col, off) {
-					return
-				}
-			}
 		}
 	}
 }
