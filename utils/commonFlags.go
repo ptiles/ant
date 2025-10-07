@@ -37,6 +37,8 @@ type CommonFlags struct {
 	MaxNoisyDots uint64
 	MinStepsPct  uint64
 	MinUniqPct   uint64
+	MinTailSteps uint64
+	MinTailSize  uint64
 
 	Rectangle   image.Rectangle
 	ScaleFactor int
@@ -89,6 +91,8 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 	flag.Uint64Var(&cf.MaxNoisyDots, "sn", 0, "Max noisy dots")
 	flag.Uint64Var(&cf.MinStepsPct, "sm", 0, "Min steps percent")
 	flag.Uint64Var(&cf.MinUniqPct, "su", 0, "Min uniq points percent")
+	flag.Uint64Var(&cf.MinTailSteps, "st", 0, "Min steps in the loop to stop when the tail is reached")
+	flag.Uint64Var(&cf.MinTailSize, "sts", 32768, "Tail size")
 	flag.Float64Var(&cf.Pattern, "p", 7e-06, "Pattern radius")
 }
 

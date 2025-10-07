@@ -29,6 +29,8 @@ func (gpc *gridPointColor) String() string {
 	return fmt.Sprintf("%s %d", gpc.gridAxes.String(), gpc.color)
 }
 
+type void struct{}
+
 const MaxModifiedPoints = 32 * 1024
 const noiseMin = 512
 const noiseMax = 32 * 1024
@@ -65,6 +67,8 @@ func ModifiedPointsStepper(
 	pal palette.Palette,
 	steps utils.StepCounts,
 	maxNoisyDots uint64,
+	minTailSteps uint64,
+	minTailSize uint64,
 ) {
 	modifiedPointsCh := make(chan []gridPointColor, 64)
 
@@ -93,19 +97,19 @@ func ModifiedPointsStepper(
 		}
 	}
 
+	var tail map[pgrid.GridAxes]void
+
 	stepNumber := uint64(0)
 	dotNumber := 0
 	noise := uint64(0)
 
-	shouldStop := false
 	noisyCount := uint64(0)
 
 	start := time.Now()
 	lineSize := float64(dotSize * 50)
 
 	for gridAxes, color := range f.RunAxesColor(steps.Max) {
-		visitedStep, ok := visited[gridAxes.Axis0][gridAxes.Axis1][gridAxes.Coords]
-		if ok {
+		if visitedStep, ok := visited[gridAxes.Axis0][gridAxes.Axis1][gridAxes.Coords]; ok {
 			stepDiff := stepNumber - visitedStep
 			if noiseMin < stepDiff && stepDiff < noiseMax {
 				noise += 1
@@ -145,11 +149,41 @@ func ModifiedPointsStepper(
 				noisyCount += 1
 			}
 			if noisyCount >= maxNoisyDots {
-				shouldStop = true
+				modifiedPointsCh <- points[:modifiedCount]
+				break
 			}
 		}
 
 		if modifiedCount == MaxModifiedPoints {
+			if minTailSteps > 0 {
+				if stepNumber <= minTailSize || tail == nil {
+					if tail == nil {
+						tail = make(map[pgrid.GridAxes]void, minTailSize*5/4)
+					}
+
+					for _, point := range points {
+						tail[point.gridAxes] = void{}
+					}
+				}
+
+				if stepNumber > minTailSteps {
+					shouldStop := false
+
+					for i, point := range points {
+						if _, ok := tail[point.gridAxes]; ok {
+							shouldStop = true
+							modifiedCount = uint64(i)
+							break
+						}
+					}
+
+					if shouldStop {
+						modifiedPointsCh <- points[:modifiedCount]
+						break
+					}
+				}
+			}
+
 			if stepNumber >= noiseClear {
 				clearStep := stepNumber - noiseClear
 				for ax0 := range pgrid.GridLinesTotal {
@@ -169,10 +203,6 @@ func ModifiedPointsStepper(
 
 		stepNumber += 1
 		modifiedCount += 1
-
-		if shouldStop {
-			break
-		}
 	}
 	fmt.Print(" ")
 	fmt.Printf("%s MiB", utils.WithSeparators(utils.MemStatsMB()))

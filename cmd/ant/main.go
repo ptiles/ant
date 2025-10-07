@@ -102,6 +102,8 @@ func main() {
 		modifiedImagesCh, pal,
 		commonFlags.Steps,
 		commonFlags.MaxNoisyDots,
+		commonFlags.MinTailSteps,
+		commonFlags.MinTailSize,
 	)
 
 	fileNameFmt := fmt.Sprintf(
