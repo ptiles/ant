@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/ptiles/ant/pgrid/parse"
 	"github.com/ptiles/ant/seq"
 	"github.com/ptiles/ant/utils"
 	"iter"
@@ -47,7 +48,7 @@ func (w *wythoff) axesParser() flagParser {
 			return nil
 		}
 
-		axis1, direction, axis2 := utils.ParseInitialAxes(axes)
+		axis1, direction, axis2 := parse.InitialAxes(axes)
 		if axis1 == "" || direction == "" || axis2 == "" {
 			return nil
 		}

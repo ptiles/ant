@@ -5,8 +5,9 @@ import (
 	"github.com/StephaneBunel/bresenham"
 	"github.com/ptiles/ant/geom"
 	"github.com/ptiles/ant/pgrid"
+	"github.com/ptiles/ant/pgrid/axis"
 	"github.com/ptiles/ant/seq"
-	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/utils/ximage"
 	"image"
 	"image/color"
 	"math"
@@ -28,7 +29,7 @@ type Range struct {
 }
 
 func New(rectN image.Rectangle, scaleFactor int) WythoffGrid {
-	rectS := utils.RectDiv(rectN, scaleFactor)
+	rectS := ximage.RectDiv(rectN, scaleFactor)
 
 	var ranges [pgrid.GridLinesTotal]Range
 	for ax := range pgrid.GridLinesTotal {
@@ -124,7 +125,7 @@ func (am AxesMap) String() string {
 
 	for ax := range pgrid.GridLinesTotal {
 		if offset, ok := am[ax]; ok {
-			fmt.Fprintf(&sb, "  %s%7d  |", utils.AxisNames[ax], offset)
+			fmt.Fprintf(&sb, "  %s%7d  |", axis.Name[ax], offset)
 		} else {
 			fmt.Fprintf(&sb, "            |")
 		}

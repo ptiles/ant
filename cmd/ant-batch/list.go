@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/pgrid/parse"
 	"iter"
 	"strings"
 )
@@ -34,7 +34,7 @@ func (l *list) axesParser() flagParser {
 			return nil
 		}
 
-		axis1, direction, axis2 := utils.ParseInitialAxes(axes)
+		axis1, direction, axis2 := parse.InitialAxes(axes)
 		if axis1 == "" || direction == "" || axis2 == "" {
 			return nil
 		}

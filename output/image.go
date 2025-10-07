@@ -2,6 +2,7 @@ package output
 
 import (
 	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/utils/ximage"
 	"github.com/ptiles/ant/wgrid"
 	"golang.org/x/image/draw"
 	"image"
@@ -18,7 +19,7 @@ type Image struct {
 }
 
 func NewImage(rectangle image.Rectangle, scaleFactor, maxDimension int) *Image {
-	rectS := utils.RectDiv(rectangle, scaleFactor)
+	rectS := ximage.RectDiv(rectangle, scaleFactor)
 	return &Image{
 		ResultRectN:  rectangle,
 		imageRectN:   rectangle,
@@ -42,12 +43,12 @@ func (i *Image) RectCenteredString() string {
 }
 
 func (i *Image) halveImage() {
-	i.imageRectN = utils.RectGrow(i.ResultRectN, i.maxDimension)
-	imageRectS := utils.RectDiv(i.imageRectN, i.ScaleFactor)
+	i.imageRectN = ximage.RectGrow(i.ResultRectN, i.maxDimension)
+	imageRectS := ximage.RectDiv(i.imageRectN, i.ScaleFactor)
 
 	newResultImageS := image.NewRGBA(imageRectS)
 	draw.ApproxBiLinear.Scale(
-		newResultImageS, utils.RectDiv(i.imageS.Rect, 2),
+		newResultImageS, ximage.RectDiv(i.imageS.Rect, 2),
 		i.imageS, i.imageS.Rect,
 		draw.Over, nil,
 	)
@@ -56,7 +57,7 @@ func (i *Image) halveImage() {
 
 func (i *Image) mergeImage(modifiedImage *image.RGBA) {
 	draw.BiLinear.Scale(
-		i.imageS, utils.RectDiv(modifiedImage.Rect, i.ScaleFactor),
+		i.imageS, ximage.RectDiv(modifiedImage.Rect, i.ScaleFactor),
 		modifiedImage, modifiedImage.Rect,
 		draw.Over, nil,
 	)

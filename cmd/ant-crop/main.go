@@ -79,13 +79,11 @@ func main() {
 
 	for point, axes := range intersections {
 		axesCount := len(axes)
-		fmt.Fprintf(os.Stderr, "[%6d,%6d]x%d  |", point.X, point.Y, axesCount)
+		fmt.Fprintf(os.Stderr, "[%6d,%6d]x%d  |%s\n", point.X, point.Y, axesCount, axes)
 		if axesCount >= flags.minAxes {
 			crop := cropRect(point, flags.cropSize, flags.cropCenter)
 			if crop.In(wg.RectS) {
 				crops = append(crops, crop)
-
-				fmt.Fprintf(os.Stderr, "%s\n", axes)
 			}
 		}
 	}

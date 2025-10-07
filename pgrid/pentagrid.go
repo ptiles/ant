@@ -1,22 +1,33 @@
 package pgrid
 
 import (
+	"github.com/ptiles/ant/pgrid/parse"
 	"math"
 )
 
 type Field struct {
-	Rules        []bool
-	Limit        uint8
-	InitialPoint string
+	Rules         []bool
+	Limit         uint8
+	currAxis      uint8
+	currOffset    int
+	prevPointSign bool
+	prevAxis      uint8
+	prevOffset    int
 	Geometry
 }
 
 func New(radius float64, rules []bool, initialPoint string) *Field {
+	currAxis, currOffset, prevPointSign, prevAxis, prevOffset := parse.InitialPoint(initialPoint)
+
 	return &Field{
-		Rules:        rules,
-		Limit:        uint8(len(rules)),
-		InitialPoint: initialPoint,
-		Geometry:     newGridGeometry(radius),
+		Rules:         rules,
+		Limit:         uint8(len(rules)),
+		currAxis:      currAxis,
+		currOffset:    currOffset,
+		prevPointSign: prevPointSign,
+		prevAxis:      prevAxis,
+		prevOffset:    prevOffset,
+		Geometry:      newGridGeometry(radius),
 	}
 }
 

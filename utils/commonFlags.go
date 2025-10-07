@@ -7,7 +7,9 @@ import (
 	"math"
 	"os"
 	"path"
+	"regexp"
 	"strconv"
+	"strings"
 )
 
 type StepCounts struct {
@@ -51,6 +53,17 @@ func (cf *CommonFlags) String() string {
 	)
 }
 
+func parseStepsStr(stepsStr string) (StepCounts, error) {
+	re := regexp.MustCompile(`((\d+)-)?(\d+)(%(\d+))?`)
+	result := re.FindStringSubmatch(strings.Replace(stepsStr, "_", "", -1))
+
+	minSt, _ := strconv.ParseUint(result[2], 0, 64)
+	maxSt, _ := strconv.ParseUint(result[3], 0, 64)
+	incSt, _ := strconv.ParseUint(result[5], 0, 64)
+
+	return StepCounts{minSt, maxSt, incSt}, nil
+}
+
 func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 	flag.StringVar(&cf.Cpuprofile, "cpuprofile", "", "Write cpu profile to file")
 	flag.StringVar(&cf.Memprofile, "memprofile", "", "Write mem profile to file")
@@ -70,7 +83,7 @@ func (cf *CommonFlags) CommonFlagsSetup(gridLinesTotal uint8) {
 	})
 	flag.BoolVar(&cf.QuitOutside, "rq", false, "Quit if initial point is outside of rectangle")
 	flag.Func("s", "Steps", func(stepsStr string) (err error) {
-		cf.Steps.Min, cf.Steps.Max, cf.Steps.Inc, err = ParseStepsStr(stepsStr)
+		cf.Steps, err = parseStepsStr(stepsStr)
 		return
 	})
 	flag.Uint64Var(&cf.MaxNoisyDots, "sn", 0, "Max noisy dots")
@@ -131,5 +144,5 @@ func (cf *CommonFlags) ParseShorthand(shorthand string) {
 
 	cf.InitialPoint = matches["initialPoint"]
 
-	cf.Steps.Min, cf.Steps.Max, cf.Steps.Inc, _ = ParseStepsStr(matches["steps"])
+	cf.Steps, _ = parseStepsStr(matches["steps"])
 }

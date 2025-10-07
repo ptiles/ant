@@ -2,7 +2,7 @@ package pgrid
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/pgrid/axis"
 	"image"
 )
 
@@ -13,15 +13,13 @@ type Turn struct {
 }
 
 func (f *Field) InitialTurn() Turn {
-	currAxis, currOffset, prevPointSign, prevAxis, prevOffset := utils.ParseInitialPoint(f.InitialPoint)
-
-	currLine := GridLine{Axis: uint8(currAxis), Offset: OffsetInt(currOffset)}
-	prevLine := GridLine{Axis: uint8(prevAxis), Offset: OffsetInt(prevOffset)}
+	currLine := GridLine{Axis: f.currAxis, Offset: OffsetInt(f.currOffset)}
+	prevLine := GridLine{Axis: f.prevAxis, Offset: OffsetInt(f.prevOffset)}
 
 	return Turn{
 		CurrLine: currLine,
 		PrevLine: prevLine,
-		sign:     prevPointSign,
+		sign:     f.prevPointSign,
 	}
 }
 
@@ -38,18 +36,15 @@ func (f *Field) InitialPointOutside(r image.Rectangle) bool {
 }
 
 func (f *Field) InitialCenterPoint() image.Point {
-	currAxis, currOffset, _, prevAxis, prevOffset := utils.ParseInitialPoint(f.InitialPoint)
 	return f.GetCenterPoint(GridAxes{
-		Axis0: uint8(currAxis), Axis1: uint8(prevAxis),
+		Axis0: f.currAxis, Axis1: f.prevAxis,
 		Coords: GridCoords{
-			Offset0: OffsetInt(currOffset), Offset1: OffsetInt(prevOffset),
+			Offset0: OffsetInt(f.currOffset), Offset1: OffsetInt(f.prevOffset),
 		},
 	})
 }
 
 func (f *Field) SeedString(seedDropBits uint8) string {
-	currAxis, currOffset, prevPointSign, prevAxis, prevOffset := utils.ParseInitialPoint(f.InitialPoint)
-
 	// Same seed for five symmetric points
 	//return fmt.Sprintf(
 	//	"%d%t%d%d",
@@ -60,7 +55,7 @@ func (f *Field) SeedString(seedDropBits uint8) string {
 	// Different seeds
 	return fmt.Sprintf(
 		"%s%s%t%d%d",
-		AxisNames[currAxis], AxisNames[prevAxis],
-		prevPointSign, currOffset>>seedDropBits, prevOffset>>seedDropBits,
+		axis.Name[f.currAxis], axis.Name[f.prevAxis],
+		f.prevPointSign, f.currOffset>>seedDropBits, f.prevOffset>>seedDropBits,
 	)
 }

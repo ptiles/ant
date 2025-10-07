@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/pgrid"
-	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/pgrid/axis"
+	"github.com/ptiles/ant/pgrid/parse"
 	"iter"
 	"math/rand/v2"
 	"strconv"
@@ -27,11 +27,11 @@ func (n *near) pointParser() flagParser {
 			return nil
 		}
 
-		ax1, off1, _, ax2, off2 := utils.ParseInitialPoint(point)
+		ax1, off1, _, ax2, off2 := parse.InitialPoint(point)
 
-		n.axis1 = ax1
+		n.axis1 = int(ax1)
 		n.offset1 = off1
-		n.axis2 = ax2
+		n.axis2 = int(ax2)
 		n.offset2 = off2
 		n.pointPresent = true
 
@@ -110,5 +110,5 @@ func genRandomPointAround(ax1, min1, max1, ax2, min2, max2 int) string {
 	off1 := rand.IntN(max1+1-min1) + min1
 	off2 := rand.IntN(max2+1-min2) + min2
 
-	return fmt.Sprintf("%s%d%s%s%d", pgrid.AxisNames[ax1], off1, dir, pgrid.AxisNames[ax2], off2)
+	return fmt.Sprintf("%s%d%s%s%d", axis.Name[ax1], off1, dir, axis.Name[ax2], off2)
 }

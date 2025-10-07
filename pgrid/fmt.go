@@ -2,18 +2,11 @@ package pgrid
 
 import (
 	"fmt"
+	"github.com/ptiles/ant/pgrid/axis"
 )
 
-var AxisNames = []string{
-	"A", "B", "C", "D", "E",
-	"F", "G", "H", "I", "J",
-	"K", "L", "M", "N", "O",
-	"P", "Q", "R", "S", "T",
-	"U", "V", "W", "X", "Y",
-}
-
 func (gl *GridLine) String() string {
-	return fmt.Sprintf("%s%d", AxisNames[gl.Axis], gl.Offset)
+	return fmt.Sprintf("%s%d", axis.Name[gl.Axis], gl.Offset)
 }
 
 func (gl *GridLine) Print() {
@@ -26,7 +19,7 @@ func (gp *GridPoint) String() string {
 	return fmt.Sprintf(
 		"[A%d B%d C%d D%d E%d] %s%d:%s%d",
 		offsets[0], offsets[1], offsets[2], offsets[3], offsets[4],
-		AxisNames[ax0], offsets[ax0], AxisNames[ax1], offsets[ax1],
+		axis.Name[ax0], offsets[ax0], axis.Name[ax1], offsets[ax1],
 	)
 }
 
@@ -41,6 +34,6 @@ func (gcu *gridCoordsUp) String() string {
 func (ga *GridAxes) String() string {
 	return fmt.Sprintf(
 		"%s%d:%s%d",
-		AxisNames[ga.Axis0], ga.Coords.Offset0, AxisNames[ga.Axis1], ga.Coords.Offset1,
+		axis.Name[ga.Axis0], ga.Coords.Offset0, axis.Name[ga.Axis1], ga.Coords.Offset1,
 	)
 }

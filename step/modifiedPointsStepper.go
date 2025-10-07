@@ -6,6 +6,7 @@ import (
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/utils"
 	"github.com/ptiles/ant/utils/palette"
+	"github.com/ptiles/ant/utils/ximage"
 	"image"
 	"maps"
 	"os"
@@ -200,7 +201,7 @@ func overflowCheck(centerPoint, prevPoint image.Point) {
 }
 
 func drawPoints(rect image.Rectangle, points []gridPointColor, pal palette.Palette) *image.RGBA {
-	img := image.NewRGBA(utils.SnapRect(rect, pgrid.Padding))
+	img := image.NewRGBA(ximage.SnapRect(rect, pgrid.Padding))
 
 	for i := range points {
 		x, y := points[i].centerPoint.X, points[i].centerPoint.Y
@@ -211,7 +212,7 @@ func drawPoints(rect image.Rectangle, points []gridPointColor, pal palette.Palet
 }
 
 func drawTiles(rect image.Rectangle, points []gridTileColor, pal palette.Palette) *image.RGBA {
-	img := image.NewRGBA(utils.SnapRect(rect, pgrid.Padding))
+	img := image.NewRGBA(ximage.SnapRect(rect, pgrid.Padding))
 
 	for i := range points {
 		gridPoint := points[i].gridPoint

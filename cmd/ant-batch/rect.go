@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/pgrid"
+	"github.com/ptiles/ant/pgrid/axis"
 	"github.com/ptiles/ant/utils"
 	"github.com/ptiles/ant/wgrid"
 	"image"
@@ -82,8 +82,8 @@ func (r *rect) seq(debug *strings.Builder) iter.Seq[string] {
 			off1 := rand.IntN(maxOffset1+1-minOffset1) + minOffset1
 
 			if _, in := wg.Intersection(uint8(ax0), off0, uint8(ax1), off1); in {
-				ax0s := pgrid.AxisNames[ax0%GridLinesTotal]
-				ax1s := pgrid.AxisNames[ax1%GridLinesTotal]
+				ax0s := axis.Name[ax0%GridLinesTotal]
+				ax1s := axis.Name[ax1%GridLinesTotal]
 				point := fmt.Sprintf("%s%d%s%s%d", ax0s, off0, dir, ax1s, off1)
 				if !yield(fmt.Sprintf(" -i %s", point)) {
 					return

@@ -1,7 +1,7 @@
 package output
 
 import (
-	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/utils/ximage"
 	"golang.org/x/image/draw"
 	"image"
 	"image/png"
@@ -15,7 +15,7 @@ type croppedImage struct {
 }
 
 func newCropped(i *Image) *croppedImage {
-	outputRectS := utils.RectDiv(i.outputRectN(), i.ScaleFactor)
+	outputRectS := ximage.RectDiv(i.outputRectN(), i.ScaleFactor)
 	croppedRect := image.Rectangle{Min: image.Point{}, Max: outputRectS.Size()}
 	dst := image.NewNRGBA(croppedRect)
 

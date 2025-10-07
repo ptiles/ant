@@ -2,7 +2,7 @@ package pgrid
 
 import (
 	"github.com/ptiles/ant/seq"
-	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/utils/ximage"
 	"image"
 	"iter"
 	"math"
@@ -183,7 +183,7 @@ func (f *Field) RectUpArray(ax0, ax1 uint8) image.Rectangle {
 	//	return rect
 	//}
 
-	return utils.SnapRect(rect, Padding)
+	return ximage.SnapRect(rect, Padding)
 }
 
 func (f *Field) rectCornerPoints(ax0, ax1 uint8, minPoint GridCoords) (image.Point, image.Point, image.Point, image.Point) {

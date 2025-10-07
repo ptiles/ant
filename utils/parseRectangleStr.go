@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"github.com/ptiles/ant/utils/ximage"
 	"image"
 	"regexp"
 )
@@ -26,7 +27,7 @@ func ParseRectangleStr(rectangleStr string) (rect image.Rectangle, scaleFactor i
 	if matches := NamedIntMatches(exprCenterSizeDiv, rectangleStr); matches != nil {
 		center := image.Point{X: matches["centerX"], Y: matches["centerY"]}
 		size := image.Point{X: matches["sizeX"], Y: matches["sizeY"]}
-		return RectCenterSize(center, size), matches["scale"], nil
+		return ximage.RectCenterSize(center, size), matches["scale"], nil
 	}
 
 	exprCenterSizeMul := regexp.MustCompile(
@@ -35,7 +36,7 @@ func ParseRectangleStr(rectangleStr string) (rect image.Rectangle, scaleFactor i
 	if matches := NamedIntMatches(exprCenterSizeMul, rectangleStr); matches != nil {
 		center := image.Point{X: matches["centerX"], Y: matches["centerY"]}
 		size := image.Point{X: matches["sizeX"], Y: matches["sizeY"]}.Mul(matches["scale"])
-		return RectCenterSize(center, size), matches["scale"], nil
+		return ximage.RectCenterSize(center, size), matches["scale"], nil
 	}
 
 	exprSizeMul := regexp.MustCompile(
@@ -81,7 +82,7 @@ func RectCenteredString(rect image.Rectangle, scaleFactor int) string {
 		}
 	}
 
-	center := RectCenter(rect)
+	center := ximage.RectCenter(rect)
 	sizeS := rect.Size().Div(scaleFactor)
 	return fmt.Sprintf("[%d,%d]#[%d,%d]*%d",
 		center.X, center.Y, sizeS.X, sizeS.Y, scaleFactor,

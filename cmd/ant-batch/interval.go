@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/ptiles/ant/pgrid"
+	"github.com/ptiles/ant/pgrid/axis"
 	"github.com/ptiles/ant/utils"
 	"iter"
 	"math/rand/v2"
@@ -137,8 +138,8 @@ func genRandomPoint(min, max int) (uint, int, string, uint, int) {
 func genRandomPointString(min, max int) string {
 	ax1, off1, dir, ax2, off2 := genRandomPoint(min, max)
 
-	ax1s := pgrid.AxisNames[ax1]
-	ax2s := pgrid.AxisNames[ax2]
+	ax1s := axis.Name[ax1]
+	ax2s := axis.Name[ax2]
 
 	return fmt.Sprintf("%s%d%s%s%d", ax1s, off1, dir, ax2s, off2)
 }
@@ -148,8 +149,8 @@ func genRandomPointKaleidoscope(min, max int) [GridLinesTotal]string {
 
 	var result [GridLinesTotal]string
 	for i := range GridLinesTotal {
-		ax1s := pgrid.AxisNames[(ax1+i)%GridLinesTotal]
-		ax2s := pgrid.AxisNames[(ax2+i)%GridLinesTotal]
+		ax1s := axis.Name[(ax1+i)%GridLinesTotal]
+		ax2s := axis.Name[(ax2+i)%GridLinesTotal]
 		point := fmt.Sprintf("%s%d%s%s%d", ax1s, off1, dir, ax2s, off2)
 		result[i] = point
 	}

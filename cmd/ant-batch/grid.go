@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/ptiles/ant/pgrid/axis"
 	"github.com/ptiles/ant/utils"
 	"github.com/ptiles/ant/wgrid"
 	"image"
@@ -107,12 +108,12 @@ func (g *grid) seq(debug *strings.Builder) iter.Seq[string] {
 							continue
 						}
 
-						p1 := fmt.Sprintf(" -i %s%d%s%s%d", utils.AxisNames[ax0], off0, "+", utils.AxisNames[ax1], off1)
+						p1 := fmt.Sprintf(" -i %s%d%s%s%d", axis.Name[ax0], off0, "+", axis.Name[ax1], off1)
 						if !yield(p1) {
 							return
 						}
 
-						p2 := fmt.Sprintf(" -i %s%d%s%s%d", utils.AxisNames[ax0], off0, "-", utils.AxisNames[ax1], off1)
+						p2 := fmt.Sprintf(" -i %s%d%s%s%d", axis.Name[ax0], off0, "-", axis.Name[ax1], off1)
 						if !yield(p2) {
 							return
 						}
