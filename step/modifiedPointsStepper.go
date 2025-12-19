@@ -80,11 +80,12 @@ func ModifiedPointsStepper(
 
 	points := make([]gridPointColor, MaxModifiedPoints)
 	modifiedCount := uint64(0)
+	maxSteps := steps.Max
 
-	dotSize := getDotSize(steps.Max)
+	dotSize := getDotSize(maxSteps)
 	fmt.Printf(
 		"%*s dot %s;   block %s;   row %s;  ",
-		1+len(utils.WithSeparators(steps.Max)), "",
+		1+len(utils.WithSeparators(maxSteps)), "",
 		utils.WithSeparators(dotSize),
 		utils.WithSeparators(dotSize*10),
 		utils.WithSeparators(dotSize*50),
@@ -100,7 +101,7 @@ func ModifiedPointsStepper(
 	var tail map[pgrid.GridAxes]void
 
 	stepNumber := uint64(0)
-	dotNumber := 0
+	dotNumber := uint64(0)
 	noise := uint64(0)
 
 	noisyCount := uint64(0)
@@ -108,7 +109,7 @@ func ModifiedPointsStepper(
 	start := time.Now()
 	lineSize := float64(dotSize * 50)
 
-	for gridAxes, color := range f.RunAxesColor(steps.Max) {
+	for gridAxes, color := range f.RunAxesColor(maxSteps) {
 		if visitedStep, ok := visited[gridAxes.Axis0][gridAxes.Axis1][gridAxes.Coords]; ok {
 			stepDiff := stepNumber - visitedStep
 			if noiseMin < stepDiff && stepDiff < noiseMax {
@@ -118,36 +119,11 @@ func ModifiedPointsStepper(
 		visited[gridAxes.Axis0][gridAxes.Axis1][gridAxes.Coords] = stepNumber
 
 		if stepNumber%dotSize == 0 {
-			// new row
-			if dotNumber%50 == 0 {
-				fmt.Print(" ")
+			showProgress(
+				&dotNumber, &noise, &noisyCount, &start,
+				dotSize, stepNumber, maxSteps, lineSize,
+			)
 
-				fmt.Printf("%s MiB", utils.WithSeparators(utils.MemStatsMB()))
-
-				if stepNumber != 0 {
-					seconds := time.Since(start).Seconds()
-					fmt.Printf("; %s st/s", utils.WithSeparators(uint64(lineSize/seconds)))
-					start = time.Now()
-				}
-
-				fmt.Printf("\n%s", utils.WithSeparatorsSpacePadded(stepNumber, steps.Max))
-			}
-
-			// new block
-			if dotNumber%10 == 0 {
-				fmt.Print(" ")
-			}
-			dotNumber += 1
-
-			// new dot
-			dotNoise := noiseCharsLen * noise / dotSize
-			fmt.Printf("%c", noiseChars[dotNoise])
-			noise = 0
-
-			noisyDot := dotNoise > 3
-			if noisyDot {
-				noisyCount += 1
-			}
 			if noisyCount >= maxNoisyDots {
 				modifiedPointsCh <- points[:modifiedCount]
 				break
