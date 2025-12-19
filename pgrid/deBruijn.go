@@ -1,6 +1,7 @@
 package pgrid
 
 import (
+	"github.com/ptiles/ant/geom"
 	"image"
 	"math"
 )
@@ -17,27 +18,26 @@ const LineScale = deBruijnScale * 2.5
 //const inflation = 1
 //const inflation = 2
 
-var deBruijnX = [GridLinesTotal]float64{}
-var deBruijnY = [GridLinesTotal]float64{}
+var deBruijn [GridLinesTotal]geom.Point
 
 func init() {
 	floatLines := float64(GridLinesTotal)
 	for i := range GridLinesTotal {
 		floatI := float64(i) / floatLines
-		deBruijnX[i] = math.Cos(2 * math.Pi * floatI)
-		deBruijnY[i] = math.Sin(2 * math.Pi * floatI)
+		deBruijn[i].X = math.Cos(2 * math.Pi * floatI)
+		deBruijn[i].Y = math.Sin(2 * math.Pi * floatI)
 	}
 }
 
 func (gp *GridPoint) GetCenterPoint() image.Point {
-	x := 0.5*deBruijnX[gp.Axes.Axis0] + 0.5*deBruijnX[gp.Axes.Axis1]
-	y := 0.5*deBruijnY[gp.Axes.Axis0] + 0.5*deBruijnY[gp.Axes.Axis1]
+	x := 0.5*deBruijn[gp.Axes.Axis0].X + 0.5*deBruijn[gp.Axes.Axis1].X
+	y := 0.5*deBruijn[gp.Axes.Axis0].Y + 0.5*deBruijn[gp.Axes.Axis1].Y
 
 	for i := range GridLinesTotal {
 		// floatOffset := float64(gp.Offsets[i]) * inflation
 		floatOffset := float64(gp.Offsets[i])
-		x += floatOffset * deBruijnX[i]
-		y += floatOffset * deBruijnY[i]
+		x += floatOffset * deBruijn[i].X
+		y += floatOffset * deBruijn[i].Y
 	}
 
 	return image.Point{X: int(x * deBruijnScale), Y: int(y * deBruijnScale)}
@@ -46,13 +46,13 @@ func (gp *GridPoint) GetCenterPoint() image.Point {
 func (f *Field) GetCenterPoint(ga GridAxes) image.Point {
 	off0, off1 := float64(ga.Coords.Offset0), float64(ga.Coords.Offset1)
 
-	x := (0.5+off0)*deBruijnX[ga.Axis0] + (0.5+off1)*deBruijnX[ga.Axis1]
-	y := (0.5+off0)*deBruijnY[ga.Axis0] + (0.5+off1)*deBruijnY[ga.Axis1]
+	x := (0.5+off0)*deBruijn[ga.Axis0].X + (0.5+off1)*deBruijn[ga.Axis1].X
+	y := (0.5+off0)*deBruijn[ga.Axis0].Y + (0.5+off1)*deBruijn[ga.Axis1].Y
 
-	for _, otl := range f.offsetsToLast[ga.Axis0][ga.Axis1] {
-		off := math.Ceil(otl.zeroZero + off0*otl.ax0Delta + off1*otl.ax1Delta)
-		x += off * deBruijnX[otl.targetAx]
-		y += off * deBruijnY[otl.targetAx]
+	for _, delta := range f.geometry[ga.Axis0][ga.Axis1].deltas {
+		off := math.Ceil(delta.zeroZero + off0*delta.ax0Delta + off1*delta.ax1Delta)
+		x += off * deBruijn[delta.targetAx].X
+		y += off * deBruijn[delta.targetAx].Y
 	}
 
 	return image.Point{X: int(x * deBruijnScale), Y: int(y * deBruijnScale)}
@@ -68,15 +68,15 @@ func (gp *GridPoint) GetCornerPoints() [4]image.Point {
 	for i := range GridLinesTotal {
 		// floatOffset := float64(gp.Offsets[i]) * inflation
 		floatOffset := float64(gp.Offsets[i])
-		x += floatOffset * deBruijnX[i]
-		y += floatOffset * deBruijnY[i]
+		x += floatOffset * deBruijn[i].X
+		y += floatOffset * deBruijn[i].Y
 	}
 
 	// TODO: prepare this in init() and store in counter-clockwise order
-	dax0x := deBruijnX[gp.Axes.Axis0]
-	dax0y := deBruijnY[gp.Axes.Axis0]
-	dax1x := deBruijnX[gp.Axes.Axis1]
-	dax1y := deBruijnY[gp.Axes.Axis1]
+	dax0x := deBruijn[gp.Axes.Axis0].X
+	dax0y := deBruijn[gp.Axes.Axis0].Y
+	dax1x := deBruijn[gp.Axes.Axis1].X
+	dax1y := deBruijn[gp.Axes.Axis1].Y
 
 	return [4]image.Point{
 		{X: int((x + _0*dax0x + _0*dax1x) * deBruijnScale), Y: int((y + _0*dax0y + _0*dax1y) * deBruijnScale)},

@@ -101,7 +101,7 @@ func axisRange(ax uint8, rect image.Rectangle) (int, int) {
 	axLine := zeroAxUnitLine(ax)
 
 	for j, cornerPoint := range cornerPoints {
-		cornerOffsets[j] = geom.Distance(axLine, geom.NewPoint(cornerPoint)) / pgrid.LineScale
+		cornerOffsets[j] = geom.Distance(geom.NewPoint(cornerPoint), axLine) / pgrid.LineScale
 	}
 
 	minOff := int(math.Floor(slices.Min(cornerOffsets))) - 10

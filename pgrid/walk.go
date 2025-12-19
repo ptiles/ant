@@ -5,27 +5,18 @@ import (
 	"iter"
 )
 
-var axesRotation = [GridLinesTotal][GridLinesTotal]bool{}
-
-// TODO: calculate this properly from angles instead of heuristic
-func init() {
-	for ax0 := range GridLinesTotal {
-		for i := range GridLinesTotal {
-			ax1 := (ax0 + i) % GridLinesTotal
-			// {true, true, true, false, false}
-			// {false, true, true, true, false}
-			axesRotation[ax0][ax1] = i <= GridLinesTotal/2
-		}
-	}
-}
-
 // RunAxesColor is used in cmd/ant
 func (f *Field) RunAxesColor(maxSteps uint64) iter.Seq2[GridAxes, uint8] {
 	return func(yield func(GridAxes, uint8) bool) {
 		initialTurn := f.InitialTurn()
+		geometry := f.geometry
 		currLine, prevLine, pointSign := initialTurn.CurrLine, initialTurn.PrevLine, initialTurn.sign
 
-		var currAxes GridAxes
+		var (
+			currAxes      GridAxes
+			nextLine      GridLine
+			nextPointSign bool
+		)
 
 		for range maxSteps {
 			// Keep axes in ascending order
@@ -44,10 +35,11 @@ func (f *Field) RunAxesColor(maxSteps uint64) iter.Seq2[GridAxes, uint8] {
 				return
 			}
 
-			axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
+			axisRotation := geometry[prevLine.Axis][currLine.Axis].rotation
 			positiveSide := isRightTurn != axisRotation != pointSign
 
-			nextLine, nextPointSign := f.nearestNeighbor(prevLine, currLine, positiveSide)
+			nextLine, nextPointSign = geometry[prevLine.Axis][currLine.Axis].deltas.nearestNeighbor(
+				float64(prevLine.Offset), float64(currLine.Offset), positiveSide)
 
 			currLine, prevLine, pointSign = nextLine, currLine, nextPointSign
 		}
@@ -58,9 +50,14 @@ func (f *Field) RunAxesColor(maxSteps uint64) iter.Seq2[GridAxes, uint8] {
 func (f *Field) RunPoint(maxSteps uint64) iter.Seq2[GridAxes, image.Point] {
 	return func(yield func(GridAxes, image.Point) bool) {
 		initialTurn := f.InitialTurn()
+		geometry := f.geometry
 		currLine, prevLine, pointSign := initialTurn.CurrLine, initialTurn.PrevLine, initialTurn.sign
 
-		var currAxes GridAxes
+		var (
+			currAxes      GridAxes
+			nextLine      GridLine
+			nextPointSign bool
+		)
 
 		for range maxSteps {
 			// Keep axes in ascending order
@@ -80,10 +77,11 @@ func (f *Field) RunPoint(maxSteps uint64) iter.Seq2[GridAxes, image.Point] {
 				return
 			}
 
-			axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
+			axisRotation := geometry[prevLine.Axis][currLine.Axis].rotation
 			positiveSide := isRightTurn != axisRotation != pointSign
 
-			nextLine, nextPointSign := f.nearestNeighbor(prevLine, currLine, positiveSide)
+			nextLine, nextPointSign = geometry[prevLine.Axis][currLine.Axis].deltas.nearestNeighbor(
+				float64(prevLine.Offset), float64(currLine.Offset), positiveSide)
 
 			currLine, prevLine, pointSign = nextLine, currLine, nextPointSign
 		}
@@ -94,6 +92,7 @@ func (f *Field) RunPoint(maxSteps uint64) iter.Seq2[GridAxes, image.Point] {
 func (f *Field) RunAxes(maxSteps uint64) iter.Seq[GridAxes] {
 	return func(yield func(GridAxes) bool) {
 		initialTurn := f.InitialTurn()
+		geometry := f.geometry
 		currLine, prevLine, pointSign := initialTurn.CurrLine, initialTurn.PrevLine, initialTurn.sign
 
 		var currAxes GridAxes
@@ -115,10 +114,11 @@ func (f *Field) RunAxes(maxSteps uint64) iter.Seq[GridAxes] {
 				return
 			}
 
-			axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
+			axisRotation := geometry[prevLine.Axis][currLine.Axis].rotation
 			positiveSide := isRightTurn != axisRotation != pointSign
 
-			nextLine, nextPointSign := f.nearestNeighbor(prevLine, currLine, positiveSide)
+			nextLine, nextPointSign := geometry[prevLine.Axis][currLine.Axis].deltas.nearestNeighbor(
+				float64(prevLine.Offset), float64(currLine.Offset), positiveSide)
 
 			currLine, prevLine, pointSign = nextLine, currLine, nextPointSign
 		}
@@ -129,6 +129,7 @@ func (f *Field) RunAxes(maxSteps uint64) iter.Seq[GridAxes] {
 func (f *Field) RunTurns(maxSteps uint64) iter.Seq2[uint64, Turn] {
 	return func(yield func(uint64, Turn) bool) {
 		initialTurn := f.InitialTurn()
+		geometry := f.geometry
 		currLine, prevLine, pointSign := initialTurn.CurrLine, initialTurn.PrevLine, initialTurn.sign
 
 		var currAxes GridAxes
@@ -150,10 +151,11 @@ func (f *Field) RunTurns(maxSteps uint64) iter.Seq2[uint64, Turn] {
 				return
 			}
 
-			axisRotation := axesRotation[prevLine.Axis][currLine.Axis]
+			axisRotation := geometry[prevLine.Axis][currLine.Axis].rotation
 			positiveSide := isRightTurn != axisRotation != pointSign
 
-			nextLine, nextPointSign := f.nearestNeighbor(prevLine, currLine, positiveSide)
+			nextLine, nextPointSign := geometry[prevLine.Axis][currLine.Axis].deltas.nearestNeighbor(
+				float64(prevLine.Offset), float64(currLine.Offset), positiveSide)
 
 			currLine, prevLine, pointSign = nextLine, currLine, nextPointSign
 		}

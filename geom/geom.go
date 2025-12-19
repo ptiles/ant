@@ -1,6 +1,7 @@
 package geom
 
 import (
+	"fmt"
 	"image"
 	"math"
 )
@@ -15,24 +16,16 @@ func (p Point) Round() image.Point {
 	return image.Point{X: int(math.Round(p.X)), Y: int(math.Round(p.Y))}
 }
 
+func (p Point) String() string {
+	return fmt.Sprintf("%.2f,%.2f", p.X, p.Y)
+}
+
 type Line struct{ A, B Point }
 
 func (l Line) SegmentContains(p Point) bool {
 	lineRect := image.Rect(int(l.A.X), int(l.A.Y), int(l.B.X), int(l.B.Y)).Inset(-1)
 
 	return p.Round().In(lineRect)
-}
-
-func FromDeg(deg float64) float64 {
-	return deg / 180 * math.Pi
-}
-
-func Sin(deg float64) float64 {
-	return math.Sin(FromDeg(deg))
-}
-
-func Cos(deg float64) float64 {
-	return math.Cos(FromDeg(deg))
 }
 
 func Intersection(line1, line2 Line) Point {
@@ -61,7 +54,7 @@ func NewPoint(p image.Point) Point {
 	return Point{X: float64(p.X), Y: float64(p.Y)}
 }
 
-func Distance(line Line, point Point) float64 {
+func Distance(point Point, line Line) float64 {
 	x1, y1 := line.A.X, line.A.Y
 	x2, y2 := line.B.X, line.B.Y
 

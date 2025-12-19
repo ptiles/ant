@@ -120,7 +120,7 @@ func (cf *CommonFlags) ParseArgs() {
 
 func (cf *CommonFlags) ParseShorthand(shorthand string) {
 	antNameR := `[RL]+`
-	radiusR := `([01]\.\d+)|(\d+e-\d+)`
+	radiusR := `([01]\.\d+)|(\d+(\.\d+)?e-\d+)`
 	initialPointR := `[A-X]-?\d+[+-]?[A-X]-?\d+`
 	stepsR := `(([0-9_]+)-)?([0-9_]+)(%([0-9_]+))?`
 

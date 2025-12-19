@@ -20,9 +20,9 @@ func (f *Field) getOffsets(ga GridAxes) GridOffsets {
 	result[ga.Axis1] = ga.Coords.Offset1
 
 	off0, off1 := float64(ga.Coords.Offset0), float64(ga.Coords.Offset1)
-	for _, otl := range f.offsetsToLast[ga.Axis0][ga.Axis1] {
-		off := math.Ceil(otl.zeroZero + off0*otl.ax0Delta + off1*otl.ax1Delta)
-		result[otl.targetAx] = OffsetInt(off)
+	for _, delta := range f.geometry[ga.Axis0][ga.Axis1].deltas {
+		result[delta.targetAx] = OffsetInt(math.Ceil(
+			delta.zeroZero + off0*delta.ax0Delta + off1*delta.ax1Delta))
 	}
 
 	return result

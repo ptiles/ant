@@ -2,6 +2,8 @@
 
 build: ant ant-batch ant-crop ant-dry
 
+old: ant-old ant-dry-old
+
 ant:
 	go build -o bin ./cmd/ant
 
@@ -30,7 +32,7 @@ bench-prep-swiss:
 #RECT = '(-423424,-430080)-(423424,375296)/128'
 #RECT = '(-423424,-430080)-(423424,375296)/1024'
 RECT = '(-423424,-430080)-(423424,375296)/2048'
-ANT = RLL__7e-06__B15160-E10890
+ANT = RLL__6e-06__B15160-E10890
 
 bench-swiss: bench-prep-swiss
 	hyperfine -i --warmup 1 -r 5 \
@@ -126,3 +128,6 @@ pprof-ant-mem: prof-ant-mem
 
 test:
 	go test ./pgrid
+
+test-v:
+	go test -v ./pgrid
