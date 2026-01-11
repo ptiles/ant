@@ -5,24 +5,11 @@ import "iter"
 func AxesCanon() iter.Seq2[uint8, uint8] {
 	return func(yield func(uint8, uint8) bool) {
 		for dax := range GridLinesTotal / 2 {
-			for ax0, ax1 := range AxesPairsSymmetric(dax) {
+			for ax0 := range GridLinesTotal {
+				ax1 := (ax0 + dax + 1) % GridLinesTotal
 				if !yield(ax0, ax1) {
 					return
 				}
-			}
-		}
-	}
-}
-
-func AxesPairsSymmetric(dax uint8) iter.Seq2[uint8, uint8] {
-	return func(yield func(uint8, uint8) bool) {
-		for ax0 := range GridLinesTotal {
-			ax1 := ax0 + dax + 1
-			if ax1 >= GridLinesTotal {
-				ax0, ax1 = ax1%GridLinesTotal, ax0
-			}
-			if !yield(ax0, ax1) {
-				return
 			}
 		}
 	}
