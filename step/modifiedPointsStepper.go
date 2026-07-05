@@ -2,7 +2,6 @@ package step
 
 import (
 	"fmt"
-	"github.com/StephaneBunel/bresenham"
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/utils"
 	"github.com/ptiles/ant/utils/palette"
@@ -223,13 +222,8 @@ func drawTiles(rect image.Rectangle, points []gridTileColor, pal palette.Palette
 	for i := range points {
 		gridPoint := points[i].gridPoint
 		color := pal[points[i].color]
-		cornerPoints := gridPoint.GetCornerPoints()
-		p0, p1, p2, p3 := cornerPoints[0], cornerPoints[1], cornerPoints[2], cornerPoints[3]
 
-		bresenham.DrawLine(img, p0.X, p0.Y, p1.X, p1.Y, color)
-		bresenham.DrawLine(img, p1.X, p1.Y, p2.X, p2.Y, color)
-		bresenham.DrawLine(img, p2.X, p2.Y, p3.X, p3.Y, color)
-		bresenham.DrawLine(img, p3.X, p3.Y, p0.X, p0.Y, color)
+		ximage.DrawQuad(img, gridPoint.GetCornerPoints(), color)
 	}
 
 	return img

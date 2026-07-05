@@ -2,14 +2,13 @@ package wgrid
 
 import (
 	"fmt"
-	"github.com/StephaneBunel/bresenham"
 	"github.com/ptiles/ant/geom"
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/pgrid/axis"
 	"github.com/ptiles/ant/seq"
 	"github.com/ptiles/ant/utils/ximage"
 	"image"
-	"image/color"
+	"iter"
 	"math"
 	"slices"
 	"strings"
@@ -161,40 +160,30 @@ func (wg WythoffGrid) IntersectionsMap(minColumn, maxColumn int) map[image.Point
 	return intersections
 }
 
-func (wg WythoffGrid) drawAxisSegment(ax uint8, off int, gridImage *image.NRGBA, c color.RGBA) {
-	axLine := axisLine(ax, off, float64(wg.ScaleFactor))
+func (wg WythoffGrid) EdgePoints(minColumn, maxColumn int) iter.Seq[[2]image.Point] {
+	return func(yield func([2]image.Point) bool) {
+		var edgePoints [2]image.Point
 
-	var edgePoints [2]image.Point
-	j := 0
-
-	for _, edge := range wg.Edges {
-		edgePoint := geom.Intersection(axLine, edge)
-		if edge.SegmentContains(edgePoint) {
-			edgePoints[j] = edgePoint.Round()
-			j += 1
-		}
-		if j == 2 {
-			bresenham.DrawLine(gridImage, edgePoints[0].X, edgePoints[0].Y, edgePoints[1].X, edgePoints[1].Y, c)
-			return
+		for ax := range pgrid.GridLinesTotal {
+			for off := range seq.WythoffMinMaxColumn(
+				wg.Ranges[ax].Min, wg.Ranges[ax].Max, minColumn, maxColumn,
+			) {
+				axLine := axisLine(ax, off, float64(wg.ScaleFactor))
+				j := 0
+				for _, edge := range wg.Edges {
+					edgePoint := geom.Intersection(axLine, edge)
+					if edge.SegmentContains(edgePoint) {
+						edgePoints[j] = edgePoint.Round()
+						j += 1
+					}
+					if j == 2 {
+						if !yield(edgePoints) {
+							return
+						}
+						break
+					}
+				}
+			}
 		}
 	}
-}
-
-func (wg WythoffGrid) DrawGrid(gridImage *image.NRGBA, c color.RGBA, minColumn, maxColumn int) {
-	for ax := range pgrid.GridLinesTotal {
-		minOffset, maxOffset := wg.Ranges[ax].Min, wg.Ranges[ax].Max
-		for off := range seq.WythoffMinMaxColumn(minOffset, maxOffset, minColumn, maxColumn) {
-			wg.drawAxisSegment(ax, off, gridImage, c)
-		}
-	}
-}
-
-func (wg WythoffGrid) DrawMultiGrid(gridSize int) *image.NRGBA {
-	gridImage := image.NewNRGBA(wg.RectS)
-
-	wg.DrawGrid(gridImage, color.RGBA{R: 0x40, G: 0x40, B: 0x40, A: 0xff}, gridSize, gridSize+3)
-	wg.DrawGrid(gridImage, color.RGBA{R: 0xa0, G: 0xa0, B: 0xa0, A: 0xff}, gridSize+3, gridSize+5)
-	wg.DrawGrid(gridImage, color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}, gridSize+5, math.MaxInt)
-
-	return gridImage
 }

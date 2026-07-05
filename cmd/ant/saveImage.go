@@ -15,12 +15,6 @@ import (
 func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fileNameFmt string, flags *Flags, commonFlags *utils.CommonFlags) uint64 {
 	out := output.NewImage(commonFlags.Rectangle, commonFlags.ScaleFactor, flags.maxDimension)
 
-	if flags.gridSize > 0 && flags.gridEmpty && !commonFlags.Rectangle.Empty() {
-		gridPrefix := fmt.Sprintf("grid_%d_", flags.gridSize)
-		fileName := fmt.Sprintf(fileNameFmt, gridPrefix, utils.WithSeparators(0), "png")
-		out.SaveGridOnly(fileName, flags.gridSize, commonFlags.Alpha)
-	}
-
 	stepsTotal := uint64(0)
 	minSteps := commonFlags.Steps.Max * commonFlags.MinStepsPct / 100
 
@@ -31,8 +25,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 
 		if mImg.Save {
 			saveImages(
-				out, commonFlags.Alpha, flags.gridBoth, flags.gridSize,
-				fileNameFmt, mImg.Steps, commonFlags.Steps.Max,
+				out, commonFlags.Alpha, fileNameFmt, mImg.Steps, commonFlags.Steps.Max,
 			)
 		}
 
@@ -49,8 +42,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 
 	if stepsTotal >= minSteps && uniqPct >= commonFlags.MinUniqPct {
 		fmt.Print(saveImages(
-			out, commonFlags.Alpha, flags.gridBoth, flags.gridSize,
-			fileNameFmt, stepsTotal, commonFlags.Steps.Max,
+			out, commonFlags.Alpha, fileNameFmt, stepsTotal, commonFlags.Steps.Max,
 		))
 
 		if flags.jsonStats {
@@ -84,22 +76,15 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 	return stepsTotal
 }
 
-func saveImages(out *output.Image, keepAlpha, gridBoth bool, gridSize int, fileNameFmt string, steps, max uint64) string {
-	var fileName, gridFileName string
+func saveImages(out *output.Image, keepAlpha bool, fileNameFmt string, steps, max uint64) string {
+	var fileName string
 	var result strings.Builder
 	result.WriteString("\n")
 
-	if gridBoth || gridSize == 0 {
-		fileName = fmt.Sprintf(fileNameFmt, "", utils.WithSeparatorsZeroPadded(steps, max), "png")
-		fmt.Fprintf(&result, "%s\n", fileName)
-	}
-	if gridSize > 0 {
-		gridPrefix := fmt.Sprintf("grid_%d_", gridSize)
-		gridFileName = fmt.Sprintf(fileNameFmt, gridPrefix, utils.WithSeparatorsZeroPadded(steps, max), "png")
-		fmt.Fprintf(&result, "%s\n", gridFileName)
-	}
+	fileName = fmt.Sprintf(fileNameFmt, "", utils.WithSeparatorsZeroPadded(steps, max), "png")
+	fmt.Fprintf(&result, "%s\n", fileName)
 
-	resultRectS := out.SaveImages(fileName, gridFileName, gridSize, keepAlpha)
+	resultRectS := out.SaveImages(fileName, keepAlpha)
 	resultRectN := out.ResultRectN
 	resultRectNFormatted := out.RectCenteredString()
 

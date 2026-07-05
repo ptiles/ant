@@ -56,6 +56,6 @@ for STEPS in "${MAX_STEPS_ARRAY[@]}"; do
          "${BASE_DIR}/${BASE}_Black.png"
 done
 
-./bin/ant-crop -f "${BASE_DIR}/${BASE}_Black.png"  \
-               -p "${BASE_DIR}/${BASE}_Crop" -g 15 \
-               -r "${RECT}" -c "${CROP}" | bash -x
+./bin/wcrop -f "${BASE_DIR}/${BASE}_Black.png"  \
+            -p "${BASE_DIR}/${BASE}_Crop" -g 15 \
+            -r "${RECT}" -c "${CROP}" | bash -x

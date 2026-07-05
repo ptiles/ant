@@ -1,6 +1,7 @@
 .DEFAULT_GOAL := build
 
-build: ant ant-batch ant-crop ant-dry
+.PHONY: ant ant-batch ant-dry wcrop wgrid
+build: ant ant-batch ant-dry wcrop wgrid
 
 old: ant-old ant-dry-old
 
@@ -10,11 +11,14 @@ ant:
 ant-batch:
 	go build -o bin ./cmd/ant-batch
 
-ant-crop:
-	go build -o bin ./cmd/ant-crop
-
 ant-dry:
 	go build -o bin ./cmd/ant-dry
+
+wcrop:
+	go build -o bin ./cmd/wcrop
+
+wgrid:
+	go build -o bin ./cmd/wgrid
 
 ant-old:
 	go build -o bin/ant-old ./cmd/ant

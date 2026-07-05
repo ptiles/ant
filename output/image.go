@@ -3,7 +3,6 @@ package output
 import (
 	"github.com/ptiles/ant/utils"
 	"github.com/ptiles/ant/utils/ximage"
-	"github.com/ptiles/ant/wgrid"
 	"golang.org/x/image/draw"
 	"image"
 )
@@ -15,7 +14,6 @@ type Image struct {
 	ScaleFactor  int
 	maxDimension int
 	dynamic      bool
-	Grid         wgrid.WythoffGrid
 }
 
 func NewImage(rectangle image.Rectangle, scaleFactor, maxDimension int) *Image {
@@ -27,7 +25,6 @@ func NewImage(rectangle image.Rectangle, scaleFactor, maxDimension int) *Image {
 		ScaleFactor:  scaleFactor,
 		maxDimension: maxDimension,
 		dynamic:      rectangle.Empty(),
-		Grid:         wgrid.New(rectangle, scaleFactor),
 	}
 }
 
@@ -74,36 +71,25 @@ func (i *Image) Merge(modifiedImage *image.RGBA) {
 				i.maxDimension *= 2
 			}
 			i.halveImage()
-			i.Grid = wgrid.New(i.ResultRectN, i.ScaleFactor)
 		}
 	}
 	i.mergeImage(modifiedImage)
 }
 
-func (i *Image) SaveImages(fileName, withGridFileName string, gridSize int, keepAlpha bool) image.Rectangle {
-	cropped := newCropped(i)
+func (i *Image) SaveImages(fileName string, keepAlpha bool) image.Rectangle {
+	outputRectS := ximage.RectDiv(i.outputRectN(), i.ScaleFactor)
+	croppedRect := image.Rectangle{Min: image.Point{}, Max: outputRectS.Size()}
 
-	cropped.draw(i.imageS)
+	croppedImg := image.NewNRGBA(croppedRect)
+	sourcePoint := outputRectS.Min
+
+	draw.Draw(croppedImg, croppedImg.Rect, i.imageS, sourcePoint, draw.Over)
+
 	if !keepAlpha {
-		cropped.removeAlpha()
-	}
-	if fileName != "" {
-		cropped.savePNG(fileName)
+		ximage.RemoveAlpha(croppedImg)
 	}
 
-	if withGridFileName != "" && gridSize > 0 {
-		cropped.draw(i.Grid.DrawMultiGrid(gridSize))
-		cropped.savePNG(withGridFileName)
-	}
+	ximage.SavePNG(croppedImg, fileName)
 
-	return cropped.dst.Rect
-}
-
-func (i *Image) SaveGridOnly(gridOnlyFileName string, gridSize int, keepAlpha bool) {
-	cropped := newCropped(i)
-	cropped.draw(i.Grid.DrawMultiGrid(gridSize))
-	if !keepAlpha {
-		cropped.removeAlpha()
-	}
-	cropped.savePNG(gridOnlyFileName)
+	return croppedImg.Rect
 }
