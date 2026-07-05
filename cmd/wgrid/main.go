@@ -8,6 +8,7 @@ import (
 	"image/color"
 	"math"
 	"os"
+	"strconv"
 
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/pgrid/parse"
@@ -110,7 +111,15 @@ func main() {
 		ximage.RemoveAlpha(gridImage)
 	}
 
-	ximage.SavePNG(gridImage, fileName)
+	txt := map[string]string{
+		"rectangle":   flags.rectangle.String(),
+		"scaleFactor": fmt.Sprintf("%d", flags.scaleFactor),
+
+		"-g": strconv.Itoa(flags.gridSize),
+		"-r": utils.RectCenteredString(flags.rectangle, flags.scaleFactor),
+	}
+
+	ximage.SavePNG(gridImage, fileName, txt)
 
 	fmt.Println("Saved grid image to:", fileName)
 

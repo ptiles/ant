@@ -2,14 +2,13 @@ package ximage
 
 import (
 	"image"
-	"image/png"
 	"os"
 	"path"
 
 	"github.com/ptiles/ant/utils/xpng"
 )
 
-func SavePNG(img image.Image, fileName string) {
+func SavePNG(img image.Image, fileName string, txt map[string]string) {
 	err := os.MkdirAll(path.Dir(fileName), 0755)
 	if err != nil {
 		panic(err)
@@ -21,7 +20,7 @@ func SavePNG(img image.Image, fileName string) {
 	}
 	defer file.Close()
 
-	err = png.Encode(file, img)
+	err = xpng.Encode(file, img, txt)
 	if err != nil {
 		panic(err)
 	}

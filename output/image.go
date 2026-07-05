@@ -1,10 +1,11 @@
 package output
 
 import (
+	"image"
+
 	"github.com/ptiles/ant/utils"
 	"github.com/ptiles/ant/utils/ximage"
 	"golang.org/x/image/draw"
-	"image"
 )
 
 type Image struct {
@@ -76,7 +77,7 @@ func (i *Image) Merge(modifiedImage *image.RGBA) {
 	i.mergeImage(modifiedImage)
 }
 
-func (i *Image) SaveImages(fileName string, keepAlpha bool) image.Rectangle {
+func (i *Image) SaveImages(fileName string, keepAlpha bool, txt map[string]string) image.Rectangle {
 	outputRectS := ximage.RectDiv(i.outputRectN(), i.ScaleFactor)
 	croppedRect := image.Rectangle{Min: image.Point{}, Max: outputRectS.Size()}
 
@@ -89,7 +90,7 @@ func (i *Image) SaveImages(fileName string, keepAlpha bool) image.Rectangle {
 		ximage.RemoveAlpha(croppedImg)
 	}
 
-	ximage.SavePNG(croppedImg, fileName)
+	ximage.SavePNG(croppedImg, fileName, txt)
 
 	return croppedImg.Rect
 }

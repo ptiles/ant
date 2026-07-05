@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"image"
 	"os"
 	"path"
 	"strings"
@@ -26,7 +27,12 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 
 		if mImg.Save {
 			saveImages(
-				out, commonFlags.Alpha, fileNameFmt, mImg.Steps, commonFlags.Steps.Max,
+				out, commonFlags.Alpha, fileNameFmt,
+				mImg.Steps, commonFlags.Steps.Max,
+				statsType{
+					Rect:        out.ResultRectN,
+					ScaleFactor: out.ScaleFactor,
+				}.txt(),
 			)
 		}
 
@@ -43,7 +49,12 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 
 	if stepsTotal >= minSteps && uniqPct >= commonFlags.MinUniqPct {
 		fmt.Print(saveImages(
-			out, commonFlags.Alpha, fileNameFmt, stepsTotal, commonFlags.Steps.Max,
+			out, commonFlags.Alpha, fileNameFmt,
+			stepsTotal, commonFlags.Steps.Max,
+			statsType{
+				Rect:        out.ResultRectN,
+				ScaleFactor: out.ScaleFactor,
+			}.txt(),
 		))
 
 		if flags.jsonStats {
@@ -60,7 +71,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 				MaxSide:          max(resultRectN.Dx(), resultRectN.Dy()),
 				Dimensions:       resultRectN.Size().String(),
 				DimensionsScaled: resultRectN.Size().Div(out.ScaleFactor).String(),
-				Rect:             resultRectN.String(),
+				Rect:             resultRectN,
 				RectMinX:         resultRectN.Min.X,
 				RectMinY:         resultRectN.Min.Y,
 				RectMaxX:         resultRectN.Max.X,
@@ -77,7 +88,7 @@ func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fil
 	return stepsTotal
 }
 
-func saveImages(out *output.Image, keepAlpha bool, fileNameFmt string, steps, max uint64) string {
+func saveImages(out *output.Image, keepAlpha bool, fileNameFmt string, steps, max uint64, txt map[string]string) string {
 	var fileName string
 	var result strings.Builder
 	result.WriteString("\n")
@@ -85,7 +96,7 @@ func saveImages(out *output.Image, keepAlpha bool, fileNameFmt string, steps, ma
 	fileName = fmt.Sprintf(fileNameFmt, "", utils.WithSeparatorsZeroPadded(steps, max), "png")
 	fmt.Fprintf(&result, "%s\n", fileName)
 
-	resultRectS := out.SaveImages(fileName, keepAlpha)
+	resultRectS := out.SaveImages(fileName, keepAlpha, txt)
 	resultRectN := out.ResultRectN
 	resultRectNFormatted := out.RectCenteredString()
 
@@ -95,25 +106,34 @@ func saveImages(out *output.Image, keepAlpha bool, fileNameFmt string, steps, ma
 }
 
 type statsType struct {
-	AntName          string `json:"antName"`
-	FileName         string `json:"fileName"`
-	Steps            uint64 `json:"steps"`
-	UniqPct          uint64 `json:"uniqPct"`
-	ImagesCount      int    `json:"imagesCount"`
-	MaxSide          int    `json:"maxSide"`
-	Dimensions       string `json:"dimensions"`
-	DimensionsScaled string `json:"dimensionsScaled"`
-	Rect             string `json:"rect"`
-	RectMinX         int    `json:"rectMinX"`
-	RectMinY         int    `json:"rectMinY"`
-	RectMaxX         int    `json:"rectMaxX"`
-	RectMaxY         int    `json:"rectMaxY"`
-	ScaleFactor      int    `json:"scaleFactor"`
+	AntName          string          `json:"antName"`
+	FileName         string          `json:"fileName"`
+	Steps            uint64          `json:"steps"`
+	UniqPct          uint64          `json:"uniqPct"`
+	ImagesCount      int             `json:"imagesCount"`
+	MaxSide          int             `json:"maxSide"`
+	Dimensions       string          `json:"dimensions"`
+	DimensionsScaled string          `json:"dimensionsScaled"`
+	Rect             image.Rectangle `json:"rect"`
+	RectMinX         int             `json:"rectMinX"`
+	RectMinY         int             `json:"rectMinY"`
+	RectMaxX         int             `json:"rectMaxX"`
+	RectMaxY         int             `json:"rectMaxY"`
+	ScaleFactor      int             `json:"scaleFactor"`
 
 	Bounds        pgrid.Bounds     `json:"bounds"`
 	BoundsSizes   pgrid.BoundsSize `json:"boundsSizes"`
 	BoundsSizeMin int32            `json:"boundsSizeMin"`
 	BoundsSizeMax int32            `json:"boundsSizeMax"`
+}
+
+func (st statsType) txt() map[string]string {
+	return map[string]string{
+		"rectangle":   st.Rect.String(),
+		"scaleFactor": fmt.Sprintf("%d", st.ScaleFactor),
+
+		"-r": utils.RectCenteredString(st.Rect, st.ScaleFactor),
+	}
 }
 
 func writeStats(fileNameFmt string, stats statsType) {
