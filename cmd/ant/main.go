@@ -3,15 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ptiles/ant/pgrid"
-	"github.com/ptiles/ant/step"
-	"github.com/ptiles/ant/utils"
-	"github.com/ptiles/ant/utils/palette"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"runtime/pprof"
+
+	"github.com/ptiles/ant/pgrid"
+	"github.com/ptiles/ant/step"
+	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/utils/palette"
 )
 
 var (

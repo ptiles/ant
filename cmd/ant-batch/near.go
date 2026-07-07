@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/pgrid/axis"
-	"github.com/ptiles/ant/pgrid/parse"
 	"iter"
 	"math/rand/v2"
 	"strconv"
 	"strings"
+
+	"github.com/ptiles/ant/pgrid/axis"
+	"github.com/ptiles/ant/pgrid/parse"
 )
 
 type near struct {

@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/pgrid"
-	"github.com/ptiles/ant/pgrid/axis"
-	"github.com/ptiles/ant/utils"
 	"iter"
 	"math/rand/v2"
 	"strconv"
 	"strings"
+
+	"github.com/ptiles/ant/pgrid"
+	"github.com/ptiles/ant/pgrid/axis"
+	"github.com/ptiles/ant/utils"
 )
 
 type interval struct {

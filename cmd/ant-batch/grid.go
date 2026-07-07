@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/pgrid/axis"
-	"github.com/ptiles/ant/utils"
-	"github.com/ptiles/ant/wgrid"
 	"image"
 	"iter"
 	"math"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/ptiles/ant/pgrid/axis"
+	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/wgrid"
 )
 
 type grid struct {

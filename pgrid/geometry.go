@@ -1,8 +1,9 @@
 package pgrid
 
 import (
-	"github.com/ptiles/ant/geom"
 	"math"
+
+	"github.com/ptiles/ant/geom"
 )
 
 type Geometry [GridLinesTotal][GridLinesTotal]intersection

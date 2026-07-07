@@ -1,9 +1,10 @@
 package palette
 
 import (
-	"github.com/lucasb-eyer/go-colorful"
 	"image/color"
 	"math/rand/v2"
+
+	"github.com/lucasb-eyer/go-colorful"
 )
 
 type Palette []color.RGBA

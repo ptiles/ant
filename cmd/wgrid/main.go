@@ -4,15 +4,16 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"image"
+	"image/color"
+	"math"
+	"os"
+
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/pgrid/parse"
 	"github.com/ptiles/ant/utils"
 	"github.com/ptiles/ant/utils/ximage"
 	"github.com/ptiles/ant/wgrid"
-	"image"
-	"image/color"
-	"math"
-	"os"
 )
 
 type Flags struct {

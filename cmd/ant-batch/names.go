@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/utils"
 	"iter"
 	"strconv"
 	"strings"
+
+	"github.com/ptiles/ant/utils"
 )
 
 type names struct {

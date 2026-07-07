@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/pgrid/parse"
 	"iter"
 	"strings"
+
+	"github.com/ptiles/ant/pgrid/parse"
 )
 
 type list struct {

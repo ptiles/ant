@@ -2,8 +2,9 @@ package step
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/utils"
 	"time"
+
+	"github.com/ptiles/ant/utils"
 )
 
 func showProgress(

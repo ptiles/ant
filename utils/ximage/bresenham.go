@@ -1,9 +1,10 @@
 package ximage
 
 import (
-	"github.com/StephaneBunel/bresenham"
 	"image"
 	"image/color"
+
+	"github.com/StephaneBunel/bresenham"
 )
 
 func DrawSegment(img bresenham.Plotter, segment [2]image.Point, c color.Color) {

@@ -3,13 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path"
+	"strings"
+
 	"github.com/ptiles/ant/output"
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/step"
 	"github.com/ptiles/ant/utils"
-	"os"
-	"path"
-	"strings"
 )
 
 func saveImageFromModifiedImages(modifiedImagesCh <-chan step.ModifiedImage, fileNameFmt string, flags *Flags, commonFlags *utils.CommonFlags) uint64 {

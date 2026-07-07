@@ -2,14 +2,15 @@ package step
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/pgrid"
-	"github.com/ptiles/ant/utils"
-	"github.com/ptiles/ant/utils/palette"
-	"github.com/ptiles/ant/utils/ximage"
 	"image"
 	"maps"
 	"os"
 	"time"
+
+	"github.com/ptiles/ant/pgrid"
+	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/utils/palette"
+	"github.com/ptiles/ant/utils/ximage"
 )
 
 type gridTileColor struct {

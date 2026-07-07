@@ -2,11 +2,12 @@ package utils
 
 import (
 	"fmt"
+	"image"
+	"regexp"
+
 	"github.com/ptiles/ant/pgrid/axis"
 	"github.com/ptiles/ant/utils/ximage"
 	"github.com/ptiles/ant/wgrid"
-	"image"
-	"regexp"
 )
 
 func ParseRectangleStr(rectangleStr string) (rect image.Rectangle, scaleFactor int, err error) {

@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/ptiles/ant/utils/ximage"
-	"github.com/ptiles/ant/wgrid"
 	"image"
 	"image/color"
 	"math"
+
+	"github.com/ptiles/ant/utils/ximage"
+	"github.com/ptiles/ant/wgrid"
 )
 
 func DrawGrid(wg *wgrid.WythoffGrid, gridImage *image.NRGBA, minColumn, maxColumn int, c color.RGBA) {

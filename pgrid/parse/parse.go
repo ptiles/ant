@@ -1,9 +1,10 @@
 package parse
 
 import (
-	"github.com/ptiles/ant/pgrid/axis"
 	"regexp"
 	"strconv"
+
+	"github.com/ptiles/ant/pgrid/axis"
 )
 
 func InitialPoint(initialPoint string) (uint8, int, bool, uint8, int) {

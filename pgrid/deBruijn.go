@@ -1,9 +1,10 @@
 package pgrid
 
 import (
-	"github.com/ptiles/ant/geom"
 	"image"
 	"math"
+
+	"github.com/ptiles/ant/geom"
 )
 
 //const DrawTilesAndPoints = true

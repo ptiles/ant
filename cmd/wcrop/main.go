@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ptiles/ant/utils"
-	"github.com/ptiles/ant/wgrid"
 	"image"
 	"math"
 	"os"
+
+	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/wgrid"
 )
 
 type Flags struct {

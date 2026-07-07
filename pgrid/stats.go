@@ -1,12 +1,13 @@
 package pgrid
 
 import (
-	"github.com/ptiles/ant/seq"
-	"github.com/ptiles/ant/utils/ximage"
 	"image"
 	"iter"
 	"math"
 	"sort"
+
+	"github.com/ptiles/ant/seq"
+	"github.com/ptiles/ant/utils/ximage"
 )
 
 func Uniq() (uint64, int) {

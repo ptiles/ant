@@ -2,16 +2,17 @@ package wgrid
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/geom"
-	"github.com/ptiles/ant/pgrid"
-	"github.com/ptiles/ant/pgrid/axis"
-	"github.com/ptiles/ant/seq"
-	"github.com/ptiles/ant/utils/ximage"
 	"image"
 	"iter"
 	"math"
 	"slices"
 	"strings"
+
+	"github.com/ptiles/ant/geom"
+	"github.com/ptiles/ant/pgrid"
+	"github.com/ptiles/ant/pgrid/axis"
+	"github.com/ptiles/ant/seq"
+	"github.com/ptiles/ant/utils/ximage"
 )
 
 type WythoffGrid struct {

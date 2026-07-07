@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/pgrid/parse"
-	"github.com/ptiles/ant/seq"
-	"github.com/ptiles/ant/utils"
 	"iter"
 	"slices"
 	"strings"
+
+	"github.com/ptiles/ant/pgrid/parse"
+	"github.com/ptiles/ant/seq"
+	"github.com/ptiles/ant/utils"
 )
 
 type wythoff struct {

@@ -2,10 +2,11 @@ package step
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/pgrid"
-	"github.com/ptiles/ant/utils"
 	"maps"
 	"time"
+
+	"github.com/ptiles/ant/pgrid"
+	"github.com/ptiles/ant/utils"
 )
 
 func DryRunStepper(f *pgrid.Field, maxSteps, maxNoisyDots uint64) {

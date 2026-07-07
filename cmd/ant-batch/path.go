@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/ptiles/ant/pgrid"
-	"github.com/ptiles/ant/seq"
-	"github.com/ptiles/ant/utils"
 	"iter"
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/ptiles/ant/pgrid"
+	"github.com/ptiles/ant/seq"
+	"github.com/ptiles/ant/utils"
 )
 
 type path struct {

@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ptiles/ant/pgrid"
-	"github.com/ptiles/ant/step"
-	"github.com/ptiles/ant/utils"
 	"log"
 	"os"
 	"runtime"
 	"runtime/pprof"
+
+	"github.com/ptiles/ant/pgrid"
+	"github.com/ptiles/ant/step"
+	"github.com/ptiles/ant/utils"
 )
 
 func main() {
