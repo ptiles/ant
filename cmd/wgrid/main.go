@@ -76,8 +76,9 @@ func main() {
 	fileName := fmt.Sprintf("%s/grid_%s_%d%s.png", flags.dir, rectStr, flags.gridSize, alphaStr)
 	halfSize, thickness, red := 10, 5, color.NRGBA{R: 255, G: 40, B: 40, A: 128}
 
-	wg := wgrid.New(flags.rectangle, flags.scaleFactor)
-	gridImage := image.NewNRGBA(ximage.RectDiv(flags.rectangle, flags.scaleFactor))
+	wg := wgrid.New(flags.rectangle)
+	rectS := ximage.RectDiv(flags.rectangle, flags.scaleFactor)
+	gridImage := image.NewNRGBA(rectS)
 	DrawMultiGrid(&wg, gridImage, flags.gridSize)
 	intersections := wg.IntersectionsMap(flags.gridSize+3, math.MaxInt)
 
@@ -89,7 +90,7 @@ func main() {
 			ximage.DrawSquareThick(gridImage, point, halfSize, thickness, red)
 		}
 		if flags.verbose {
-			fmt.Fprintf(os.Stderr, "%3d uniq intersections\t%s\n", len(intersections), wg.RectS)
+			fmt.Fprintf(os.Stderr, "%3d uniq intersections\t%s\n", len(intersections), rectS)
 		}
 	}
 
@@ -99,7 +100,7 @@ func main() {
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
 			ax1, off1, _, ax2, off2 := parse.InitialPoint(scanner.Text())
-			point := wgrid.Intersection(ax1, off1, ax2, off2, flags.scaleFactor)
+			point := wgrid.Intersection(ax1, off1, ax2, off2)
 			ximage.DrawSquareThick(gridImage, point, halfSize, thickness, green)
 		}
 		if err := scanner.Err(); err != nil {

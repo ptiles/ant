@@ -23,7 +23,7 @@ func ParseRectangleStr(rectangleStr string) (rect image.Rectangle, scaleFactor i
 	if stringMatches != nil && intMatches != nil {
 		center := wgrid.Intersection(
 			axis.Index(stringMatches["ax0"]), intMatches["off0"],
-			axis.Index(stringMatches["ax1"]), intMatches["off1"], 1)
+			axis.Index(stringMatches["ax1"]), intMatches["off1"])
 		size := image.Point{X: intMatches["sizeX"], Y: intMatches["sizeY"]}.Mul(intMatches["scale"])
 		return ximage.RectCenterSize(center, size), intMatches["scale"], nil
 	}

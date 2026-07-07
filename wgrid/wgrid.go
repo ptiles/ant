@@ -12,38 +12,33 @@ import (
 	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/pgrid/axis"
 	"github.com/ptiles/ant/seq"
-	"github.com/ptiles/ant/utils/ximage"
 )
 
 type WythoffGrid struct {
-	RectN       image.Rectangle
-	RectS       image.Rectangle
-	ScaleFactor int
-	Edges       []geom.Line
-	Ranges      [pgrid.GridLinesTotal]Range
+	rect   image.Rectangle
+	edges  []geom.Line
+	Ranges [pgrid.GridLinesTotal]Range
 }
 
 type Range struct {
-	Min int
-	Max int
+	Min     int
+	Max     int
+	reverse seq.NumColSlice
 }
 
-func New(rectN image.Rectangle, scaleFactor int) WythoffGrid {
-	rectS := ximage.RectDiv(rectN, scaleFactor)
-
+func New(rect image.Rectangle) WythoffGrid {
 	var ranges [pgrid.GridLinesTotal]Range
 	for ax := range pgrid.GridLinesTotal {
-		rMin, rMax := axisRange(ax, rectN)
+		rMin, rMax := axisRange(ax, rect)
 		ranges[ax].Min = rMin
 		ranges[ax].Max = rMax
+		ranges[ax].reverse = seq.WythoffReverseSorted.Slice(rMin, rMax)
 	}
 
 	return WythoffGrid{
-		RectN:       rectN,
-		RectS:       rectS,
-		ScaleFactor: scaleFactor,
-		Edges:       edgeLines(rectS),
-		Ranges:      ranges,
+		rect:   rect,
+		edges:  edgeLines(rect),
+		Ranges: ranges,
 	}
 }
 
@@ -74,20 +69,20 @@ func init() {
 	}
 }
 
-func axisLine(ax uint8, offset int, scaleFactor float64) geom.Line {
-	aX, aY := float64(offset)*pgrid.LineScale, float64(-1_000)
-	bX, bY := float64(offset)*pgrid.LineScale, float64(1_000)
+func axisLine(ax uint8, offset int) geom.Line {
+	aX, aY := float64(offset)*pgrid.LineScale, -0.5
+	bX, bY := float64(offset)*pgrid.LineScale, 0.5
 	sin := sinCos[ax].sin
 	cos := sinCos[ax].cos
 
 	return geom.Line{
-		A: geom.Point{X: (aX*cos - aY*sin) / scaleFactor, Y: (aX*sin + aY*cos) / scaleFactor},
-		B: geom.Point{X: (bX*cos - bY*sin) / scaleFactor, Y: (bX*sin + bY*cos) / scaleFactor},
+		A: geom.Point{X: aX*cos - aY*sin, Y: aX*sin + aY*cos},
+		B: geom.Point{X: bX*cos - bY*sin, Y: bX*sin + bY*cos},
 	}
 }
 
 func zeroAxUnitLine(ax uint8) geom.Line {
-	return axisLine(ax, 0, 2000)
+	return axisLine(ax, 0)
 }
 
 func axisRange(ax uint8, rect image.Rectangle) (int, int) {
@@ -111,13 +106,13 @@ func axisRange(ax uint8, rect image.Rectangle) (int, int) {
 }
 
 func (wg WythoffGrid) Intersection(ax0 uint8, off0 int, ax1 uint8, off1 int) (image.Point, bool) {
-	point := Intersection(ax0, off0, ax1, off1, wg.ScaleFactor)
-	return point, point.In(wg.RectS)
+	point := Intersection(ax0, off0, ax1, off1)
+	return point, point.In(wg.rect)
 }
 
-func Intersection(ax0 uint8, off0 int, ax1 uint8, off1 int, scaleFactor int) image.Point {
-	line0 := axisLine(ax0, off0, float64(scaleFactor))
-	line1 := axisLine(ax1, off1, float64(scaleFactor))
+func Intersection(ax0 uint8, off0 int, ax1 uint8, off1 int) image.Point {
+	line0 := axisLine(ax0, off0)
+	line1 := axisLine(ax1, off1)
 
 	return geom.Intersection(line0, line1).Round()
 }
@@ -142,11 +137,11 @@ func (wg WythoffGrid) IntersectionsMap(minColumn, maxColumn int) map[image.Point
 	intersections := map[image.Point]AxesMap{}
 
 	for ax0, ax1 := range pgrid.AxesCanon() {
-		minOffset0, maxOffset0 := wg.Ranges[ax0].Min, wg.Ranges[ax0].Max
-		minOffset1, maxOffset1 := wg.Ranges[ax1].Min, wg.Ranges[ax1].Max
+		reverse0 := wg.Ranges[ax0].reverse
+		reverse1 := wg.Ranges[ax1].reverse
 
-		for off0 := range seq.WythoffMinMaxColumn(minOffset0, maxOffset0, minColumn, maxColumn) {
-			for off1 := range seq.WythoffMinMaxColumn(minOffset1, maxOffset1, minColumn, maxColumn) {
+		for off0 := range reverse0.MinMaxColumn(minColumn, maxColumn) {
+			for off1 := range reverse1.MinMaxColumn(minColumn, maxColumn) {
 				if point, in := wg.Intersection(ax0, off0, ax1, off1); in {
 					if intersections[point] == nil {
 						intersections[point] = make(AxesMap, pgrid.GridLinesTotal)
@@ -166,12 +161,12 @@ func (wg WythoffGrid) EdgePoints(minColumn, maxColumn int) iter.Seq[[2]image.Poi
 		var edgePoints [2]image.Point
 
 		for ax := range pgrid.GridLinesTotal {
-			for off := range seq.WythoffMinMaxColumn(
-				wg.Ranges[ax].Min, wg.Ranges[ax].Max, minColumn, maxColumn,
-			) {
-				axLine := axisLine(ax, off, float64(wg.ScaleFactor))
+			reverse := wg.Ranges[ax].reverse
+
+			for off := range reverse.MinMaxColumn(minColumn, maxColumn) {
+				axLine := axisLine(ax, off)
 				j := 0
-				for _, edge := range wg.Edges {
+				for _, edge := range wg.edges {
 					edgePoint := geom.Intersection(axLine, edge)
 					if edge.SegmentContains(edgePoint) {
 						edgePoints[j] = edgePoint.Round()

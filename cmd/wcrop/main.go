@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/ptiles/ant/utils"
+	"github.com/ptiles/ant/utils/ximage"
 	"github.com/ptiles/ant/wgrid"
 )
 
@@ -71,7 +72,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	wg := wgrid.New(flags.rectangle, flags.scaleFactor)
+	wg := wgrid.New(flags.rectangle)
+	rectS := ximage.RectDiv(flags.rectangle, flags.scaleFactor)
 	intersections := wg.IntersectionsMap(flags.gridSize+5, math.MaxInt)
 
 	fmt.Fprintf(os.Stderr, "%3d uniq intersections\n", len(intersections))
@@ -83,7 +85,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "[%6d,%6d]x%d  |%s\n", point.X, point.Y, axesCount, axes)
 		if axesCount >= flags.minAxes {
 			crop := cropRect(point, flags.cropSize, flags.cropCenter)
-			if crop.In(wg.RectS) {
+			if crop.In(rectS) {
 				crops = append(crops, crop)
 			}
 		}
@@ -102,7 +104,7 @@ func main() {
 	for i, crop := range crops {
 		cropStr := fmt.Sprintf("%dx%d+%d+%d!",
 			flags.cropSize.X, flags.cropSize.Y,
-			crop.Min.X-wg.RectS.Min.X, crop.Min.Y-wg.RectS.Min.Y,
+			crop.Min.X-rectS.Min.X, crop.Min.Y-rectS.Min.Y,
 		)
 		fmt.Printf("magick %s -crop %-24s %s%d.png\n",
 			flags.fileName, cropStr, flags.outPrefix, i,

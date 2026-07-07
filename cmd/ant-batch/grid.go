@@ -96,7 +96,7 @@ func (g *grid) seq(debug *strings.Builder) iter.Seq[string] {
 			g.gridSizeMax = math.MaxInt
 		}
 
-		wg := wgrid.New(g.rect, g.scaleFactor)
+		wg := wgrid.New(g.rect)
 		intersections := wg.IntersectionsMap(g.gridSize, g.gridSizeMax)
 		startingPoints := 0
 

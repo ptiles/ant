@@ -69,7 +69,7 @@ func (r *rect) seq(debug *strings.Builder) iter.Seq[string] {
 			debug.WriteString("\nRect:")
 		}
 
-		wg := wgrid.New(r.rect, r.scaleFactor)
+		wg := wgrid.New(r.rect)
 
 		count := 0
 

@@ -1,16 +1,22 @@
 package seq
 
 import (
+	"cmp"
 	"iter"
+	"maps"
 	"math"
+	"slices"
 )
 
 type RowCol struct{ Row, Col int }
+type NumCol struct{ Num, Col int }
+type NumColSlice []NumCol
 
 // recalculate capacities on rowsMax or colsMax change
 
 var Wythoff = make(map[RowCol]int, 16450)
 var WythoffReverse = make(map[int]RowCol, 32901)
+var WythoffReverseSorted NumColSlice
 
 const rowsMax = 512
 const colsMax = 36
@@ -45,17 +51,12 @@ func init() {
 			prev, curr = curr, next
 		}
 	}
-}
 
-func WythoffMinMaxColumn(a, b, minColumn, maxColumn int) iter.Seq[int] {
-	return func(yield func(int) bool) {
-		for off := a; off <= b; off += 1 {
-			col := WythoffReverse[off].Col
-			if col >= minColumn && col < maxColumn {
-				if !yield(off) {
-					return
-				}
-			}
+	WythoffReverseSorted = make([]NumCol, len(WythoffReverse))
+	for i, num := range slices.Sorted(maps.Keys(WythoffReverse)) {
+		WythoffReverseSorted[i] = NumCol{
+			Num: num,
+			Col: WythoffReverse[num].Col,
 		}
 	}
 }
@@ -75,6 +76,30 @@ func WythoffDelta(a, b, minDelta int) iter.Seq[int] {
 			col := WythoffReverse[off].Col
 			if col >= minColumn {
 				if !yield(off) {
+					return
+				}
+			}
+		}
+	}
+}
+
+func compare(e NumCol, t int) int {
+	return cmp.Compare(e.Num, t)
+}
+
+func (ncs NumColSlice) Slice(a, b int) NumColSlice {
+	aIndex, _ := slices.BinarySearchFunc(WythoffReverseSorted, a, compare)
+	bIndex, _ := slices.BinarySearchFunc(WythoffReverseSorted, b, compare)
+
+	return WythoffReverseSorted[aIndex:bIndex]
+}
+
+func (ncs NumColSlice) MinMaxColumn(minColumn, maxColumn int) iter.Seq[int] {
+	return func(yield func(int) bool) {
+		for _, numCol := range ncs {
+			col := numCol.Col
+			if col >= minColumn && col < maxColumn {
+				if !yield(numCol.Num) {
 					return
 				}
 			}
