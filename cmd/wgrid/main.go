@@ -99,9 +99,15 @@ func main() {
 
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
-			ax1, off1, _, ax2, off2 := parse.InitialPoint(scanner.Text())
-			point := wgrid.Intersection(ax1, off1, ax2, off2)
-			ximage.DrawSquareThick(gridImage, point, halfSize, thickness, green)
+			ax0, off0, _, ax1, off1 := parse.InitialPoint(scanner.Text())
+			gridAxes := pgrid.GridAxes{
+				Axis0: ax0, Axis1: ax1,
+				Coords: pgrid.GridCoords{
+					Offset0: pgrid.OffsetInt(off0), Offset1: pgrid.OffsetInt(off1),
+				},
+			}
+
+			ximage.DrawSquareThick(gridImage, gridAxes.GetCenterPoint(), halfSize, thickness, green)
 		}
 		if err := scanner.Err(); err != nil {
 			fmt.Fprintln(os.Stderr, "reading standard input:", err)

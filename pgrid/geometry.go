@@ -115,3 +115,12 @@ func threeAxesOffset(primaryAx, secondaryAx, targetAx uint8) float64 {
 
 	return geom.SinOverSin(target-secondary, primary-secondary)
 }
+
+func threeAxesOffsetDeg(primaryAx, secondaryAx uint8, targetDeg float64) float64 {
+	alpha := 360 / float64(GridLinesTotal)
+
+	primary := float64(primaryAx) * alpha
+	secondary := float64(secondaryAx) * alpha
+
+	return geom.SinOverSin(targetDeg-secondary, primary-secondary)
+}

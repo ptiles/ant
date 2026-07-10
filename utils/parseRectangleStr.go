@@ -5,9 +5,9 @@ import (
 	"image"
 	"regexp"
 
+	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/pgrid/axis"
 	"github.com/ptiles/ant/utils/ximage"
-	"github.com/ptiles/ant/wgrid"
 )
 
 func ParseRectangleStr(rectangleStr string) (rect image.Rectangle, scaleFactor int, err error) {
@@ -21,9 +21,15 @@ func ParseRectangleStr(rectangleStr string) (rect image.Rectangle, scaleFactor i
 	stringMatches := NamedStringMatches(exprCenterPointSizeMul, rectangleStr)
 	intMatches := NamedIntMatches(exprCenterPointSizeMul, rectangleStr)
 	if stringMatches != nil && intMatches != nil {
-		center := wgrid.Intersection(
-			axis.Index(stringMatches["ax0"]), intMatches["off0"],
-			axis.Index(stringMatches["ax1"]), intMatches["off1"])
+		gridAxes := pgrid.GridAxes{
+			Axis0: axis.Index(stringMatches["ax0"]),
+			Axis1: axis.Index(stringMatches["ax1"]),
+			Coords: pgrid.GridCoords{
+				Offset0: pgrid.OffsetInt(intMatches["off0"]),
+				Offset1: pgrid.OffsetInt(intMatches["off1"]),
+			},
+		}
+		center := gridAxes.GetCenterPoint()
 		size := image.Point{X: intMatches["sizeX"], Y: intMatches["sizeY"]}.Mul(intMatches["scale"])
 		return ximage.RectCenterSize(center, size), intMatches["scale"], nil
 	}

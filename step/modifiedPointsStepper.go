@@ -75,7 +75,8 @@ func ModifiedPointsStepper(
 	//if pgrid.DrawTilesAndPoints {
 	//	go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, pal, steps, drawTiles)
 	//} else {
-	go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, pal, steps, drawPoints)
+	//go modifiedPointsToImages(f, modifiedPointsCh, modifiedImagesCh, pal, steps, drawPoints)
+	go modifiedPointsToImages(modifiedPointsCh, modifiedImagesCh, pal, steps, drawPoints)
 	//}
 
 	points := make([]gridPointColor, MaxModifiedPoints)
@@ -175,7 +176,11 @@ func ModifiedPointsStepper(
 			modifiedCount = 0
 			points = make([]gridPointColor, MaxModifiedPoints)
 		}
-		points[modifiedCount] = gridPointColor{gridAxes: gridAxes, color: color}
+		points[modifiedCount] = gridPointColor{
+			gridAxes:    gridAxes,
+			centerPoint: gridAxes.GetCenterPoint(),
+			color:       color,
+		}
 
 		stepNumber += 1
 		modifiedCount += 1
@@ -242,7 +247,6 @@ type ModifiedImage struct {
 }
 
 func modifiedPointsToImages(
-	f *pgrid.Field,
 	modifiedPointsCh <-chan []gridPointColor,
 	modifiedImagesCh chan<- ModifiedImage,
 	pal palette.Palette,
@@ -258,13 +262,11 @@ func modifiedPointsToImages(
 		pixelRect := image.Point{X: 1, Y: 1}
 
 		for i := range points {
-			centerPoint := f.GetCenterPoint(points[i].gridAxes)
+			centerPoint := points[i].centerPoint
 			if !rect.Empty() {
 				overflowCheck(centerPoint, prevPoint)
 			}
 			prevPoint = centerPoint
-
-			points[i].centerPoint = centerPoint
 
 			rect = rect.Union(image.Rectangle{
 				Min: centerPoint,

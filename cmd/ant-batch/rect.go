@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ptiles/ant/pgrid"
 	"github.com/ptiles/ant/pgrid/axis"
 	"github.com/ptiles/ant/utils"
 	"github.com/ptiles/ant/wgrid"
@@ -82,7 +83,14 @@ func (r *rect) seq(debug *strings.Builder) iter.Seq[string] {
 			off0 := rand.IntN(maxOffset0+1-minOffset0) + minOffset0
 			off1 := rand.IntN(maxOffset1+1-minOffset1) + minOffset1
 
-			if _, in := wg.Intersection(uint8(ax0), off0, uint8(ax1), off1); in {
+			gridAxes := pgrid.GridAxes{
+				Axis0: uint8(ax0), Axis1: uint8(ax1),
+				Coords: pgrid.GridCoords{
+					Offset0: pgrid.OffsetInt(off0), Offset1: pgrid.OffsetInt(off1),
+				},
+			}
+
+			if wg.Contains(gridAxes.GetCenterPoint()) {
 				ax0s := axis.Name[ax0%GridLinesTotal]
 				ax1s := axis.Name[ax1%GridLinesTotal]
 				point := fmt.Sprintf("%s%d%s%s%d", ax0s, off0, dir, ax1s, off1)

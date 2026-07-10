@@ -105,16 +105,8 @@ func axisRange(ax uint8, rect image.Rectangle) (int, int) {
 	return minOff, maxOff
 }
 
-func (wg WythoffGrid) Intersection(ax0 uint8, off0 int, ax1 uint8, off1 int) (image.Point, bool) {
-	point := Intersection(ax0, off0, ax1, off1)
-	return point, point.In(wg.rect)
-}
-
-func Intersection(ax0 uint8, off0 int, ax1 uint8, off1 int) image.Point {
-	line0 := axisLine(ax0, off0)
-	line1 := axisLine(ax1, off1)
-
-	return geom.Intersection(line0, line1).Round()
+func (wg WythoffGrid) Contains(point image.Point) bool {
+	return point.In(wg.rect)
 }
 
 type AxesMap map[uint8]int
@@ -142,7 +134,15 @@ func (wg WythoffGrid) IntersectionsMap(minColumn, maxColumn int) map[image.Point
 
 		for off0 := range reverse0.MinMaxColumn(minColumn, maxColumn) {
 			for off1 := range reverse1.MinMaxColumn(minColumn, maxColumn) {
-				if point, in := wg.Intersection(ax0, off0, ax1, off1); in {
+				gridAxes := pgrid.GridAxes{
+					Axis0: ax0, Axis1: ax1,
+					Coords: pgrid.GridCoords{
+						Offset0: pgrid.OffsetInt(off0), Offset1: pgrid.OffsetInt(off1),
+					},
+				}
+				point := gridAxes.GetCenterPoint()
+
+				if wg.Contains(point) {
 					if intersections[point] == nil {
 						intersections[point] = make(AxesMap, pgrid.GridLinesTotal)
 					}
