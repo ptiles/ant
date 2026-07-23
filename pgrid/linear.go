@@ -2,6 +2,7 @@ package pgrid
 
 import (
 	"image"
+	"math"
 
 	"github.com/ptiles/ant/geom"
 )
@@ -15,14 +16,22 @@ func init() {
 	}
 }
 
-func (ga *GridAxes) GetCenterPoint() image.Point {
+func (ga *GridAxes) GetCenterPointFloat() (float64, float64) {
 	off0 := float64(ga.Coords.Offset0)
 	off1 := float64(ga.Coords.Offset1)
 
-	return image.Point{
-		X: int(off0*linear[ga.Axis0][ga.Axis1].X +
-			off1*linear[ga.Axis1][ga.Axis0].X),
-		Y: int(off0*linear[ga.Axis0][ga.Axis1].Y +
-			off1*linear[ga.Axis1][ga.Axis0].Y),
-	}
+	return off0*linear[ga.Axis0][ga.Axis1].X + off1*linear[ga.Axis1][ga.Axis0].X,
+		off0*linear[ga.Axis0][ga.Axis1].Y + off1*linear[ga.Axis1][ga.Axis0].Y
+}
+
+func (ga *GridAxes) GetCenterPoint() image.Point {
+	x, y := ga.GetCenterPointFloat()
+
+	return image.Point{X: int(x), Y: int(y)}
+}
+
+func (ga *GridAxes) GetCenterPointRound() image.Point {
+	x, y := ga.GetCenterPointFloat()
+
+	return image.Point{X: int(math.Round(x)), Y: int(math.Round(y))}
 }
